@@ -1,0 +1,1091 @@
+#pragma once
+
+#include <type_traits>
+#include <array>
+#include <vector>
+#include <stdexcept>
+
+#include <cstddef> //size_t
+
+#include "Common.hpp"
+
+namespace mbedTLScpp
+{
+	/**
+	 * @brief A helper for std::enable_if. This will be provided in std library
+	 *        after C++14 standard. For details, please refer to:
+	 *        https://en.cppreference.com/w/cpp/types/enable_if
+	 *
+	 * @tparam B A boolean expression/value given to std::enable_if
+	 * @tparam T A type given to std::enable_if
+	 */
+	template<bool B, class T = void>
+	using enable_if_t = typename std::enable_if<B,T>::type;
+
+	/**
+	 * @brief Type trait that removes const and reference.
+	 *        It's a combination of std::remove_cv and std::remove_reference.
+	 *        This will be provided in std library after C++20 standard. For
+	 *        details, please refer to:
+	 *        https://en.cppreference.com/w/cpp/types/remove_cvref
+	 *
+	 * @tparam T Data type to operate on.
+	 */
+	template<class T>
+	struct remove_cvref
+	{
+		typedef typename std::remove_cv<typename std::remove_reference<T>::type >::type type;
+	};
+
+	/**
+	 * @brief Base class for non-contiguous container type. It also could be a
+	 *        type that we don't know much about its property.
+	 *        (i.e., default type)
+	 *
+	 */
+	struct NonContiguousCtnType
+	{
+		/**
+		 * @brief Is the container contiguous?
+		 *
+		 */
+		static constexpr bool sk_isCtnCont = false;
+	};
+
+	/**
+	 * @brief Base class for contiguous container type.
+	 *
+	 */
+	struct ContiguousCtnType
+	{
+		/**
+		 * @brief Is the container contiguous?
+		 *
+		 */
+		static constexpr bool sk_isCtnCont = true;
+	};
+
+	/**
+	 * @brief Base class for static (and contiguous) container types.
+	 *
+	 * @tparam _ValType     The type of values stored in the container.
+	 * @tparam _ArrayLength The number of items stored in the container.
+	 */
+	template<class _ValType, size_t _ArrayLength>
+	struct StaticCtnType : ContiguousCtnType
+	{
+		/**
+		 * @brief Is the container size and allocation static?
+		 *
+		 */
+		static constexpr bool sk_isCtnStatic = true;
+
+		/**
+		 * @brief Number of items in the container.
+		 *
+		 */
+		static constexpr size_t sk_itemCount = _ArrayLength;
+
+		/**
+		 * @brief Size (in bytes) of a *single* value stored in the container.
+		 *
+		 */
+		static constexpr size_t sk_valSize = sizeof(_ValType);
+
+		/**
+		 * @brief The size (in bytes) of the entire container, which equals to the
+		 *        number of items times the size of a single value.
+		 *
+		 */
+		static constexpr size_t sk_ctnSize = sk_valSize * sk_itemCount;
+
+		/**
+		 * @brief Type of the values stored in the container.
+		 *
+		 */
+		typedef _ValType ValType;
+	};
+
+	/**
+	 * @brief Base class for dynamic (i.e., size can change at runtime) and
+	 *        contiguous container types.
+	 *
+	 * @tparam _ValType The type of values stored in the container.
+	 */
+	template<class _ValType>
+	struct DynCtnType : ContiguousCtnType
+	{
+		/**
+		 * @brief Is the container size and allocation static?
+		 *
+		 */
+		static constexpr bool sk_isCtnStatic = false;
+
+		/**
+		 * @brief Size (in bytes) of a *single* value stored in the container.
+		 *
+		 */
+		static constexpr size_t sk_valSize = sizeof(_ValType);
+
+		/**
+		 * @brief Type of the values stored in the container.
+		 *
+		 */
+		typedef _ValType ValType;
+	};
+
+
+	/**
+	 * @brief The default CtnType. It is a child type of non-contiguous
+	 *        Ctn type.
+	 *
+	 * @tparam ContainerType Type of the container.
+	 */
+	template<typename ContainerType>
+	struct CtnType : NonContiguousCtnType
+	{};
+
+	/**
+	 * @brief The CtnType for C-style array. It is a child type of
+	 *        static Ctn Type.
+	 *
+	 * @tparam _ValType     Type of the value stored in the container.
+	 * @tparam _ArrayLength Length of the array (i.e., number of items).
+	 */
+	template<typename _ValType, size_t _ArrayLength>
+	struct CtnType<_ValType[_ArrayLength]> : StaticCtnType<_ValType, _ArrayLength>
+	{
+		static_assert(_ArrayLength > 0, "The length of the array should be at least 1.");
+
+		/**
+		 * @brief Is container static in size and offset is in the range of the container.
+		 *
+		 * @exception None No exception thrown
+		 * @param offset The offset to test with.
+		 * @return bool Is container static in size and offset is in the range of the container.
+		 */
+		static constexpr bool IsStaticAndInRange(size_t offset) noexcept
+		{
+			return offset <= StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
+		}
+
+		/**
+		 * @brief Get the count of the provided container
+		 *        (i.e., number of items stored in the container).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the count of the container.
+		 */
+		static constexpr size_t GetCount(const _ValType(&v)[_ArrayLength]) noexcept
+		{
+			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
+		}
+
+		/**
+		 * @brief Get the total container size in bytes (i.e., count * val_size).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the total container size in bytes
+		 */
+		static constexpr size_t GetCtnSize(const _ValType(&v)[_ArrayLength]) noexcept
+		{
+			return StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return const void* the pointer to the first available memory location.
+		 */
+		static const void* GetPtr(const _ValType(&v)[_ArrayLength]) noexcept
+		{
+			return &v[0];
+		}
+
+		/**
+		 * @brief Get the const-byte-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const uint8_t* the byte-pointer to the first available memory location.
+		 */
+		static const uint8_t* GetBytePtr(const _ValType(&v)[_ArrayLength], size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<const uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const void* the pointer to the requested memory location.
+		 */
+		static const void* GetPtr(const _ValType(&v)[_ArrayLength], size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+
+		/**
+		 * @brief Get the pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return void* the pointer to the first available memory location.
+		 */
+		static void* GetPtr(_ValType(&v)[_ArrayLength]) noexcept
+		{
+			return &v[0];
+		}
+
+		/**
+		 * @brief Get the byte-pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return uint8_t* the byte-pointer to the requested memory location.
+		 */
+		static uint8_t* GetBytePtr(_ValType(&v)[_ArrayLength], size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return void* the byte-pointer to the requested memory location.
+		 */
+		static void* GetPtr(_ValType(&v)[_ArrayLength], size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+	};
+
+	/**
+	 * @brief The CtnType for C++-style array. It is a child type of
+	 *        static Ctn Type.
+	 *
+	 * @tparam _ValType     Type of the value stored in the container.
+	 * @tparam _ArrayLength Length of the array (i.e., number of items).
+	 */
+	template<typename _ValType, size_t _ArrayLength>
+	struct CtnType<std::array<_ValType, _ArrayLength> > : StaticCtnType<_ValType, _ArrayLength>
+	{
+		static_assert(_ArrayLength > 0, "The length of the array should be at least 1.");
+
+		/**
+		 * @brief Is container static in size and offset is in the range of the container.
+		 *
+		 * @exception None No exception thrown
+		 * @param offset The offset to test with.
+		 * @return bool Is container static in size and offset is in the range of the container.
+		 */
+		static constexpr bool IsStaticAndInRange(size_t offset) noexcept
+		{
+			return offset <= StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
+		}
+
+		/**
+		 * @brief Get the count of the provided container
+		 *        (i.e., number of items stored in the container).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the count of the container.
+		 */
+		static constexpr size_t GetCount(const std::array<_ValType, _ArrayLength>& v) noexcept
+		{
+			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
+		}
+
+		/**
+		 * @brief Get the total container size in bytes (i.e., count * val_size).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the total container size in bytes
+		 */
+		static constexpr size_t GetCtnSize(const std::array<_ValType, _ArrayLength>& v) noexcept
+		{
+			return StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return const void* the pointer to the first available memory location.
+		 */
+		static const void* GetPtr(const std::array<_ValType, _ArrayLength>& v) noexcept
+		{
+			return v.data();
+		}
+
+		/**
+		 * @brief Get the const-byte-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const uint8_t* the byte-pointer to the first available memory location.
+		 */
+		static const uint8_t* GetBytePtr(const std::array<_ValType, _ArrayLength>& v, size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<const uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const void* the pointer to the requested memory location.
+		 */
+		static const void* GetPtr(const std::array<_ValType, _ArrayLength>& v, size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+
+		/**
+		 * @brief Get the pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return void* the pointer to the first available memory location.
+		 */
+		static void* GetPtr(std::array<_ValType, _ArrayLength>& v) noexcept
+		{
+			return v.data();
+		}
+
+		/**
+		 * @brief Get the byte-pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return uint8_t* the byte-pointer to the requested memory location.
+		 */
+		static uint8_t* GetBytePtr(std::array<_ValType, _ArrayLength>& v, size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return void* the byte-pointer to the requested memory location.
+		 */
+		static void* GetPtr(std::array<_ValType, _ArrayLength>& v, size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+	};
+
+	/**
+	 * @brief The CtnType for std::vector<bool> container. It's not necessary a
+	 *        contiguous container.
+	 *        Details can be found at https://en.cppreference.com/w/cpp/container/vector_bool
+	 *
+	 */
+	template<>
+	struct CtnType<std::vector<bool> > : NonContiguousCtnType
+	{};
+
+	/**
+	 * @brief The CtnType for std::vector<> other than std::vector<bool> container.
+	 *        It's a dynamic contiguous container.
+	 *
+	 * @tparam _ValType Type of the value stored in the container.
+	 */
+	template<typename _ValType>
+	struct CtnType<std::vector<_ValType> > : DynCtnType<_ValType>
+	{
+		/**
+		 * @brief Is container static in size and offset is in the range of the container.
+		 *
+		 * @exception None No exception thrown
+		 * @param offset The offset to test with.
+		 * @return bool Is container static in size and offset is in the range of the container.
+		 */
+		static constexpr bool IsStaticAndInRange(size_t offset) noexcept
+		{
+			return false;
+		}
+
+		/**
+		 * @brief Get the count of the provided container
+		 *        (i.e., number of items stored in the container).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the count of the container.
+		 */
+		static size_t GetCount(const std::vector<_ValType>& v) noexcept
+		{
+			return v.size(); //noexcept
+		}
+
+		/**
+		 * @brief Get the total container size in bytes (i.e., count * val_size).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the total container size in bytes
+		 */
+		static size_t GetCtnSize(const std::vector<_ValType>& v) noexcept
+		{
+			return DynCtnType<_ValType>::sk_valSize * GetCount(v); //noexcept
+		}
+
+		/**
+		 * @brief Get the const-pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return const void* the pointer to the first available memory location.
+		 */
+		static const void* GetPtr(const std::vector<_ValType>& v) noexcept
+		{
+			return v.data(); //noexcept
+		}
+
+		/**
+		 * @brief Get the const-byte-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const uint8_t* the byte-pointer to the first available memory location.
+		 */
+		static const uint8_t* GetBytePtr(const std::vector<_ValType>& v, size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<const uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const void* the pointer to the requested memory location.
+		 */
+		static const void* GetPtr(const std::vector<_ValType>& v, size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+
+		/**
+		 * @brief Get the pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return void* the pointer to the first available memory location.
+		 */
+		static void* GetPtr(std::vector<_ValType>& v) noexcept
+		{
+			return v.data(); //noexcept
+		}
+
+		/**
+		 * @brief Get the byte-pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return uint8_t* the byte-pointer to the requested memory location.
+		 */
+		static uint8_t* GetBytePtr(std::vector<_ValType>& v, size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<uint8_t*>(GetPtr(v)) + offsetInByte; //noexcept
+		}
+
+		/**
+		 * @brief Get the pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return void* the byte-pointer to the requested memory location.
+		 */
+		static void* GetPtr(std::vector<_ValType>& v, size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+	};
+
+	/**
+	 * @brief The CtnType for std::basic_string<> container.
+	 *        It's a dynamic contiguous container.
+	 *
+	 * @tparam _Elem   character type
+	 * @tparam _Traits traits class specifying the operations on the character type
+	 * @tparam _Alloc  Allocator type used to allocate internal storage
+	 */
+	template<class _Elem, class _Traits, class _Alloc>
+	struct CtnType<std::basic_string<_Elem, _Traits, _Alloc> > : DynCtnType<typename std::basic_string<_Elem, _Traits, _Alloc>::value_type>
+	{
+		/**
+		 * @brief Is container static in size and offset is in the range of the container.
+		 *
+		 * @exception None No exception thrown
+		 * @param offset The offset to test with.
+		 * @return bool Is container static in size and offset is in the range of the container.
+		 */
+		static constexpr bool IsStaticAndInRange(size_t offset) noexcept
+		{
+			return false;
+		}
+
+		/**
+		 * @brief Get the count of the provided container
+		 *        (i.e., number of items stored in the container).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the count of the container.
+		 */
+		static size_t GetCount(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
+		{
+			return v.size(); //noexcept
+		}
+
+		/**
+		 * @brief Get the total container size in bytes (i.e., count * val_size).
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return constexpr size_t the total container size in bytes
+		 */
+		static size_t GetCtnSize(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
+		{
+			return DynCtnType<typename std::basic_string<_Elem, _Traits, _Alloc>::value_type>::sk_valSize * GetCount(v);
+		}
+
+		/**
+		 * @brief Get the const-pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v The container.
+		 * @return const void* the pointer to the first available memory location.
+		 */
+		static const void* GetPtr(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
+		{
+			return v.data(); //noexcept
+		}
+
+		/**
+		 * @brief Get the const-byte-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const uint8_t* the byte-pointer to the first available memory location.
+		 */
+		static const uint8_t* GetBytePtr(const std::basic_string<_Elem, _Traits, _Alloc>& v, size_t offsetInByte = 0) noexcept
+		{
+			return static_cast<const uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the const-pointer to the requested memory location
+		 *        in the provided container.
+		 *
+		 * @exception None No exception thrown
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return const void* the pointer to the requested memory location.
+		 */
+		static const void* GetPtr(const std::basic_string<_Elem, _Traits, _Alloc>& v, size_t offsetInByte) noexcept
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+
+		/**
+		 * @brief Get the pointer to the first available memory location
+		 *        in the provided container.
+		 *
+		 * @exception std::out_of_range Thrown if container has zero size.
+		 * @param v The container.
+		 * @return void* the pointer to the first available memory location.
+		 */
+		static void* GetPtr(std::basic_string<_Elem, _Traits, _Alloc>& v)
+		{
+			return &v[0];
+		}
+
+		/**
+		 * @brief Get the byte-pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception std::out_of_range Thrown if container has zero size.
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return uint8_t* the byte-pointer to the requested memory location.
+		 */
+		static uint8_t* GetBytePtr(std::basic_string<_Elem, _Traits, _Alloc>& v, size_t offsetInByte = 0)
+		{
+			return static_cast<uint8_t*>(GetPtr(v)) + offsetInByte;
+		}
+
+		/**
+		 * @brief Get the pointer to the requested memory location in the
+		 *        provided container.
+		 *
+		 * @exception std::out_of_range Thrown if container has zero size.
+		 * @param v            The container.
+		 * @param offsetInByte Offset from the begining of the container, in bytes.
+		 * @return void* the byte-pointer to the requested memory location.
+		 */
+		static void* GetPtr(std::basic_string<_Elem, _Traits, _Alloc>& v, size_t offsetInByte)
+		{
+			return GetBytePtr(v, offsetInByte);
+		}
+	};
+
+	/**
+	 * @brief The contiguous Container Read-Only Reference struct that
+	 *        stores the const reference to a existing container, for
+	 *        read-only purpose.
+	 *
+	 * @tparam ContainerType Type of the container.
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<typename remove_cvref<ContainerType>::type>::sk_isCtnCont, int> = 0>
+	struct ContCtnReadOnlyRef
+	{
+		/**
+		 * @brief The pure type of the container, which means all "const" and "&"
+		 *        specification have been removed.
+		 *
+		 */
+		typedef typename remove_cvref<ContainerType>::type PureContainerType;
+
+		/**
+		 * @brief The const-reference to the container.
+		 *
+		 */
+		const PureContainerType& m_ctn;
+
+		/**
+		 * @brief The offset (in Bytes, starts from the begining of the
+		 *        container) for the begining of the memory region.
+		 *
+		 */
+		const size_t m_beginOffset;
+
+		/**
+		 * @brief The offset (in Bytes, starts from the begining of the
+		 *        container) for the end of the memory region.
+		 *
+		 */
+		const size_t m_endOffset;
+
+		/**
+		 * @brief Construct a new Contiguous Container Read Only Reference object.
+		 *
+		 * @exception std::invalid_argument Thrown if endOffset < beginOffset.
+		 * @exception std::out_of_range Thrown if endOffset is out of the size of the container.
+		 * @param ctn         The const reference to the container.
+		 * @param beginOffset The offset (in Bytes, starts from the begining of
+		 *                    the container) for the begining of the memory region.
+		 * @param endOffset   The offset (in Bytes, starts from the begining of
+		 *                    the container) for the end of the memory region.
+		 */
+		ContCtnReadOnlyRef(const PureContainerType& ctn, size_t beginOffset, size_t endOffset) :
+			m_ctn(ctn),
+			m_beginOffset(beginOffset),
+			m_endOffset(endOffset)
+		{
+			if(endOffset < beginOffset)
+			{
+				throw std::invalid_argument("The end of the range is smaller than the begining of the range.");
+			}
+
+			if(endOffset > CtnType<PureContainerType>::GetCtnSize(m_ctn))
+			{
+				throw std::out_of_range("The end if the range is outside of the container.");
+			}
+		}
+
+		/**
+		 * @brief Construct a new Contiguous Container Read Only Reference object.
+		 *        NOTE: Call this constructor only if you already done the safety
+		 *        checks on beginOffset and endOffset!
+		 *
+		 * @exception None No exception thrown
+		 * @param ctn         The const reference to the container.
+		 * @param beginOffset The offset (in Bytes, starts from the begining of
+		 *                    the container) for the begining of the memory region.
+		 * @param endOffset   The offset (in Bytes, starts from the begining of
+		 *                    the container) for the end of the memory region.
+		 */
+		ContCtnReadOnlyRef(const PureContainerType& ctn, size_t beginOffset, size_t endOffset, NoSafeCheck) noexcept :
+			m_ctn(ctn),
+			m_beginOffset(beginOffset),
+			m_endOffset(endOffset)
+		{}
+
+		/**
+		 * @brief Construct a new Contiguous Container Read Only Reference object
+		 *        by copying the reference from an existing instance.
+		 *
+		 * @exception None No exception thrown
+		 * @param rhs The existing instance.
+		 */
+		ContCtnReadOnlyRef(const ContCtnReadOnlyRef& rhs) noexcept :
+			m_ctn(rhs.m_ctn),
+			m_beginOffset(rhs.m_beginOffset),
+			m_endOffset(rhs.m_endOffset)
+		{}
+
+		ContCtnReadOnlyRef& operator=(const ContCtnReadOnlyRef& rhs) = delete;
+
+		ContCtnReadOnlyRef& operator=(ContCtnReadOnlyRef&& rhs) = delete;
+
+		// /**
+		//  * @brief Get the item count of the container.
+		//  *
+		//  * @exception None No exception thrown
+		//  * @return size_t count of items.
+		//  */
+		// size_t GetCtnCount() const
+		// {
+		// 	return CtnType<PureContainerType>::GetCount(m_ctn);
+		// }
+
+		/**
+		 * @brief Get the size (in bytes) of a *single* value stored in the container.
+		 *
+		 * @exception None No exception thrown
+		 * @return size_t the size (in bytes) of a *single* value
+		 */
+		size_t GetValSize() const noexcept
+		{
+			return CtnType<PureContainerType>::sk_valSize;
+		}
+
+		// /**
+		//  * @brief Get the total container size in bytes (i.e., count * val_size).
+		//  *
+		//  * @exception None No exception thrown
+		//  * @return size_t the total container size in bytes
+		//  */
+		// size_t GetCtnSize() const noexcept
+		// {
+		// 	return CtnType<PureContainerType>::GetCtnSize(m_ctn);
+		// }
+
+		/**
+		 * @brief Get the size of the memory region
+		 *
+		 * @exception None No exception thrown
+		 * @return size_t The size of the memory region
+		 */
+		size_t GetRegionSize() const noexcept
+		{
+			return m_endOffset - m_beginOffset;
+		}
+
+		/**
+		 * @brief Get the void pointer to the begining of the memory region.
+		 *
+		 * @exception None No exception thrown
+		 * @return const void* The pointer to the begining of the memory region.
+		 */
+		const void* BeginPtr() const noexcept
+		{
+			return CtnType<PureContainerType>::GetPtr(m_ctn, m_beginOffset);
+		}
+
+		/**
+		 * @brief Get the byte pointer to the begining of the memory region.
+		 *
+		 * @exception None No exception thrown
+		 * @return const byte The pointer to the begining of the memory region.
+		 */
+		const uint8_t* BeginBytePtr() const noexcept
+		{
+			return CtnType<PureContainerType>::GetBytePtr(m_ctn, m_beginOffset);
+		}
+
+		/**
+		 * @brief Get the void pointer to the end of the memory region.
+		 *
+		 * @exception None No exception thrown
+		 * @return const void* The pointer to the end of the memory region.
+		 */
+		const void* EndPtr() const noexcept
+		{
+			return CtnType<PureContainerType>::GetPtr(m_ctn, m_endOffset);
+		}
+
+		/**
+		 * @brief Get the byte pointer to the end of the memory region.
+		 *
+		 * @exception None No exception thrown
+		 * @return const uint8_t* The pointer to the end of the memory region.
+		 */
+		const uint8_t* EndBytePtr() const noexcept
+		{
+			return CtnType<PureContainerType>::GetBytePtr(m_ctn, m_endOffset);
+		}
+	};
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) the entire range of the container
+	 *        B) containers with static size
+	 *
+	 * @exception None No exception thrown
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnFullR(const ContainerType& ctn) noexcept
+	{
+		return ContCtnReadOnlyRef<ContainerType>(ctn, 0, CtnType<ContainerType>::sk_ctnSize, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) the entire range of the container
+	 *        B) containers with dynamic size
+	 *
+	 * @exception None No exception thrown
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnFullR(const ContainerType& ctn) noexcept
+	{
+		return ContCtnReadOnlyRef<ContainerType>(ctn, 0, CtnType<ContainerType>::GetCtnSize(ctn), gsk_noSafeCheck);
+	}
+
+
+
+
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with static size
+	 *        C) range is specified statically
+	 *
+	 * @exception None No exception thrown
+	 * @tparam beginOffset   The left end of the range (inclusive, in bytes).
+	 * @tparam endOffset     The right end of the range (exclusive, in bytes).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginOffset, size_t endOffset,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn) noexcept
+	{
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+		static_assert(CtnType<ContainerType>::IsStaticAndInRange(endOffset), "The end of the range is outside of the container.");
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with static size
+	 *        C) range is specified statically
+	 *
+	 * @exception None No exception thrown
+	 * @tparam beginOffset   The left end of the range (inclusive, in bytes).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginOffset,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn) noexcept
+	{
+		static_assert(CtnType<ContainerType>::IsStaticAndInRange(beginOffset), "The begining of the range is outside of the container.");
+
+		constexpr size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with dynamic size
+	 *        C) range is specified statically
+	 *
+	 * @exception std::out_of_range Thrown if endOffset is out of the size of the container.
+	 * @tparam beginOffset   The left end of the range (inclusive, in bytes).
+	 * @tparam endOffset     The right end of the range (exclusive, in bytes).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginOffset, size_t endOffset,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn)
+	{
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+
+		if(endOffset > CtnType<ContainerType>::GetCtnSize(ctn))
+		{
+			throw std::out_of_range("The end of the range is outside of the container.");
+		}
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with dynamic size
+	 *        C) range is specified statically
+	 *
+	 * @exception std::out_of_range Thrown if beginOffset is out of the size of the container.
+	 * @tparam beginOffset   The left end of the range (inclusive, in bytes).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginOffset,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn)
+	{
+		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		if(beginOffset > endOffset)
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with dynamic size
+	 *        C) range is specified dynamically
+	 *
+	 * @exception std::invalid_argument Thrown if endOffset < beginOffset.
+	 * @exception std::out_of_range Thrown if endOffset is out of the size of the container.
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn         The const-reference to the container.
+	 * @param beginOffset The left end of the range (inclusive, in bytes).
+	 * @param endOffset   The right end of the range (exclusive, in bytes).
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn, size_t beginOffset, size_t endOffset)
+	{
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with dynamic size
+	 *        C) range is specified dynamically
+	 *
+	 * @exception std::invalid_argument Thrown if endOffset < beginOffset.
+	 * @exception std::out_of_range Thrown if endOffset is out of the size of the container.
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn         The const-reference to the container.
+	 * @param beginOffset The left end of the range (inclusive, in bytes).
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn, size_t beginOffset)
+	{
+		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
+	}
+
+
+
+
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with static size
+	 *        C) range is specified statically
+	 *
+	 * @exception None No exception thrown
+	 * @tparam beginCount   The left end of the range (inclusive, in item counts).
+	 * @tparam endCount     The right end of the range (exclusive, in item counts).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginCount, size_t endCount,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn) noexcept
+	{
+		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
+		static_assert(endCount <= CtnType<ContainerType>::sk_itemCount, "The end of the range is outside of the container.");
+
+		//Should we checks for overflow? - No, if it overflows here, then there is no way that the pointer can hold the address.
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+}
