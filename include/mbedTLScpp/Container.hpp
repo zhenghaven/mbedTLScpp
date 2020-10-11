@@ -9,7 +9,11 @@
 
 #include "Common.hpp"
 
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp
+#else
+namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+#endif
 {
 	/**
 	 * @brief A helper for std::enable_if. This will be provided in std library
@@ -177,7 +181,7 @@ namespace mbedTLScpp
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static constexpr size_t GetCount(const _ValType(&v)[_ArrayLength]) noexcept
+		static constexpr size_t GetItemCount(const _ValType(&v)[_ArrayLength]) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
 		}
@@ -309,7 +313,7 @@ namespace mbedTLScpp
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static constexpr size_t GetCount(const std::array<_ValType, _ArrayLength>& v) noexcept
+		static constexpr size_t GetItemCount(const std::array<_ValType, _ArrayLength>& v) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
 		}
@@ -448,7 +452,7 @@ namespace mbedTLScpp
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static size_t GetCount(const std::vector<_ValType>& v) noexcept
+		static size_t GetItemCount(const std::vector<_ValType>& v) noexcept
 		{
 			return v.size(); //noexcept
 		}
@@ -462,7 +466,7 @@ namespace mbedTLScpp
 		 */
 		static size_t GetCtnSize(const std::vector<_ValType>& v) noexcept
 		{
-			return DynCtnType<_ValType>::sk_valSize * GetCount(v); //noexcept
+			return DynCtnType<_ValType>::sk_valSize * GetItemCount(v); //noexcept
 		}
 
 		/**
@@ -579,7 +583,7 @@ namespace mbedTLScpp
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static size_t GetCount(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
+		static size_t GetItemCount(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
 		{
 			return v.size(); //noexcept
 		}
@@ -593,7 +597,7 @@ namespace mbedTLScpp
 		 */
 		static size_t GetCtnSize(const std::basic_string<_Elem, _Traits, _Alloc>& v) noexcept
 		{
-			return DynCtnType<typename std::basic_string<_Elem, _Traits, _Alloc>::value_type>::sk_valSize * GetCount(v);
+			return DynCtnType<typename std::basic_string<_Elem, _Traits, _Alloc>::value_type>::sk_valSize * GetItemCount(v);
 		}
 
 		/**
@@ -785,9 +789,9 @@ namespace mbedTLScpp
 		//  * @exception None No exception thrown
 		//  * @return size_t count of items.
 		//  */
-		// size_t GetCtnCount() const
+		// size_t GetItemCount() const
 		// {
-		// 	return CtnType<PureContainerType>::GetCount(m_ctn);
+		// 	return CtnType<PureContainerType>::GetItemCount(m_ctn);
 		// }
 
 		/**
@@ -1041,7 +1045,7 @@ namespace mbedTLScpp
 	 *        C) range is specified dynamically
 	 *
 	 * @exception std::invalid_argument Thrown if endOffset < beginOffset.
-	 * @exception std::out_of_range Thrown if endOffset is out of the size of the container.
+	 * @exception std::out_of_range Thrown if begining is out of the size of the container.
 	 * @tparam ContainerType Type of the container, which will be inferred from
 	 *                       the giving parameter.
 	 * @param ctn         The const-reference to the container.
@@ -1053,6 +1057,11 @@ namespace mbedTLScpp
 	ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn, size_t beginOffset)
 	{
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		if(beginOffset > endOffset)
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 
@@ -1087,5 +1096,144 @@ namespace mbedTLScpp
 		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
 
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with static size
+	 *        C) range is specified statically
+	 *
+	 * @exception None No exception thrown
+	 * @tparam beginCount    The left end of the range (inclusive, in item counts).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginCount,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn) noexcept
+	{
+		static_assert(beginCount <= CtnType<ContainerType>::sk_itemCount, "The begining of the range is outside of the container.");
+
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		constexpr size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with dynamic size
+	 *        C) range is specified statically
+	 *
+	 * @exception std::out_of_range Thrown if endCount is out of the size of the container.
+	 * @tparam beginCount    The left end of the range (inclusive, in item counts).
+	 * @tparam endCount      The right end of the range (exclusive, in item counts).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginCount, size_t endCount,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn)
+	{
+		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
+
+		if(endCount > CtnType<ContainerType>::GetItemCount(ctn))
+		{
+			throw std::out_of_range("The end of the range is outside of the container.");
+		}
+
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with dynamic size
+	 *        C) range is specified statically
+	 *
+	 * @exception std::out_of_range Thrown if beginCount is out of the size of the container.
+	 * @tparam beginCount    The left end of the range (inclusive, in item counts).
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn The const-reference to the container.
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<size_t beginCount,
+		typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn)
+	{
+		if(beginCount > CtnType<ContainerType>::GetItemCount(ctn))
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		const     size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container
+	 *        B) containers with dynamic size
+	 *        C) range is specified dynamically
+	 *
+	 * @exception std::invalid_argument Thrown if beginCount < endCount.
+	 * @exception std::out_of_range Thrown if endCount is out of the size of the container.
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn         The const-reference to the container.
+	 * @param beginCount  The left end of the range (inclusive, in item counts).
+	 * @param endCount    The right end of the range (exclusive, in item counts).
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn, size_t beginCount, size_t endCount)
+	{
+		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		const size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
+	}
+
+	/**
+	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
+	 *        A) a specific range of the container, where the end of range is the end of container
+	 *        B) containers with dynamic size
+	 *        C) range is specified dynamically
+	 *
+	 * @exception std::invalid_argument Thrown if beginCount < endCount.
+	 * @exception std::out_of_range Thrown if beginCount is out of the size of the container.
+	 * @tparam ContainerType Type of the container, which will be inferred from
+	 *                       the giving parameter.
+	 * @param ctn         The const-reference to the container.
+	 * @param beginCount  The left end of the range (inclusive, in item counts).
+	 * @return ContCtnReadOnlyRef<ContainerType> The constructed ContCtnReadOnlyRef struct
+	 */
+	template<typename ContainerType,
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn, size_t beginCount)
+	{
+		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		if(beginOffset > endOffset)
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 }

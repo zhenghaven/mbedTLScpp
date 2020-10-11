@@ -1,6 +1,10 @@
 #pragma once
 
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp
+#else
+namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+#endif
 {
 	/**
 	 * @brief Dummy struct to indicate safety check is unnecessary. Usually it's
