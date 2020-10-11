@@ -1,0 +1,202 @@
+#pragma once
+
+#include <stdexcept>
+#include <utility>
+#include <memory>
+
+#include <mbedtls/error.h>
+#include <mbedtls/platform.h>
+
+#include "Internal/make_unique.hpp"
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+namespace mbedTLScpp
+#else
+namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+#endif
+{
+	/**
+	 * @brief The exception base class for all mbed TLS cpp classes' exceptions
+	 *        (except those in Container header).
+	 *        This class is inherited from std::runtime_error class.
+	 *
+	 */
+	class RuntimeException : public std::runtime_error
+	{
+	public:
+
+		/**
+		 * @brief Construct a new Runtime Exception object.
+		 *        Same usage as the one in std::runtime_error.
+		 *
+		 * @param what_arg explanatory string
+		 */
+		RuntimeException(const std::string& what_arg) :
+			std::runtime_error(what_arg)
+		{}
+
+		/**
+		 * @brief Construct a new Runtime Exception object.
+		 *        Same usage as the one in std::runtime_error.
+		 *
+		 * @param what_arg explanatory string
+		 */
+		RuntimeException(const char* what_arg) :
+			std::runtime_error(what_arg)
+		{}
+
+		/**
+		 * @brief Construct a new Runtime Exception object.
+		 *        Same usage as the one in std::runtime_error.
+		 *
+		 * @param other another exception object to copy
+		 */
+		RuntimeException(const RuntimeException& other) noexcept :
+			std::runtime_error(other)
+		{}
+
+		/**
+		 * @brief Destroy the Runtime Exception object
+		 *
+		 */
+		virtual ~RuntimeException()
+		{}
+	};
+
+	/**
+	 * @brief The exception class that encapsulates all mbed TLS built-in error
+	 *        codes. In mbed TLS cpp, all C-style error code will be encapsulated
+	 *        and thrown by this exception class.
+	 *
+	 */
+	class mbedTLSRuntimeError : public RuntimeException
+	{
+	public: //static members
+
+		/**
+		 * @brief The helper function to construct the explanatory string.
+		 *
+		 * @param errorCode Error code returned by mbed TLS.
+		 * @param caller    The name of mbed TLS cpp function that calls the mbed TLS C function.
+		 * @param callee    The name of mbed TLS C function being called.
+		 * @return std::string The explanatory string.
+		 */
+		static std::string ConstructWhatMsg(int errorCode, const char* caller, const char* callee)
+		{
+			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
+			char errCodeHex[10];
+			const char* highErrCStr = mbedtls_high_level_strerr(errorCode);
+			const char* lowErrCStr = mbedtls_low_level_strerr(errorCode);
+			std::string highErrStr(highErrCStr != nullptr ? highErrCStr : "N/A");
+			std::string lowErrStr(lowErrCStr != nullptr ? lowErrCStr : "N/A");
+
+			mbedtls_snprintf(errCodeHex, sizeof(errCodeHex), "-0x%04X", (unsigned int) posErrCode);
+
+			return std::string("embed TLS returned error ") + errCodeHex +
+			       " (" + highErrStr + " : " + lowErrStr + ") when function " +
+				   caller + " called function " + callee;
+		}
+
+		/**
+		 * @brief The helper function that picks and returns an C string as the
+		 *        explanatory string. The returned pointer could point to the
+		 *        mbed TLS high level strerr or mbed TLS low level strerr or the
+		 *        fallback buffer. The fallback buffer is a C string buffer to
+		 *        write error code string if the error code is unknown.
+		 *
+		 * @param errorCode       Error code returned by mbed TLS.
+		 * @param fallbackBuf     The pointer points to the fallback buffer.
+		 * @param fallbackBufSize The size of the fallback buffer.
+		 * @return const char* The explanatory string.
+		 */
+		static const char* ConstructFallbackMsg(int errorCode, char* fallbackBuf, size_t fallbackBufSize)
+		{
+			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
+			mbedtls_snprintf(fallbackBuf, fallbackBufSize, "UNKNOWN ERROR CODE -0x%04X", posErrCode);
+			const char* highErrCStr = mbedtls_high_level_strerr(errorCode);
+			const char* lowErrCStr = mbedtls_low_level_strerr(errorCode);
+
+			return highErrCStr != nullptr ? highErrCStr :
+				        (lowErrCStr != nullptr ? lowErrCStr : fallbackBuf);
+		}
+
+	public:
+
+		/**
+		 * @brief Construct a new mbed TLS Runtime Error object.
+		 *        Same usage as the one in RuntimeException.
+		 *
+		 * @param what_arg explanatory string
+		 */
+		mbedTLSRuntimeError(const char* what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		/**
+		 * @brief Construct a new mbed TLS Runtime Error object.
+		 *        Same usage as the one in RuntimeException.
+		 *
+		 * @param what_arg explanatory string
+		 */
+		mbedTLSRuntimeError(const std::string& what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		/**
+		 * @brief Construct a new mbed TLS Runtime Error object.
+		 *        Same usage as the one in RuntimeException.
+		 *
+		 * @param other another exception object to copy
+		 */
+		mbedTLSRuntimeError(const mbedTLSRuntimeError& other) noexcept :
+			RuntimeException(other)
+		{}
+
+		/**
+		 * @brief Destroy the mbed TLS Runtime Error object
+		 *
+		 */
+		virtual ~mbedTLSRuntimeError()
+		{}
+
+	};
+
+}
+
+/**
+ * @brief Check if the error code given is MBEDTLS_EXIT_SUCCESS or not.
+ *        If not, it will construct and throw the mbedTLSRuntimeError exception.
+ *
+ */
+#define MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(ERROR_CODE, CALLER, CALLEE) { \
+	if (ERROR_CODE != MBEDTLS_EXIT_SUCCESS) { \
+		std::unique_ptr<std::string> errorStrPtr; \
+		try	{ \
+			errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
+		} catch(...) { \
+			char fallbackStr[] = "UNKNOWN ERROR CODE           "; \
+			throw mbedTLSRuntimeError(mbedTLSRuntimeError::ConstructFallbackMsg(ERROR_CODE, fallbackStr, sizeof(fallbackStr))); \
+		} \
+		throw mbedTLSRuntimeError(*errorStrPtr); \
+	} \
+}
+
+/**
+ * @brief Check if the mbed TLS C function call given returns MBEDTLS_EXIT_SUCCESS or not.
+ *        If not, it will construct and throw the mbedTLSRuntimeError exception.
+ *
+ */
+#define MBEDTLSCPP_C_FUNC_CALL(CALLER, CALLEE, CALL_STATEMENT) { \
+	int retVal = CALL_STATEMENT; \
+	MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(retVal, CALLER, CALLEE); \
+}
+
+/**
+ * @brief Make the call to a specified mbed TLS C function, and check if it returns
+ *        MBEDTLS_EXIT_SUCCESS or not.
+ *        If not, it will construct and throw the mbedTLSRuntimeError exception.
+ *
+ */
+#define MBEDTLSCPP_MAKE_C_FUNC_CALL(CALLER, CALLEE, ...) { \
+	MBEDTLSCPP_C_FUNC_CALL(CALLER, CALLEE, CALLEE(__VA_ARGS__)); \
+}
