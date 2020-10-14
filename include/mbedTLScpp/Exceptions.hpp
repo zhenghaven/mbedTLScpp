@@ -161,6 +161,59 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	};
 
+	/**
+	 * @brief An exception class that is thrown when the program is trying to
+	 *        access an null instance of a mbed TLS cpp object.
+	 *
+	 */
+	class InvalidObjectException : public RuntimeException
+	{
+	public:
+
+		InvalidObjectException(const std::string& objTypeName) :
+			RuntimeException("A invalid/null instance of the mbed TLS cpp object type " + objTypeName + " is accessed.")
+		{}
+
+		InvalidObjectException(const InvalidObjectException& other) noexcept :
+			RuntimeException(other)
+		{}
+
+		/**
+		 * @brief Destroy the Invalid Object Exception object
+		 *
+		 */
+		virtual ~InvalidObjectException()
+		{}
+	};
+
+	/**
+	 * @brief An exception class that is thrown when the argument given to the
+	 *        function call is invalid.
+	 *
+	 */
+	class InvalidArgumentException : public RuntimeException
+	{
+	public:
+
+		InvalidArgumentException(const char* what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		InvalidArgumentException(const std::string& what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		InvalidArgumentException(const InvalidArgumentException& other) noexcept :
+			RuntimeException(other)
+		{}
+
+		/**
+		 * @brief Destroy the Invalid Object Exception object
+		 *
+		 */
+		virtual ~InvalidArgumentException()
+		{}
+	};
 }
 
 /**

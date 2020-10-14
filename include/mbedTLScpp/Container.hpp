@@ -1236,4 +1236,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
+
+
+	template<typename ContainerType>
+	inline constexpr InDataListItem ConstructInDataListItem(ContCtnReadOnlyRef<ContainerType> data)
+	{
+		return InDataListItem{ data.BeginPtr(), data.GetRegionSize() };
+	}
+
+	template<class... Args>
+	inline constexpr InDataList<sizeof...(Args)> ConstructInDataList(ContCtnReadOnlyRef<Args>... args)
+	{
+		return InDataList<sizeof...(Args)>{ ConstructInDataListItem(args)... };
+	}
 }

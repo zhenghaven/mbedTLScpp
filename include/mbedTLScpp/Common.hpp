@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp
 #else
@@ -18,5 +20,30 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		explicit NoSafeCheck() = default;
 	};
 	constexpr NoSafeCheck gsk_noSafeCheck;
+
+	/**
+	 * @brief a constexpr that represents bits per byte.
+	 *
+	 */
+	constexpr uint8_t gsk_bitsPerByte = 8;
+
+	/**
+	 * @brief An item in InDataList.
+	 *
+	 */
+	struct InDataListItem
+	{
+		const void*  m_data;
+		const size_t m_size;
+	};
+
+	/**
+	 * @brief A list that summarize a list of input containers' memory region.
+	 *
+	 * @tparam Len Number of items in the list.
+	 */
+	template<size_t Len>
+	using InDataList = std::array<InDataListItem, Len>;
+
 }
 
