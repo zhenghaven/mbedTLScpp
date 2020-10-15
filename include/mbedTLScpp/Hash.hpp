@@ -31,20 +31,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	inline constexpr uint8_t GetHashByteSize(HashType type)
 	{
-		switch (type)
-		{
-		case HashType::SHA224:
-			return (224 / gsk_bitsPerByte);
-		case HashType::SHA256:
-			return (256 / gsk_bitsPerByte);
-		case HashType::SHA384:
-			return (384 / gsk_bitsPerByte);
-		case HashType::SHA512:
-			return (512 / gsk_bitsPerByte);
-		default:
-			throw InvalidArgumentException("Hash type given is not supported.");
-		}
+		return (type == HashType::SHA224 ?
+		           (224 / gsk_bitsPerByte) :
+			   (type == HashType::SHA256 ?
+			       (256 / gsk_bitsPerByte) :
+			   (type == HashType::SHA384 ?
+			       (384 / gsk_bitsPerByte) :
+			   (type == HashType::SHA512 ?
+			       (512 / gsk_bitsPerByte) :
+                   throw InvalidArgumentException("Hash type given is not supported.")
+			   ))));
 	}
+	static_assert(GetHashByteSize(HashType::SHA224) == (224 / gsk_bitsPerByte), "Programming error.");
+	static_assert(GetHashByteSize(HashType::SHA256) == (256 / gsk_bitsPerByte), "Programming error.");
+	static_assert(GetHashByteSize(HashType::SHA384) == (384 / gsk_bitsPerByte), "Programming error.");
+	static_assert(GetHashByteSize(HashType::SHA512) == (512 / gsk_bitsPerByte), "Programming error.");
 
 	/**
 	 * @brief The container type used to store the hash result (for a known hash type).
