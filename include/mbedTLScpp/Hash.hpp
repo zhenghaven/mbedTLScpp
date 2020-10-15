@@ -1,10 +1,7 @@
 #pragma once
 
-#include "ObjectBase.hpp"
+#include "MegDigestBase.hpp"
 
-#include <mbedtls/md.h>
-
-#include "Common.hpp"
 #include "Container.hpp"
 #include "Exceptions.hpp"
 
@@ -14,39 +11,6 @@ namespace mbedTLScpp
 namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
-	/** @brief	Enum that represent hash types */
-	enum class HashType
-	{
-		SHA224,
-		SHA256,
-		SHA384,
-		SHA512,
-	};
-
-	/**
-	 * @brief Get the size (in bytes) of a given Hash type.
-	 *
-	 * @param type The type of the hash
-	 * @return constexpr uint8_t The size in bytes
-	 */
-	inline constexpr uint8_t GetHashByteSize(HashType type)
-	{
-		return (type == HashType::SHA224 ?
-		           (224 / gsk_bitsPerByte) :
-			   (type == HashType::SHA256 ?
-			       (256 / gsk_bitsPerByte) :
-			   (type == HashType::SHA384 ?
-			       (384 / gsk_bitsPerByte) :
-			   (type == HashType::SHA512 ?
-			       (512 / gsk_bitsPerByte) :
-                   throw InvalidArgumentException("Hash type given is not supported.")
-			   ))));
-	}
-	static_assert(GetHashByteSize(HashType::SHA224) == (224 / gsk_bitsPerByte), "Programming error.");
-	static_assert(GetHashByteSize(HashType::SHA256) == (256 / gsk_bitsPerByte), "Programming error.");
-	static_assert(GetHashByteSize(HashType::SHA384) == (384 / gsk_bitsPerByte), "Programming error.");
-	static_assert(GetHashByteSize(HashType::SHA512) == (512 / gsk_bitsPerByte), "Programming error.");
-
 	/**
 	 * @brief The container type used to store the hash result (for a known hash type).
 	 *
@@ -55,103 +19,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	template<HashType _HashTypeValue>
 	using Hash = std::array<uint8_t, GetHashByteSize(_HashTypeValue)>;
 
-	/** @brief	Message Digest Base class. It will be further inherited by the
-	 *          hash calculator and HMAC calculator.
+	/**
+	 * @brief The base class for Hash calculator. It can accept some raw pointer
+	 *        parameters, and hash type can be specified at runtime.
+	 *
 	 */
-	class MsgDigestBase : public ObjectBase<mbedtls_md_context_t>
-	{
-	public: // static members:
-		static inline const mbedtls_md_info_t& GetMdInfo(HashType type)
-		{
-			const mbedtls_md_info_t* res = nullptr;
-			switch (type)
-			{
-			case HashType::SHA224:
-				res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA224);
-				break;
-			case HashType::SHA256:
-				res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256);
-				break;
-			case HashType::SHA384:
-				res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA384);
-				break;
-			case HashType::SHA512:
-				res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA512);
-				break;
-			default:
-				break;
-			}
-
-			if (res != nullptr)
-			{
-				return *res;
-			}
-			throw InvalidArgumentException("Hash type given is not supported.");
-		}
-
-	public:
-
-		/**
-		 * @brief Construct a new Msgessage Digest Base object.
-		 *
-		 * @param mdInfo   The md info provided by mbed TLS library.
-		 * @param needHmac Is HMAC calculation needed?
-		 */
-		MsgDigestBase(const mbedtls_md_info_t& mdInfo, bool needHmac) :
-			ObjectBase(&mbedtls_md_free)
-		{
-			static_assert(false == 0, "The value of false is different with the one expected in mbedTLS.");
-
-			mbedtls_md_init(Get());
-
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(MsgDigestBase::MsgDigestBase, mbedtls_md_setup, Get(), &mdInfo, needHmac);
-		}
-
-		/**
-		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
-		 *
-		 * @param rhs The other MsgDigestBase instance.
-		 */
-		MsgDigestBase(MsgDigestBase&& rhs) :
-			ObjectBase(std::forward<ObjectBase>(rhs))
-		{}
-
-		MsgDigestBase(const MsgDigestBase& rhs) = delete;
-
-		/**
-		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
-		 *
-		 * @param rhs The other MsgDigestBase instance.
-		 * @return MsgDigestBase& A reference to this instance.
-		 */
-		MsgDigestBase& operator=(MsgDigestBase&& rhs)
-		{
-			ObjectBase::operator=(std::forward<ObjectBase>(rhs));
-
-			return *this;
-		}
-
-		MsgDigestBase& operator=(const MsgDigestBase& other) = delete;
-
-		/** @brief	Destructor */
-		virtual ~MsgDigestBase()
-		{}
-
-		/**
-		 * @brief Check if the current instance is holding a null pointer for
-		 *        the mbedTLS object. If so, exception will be thrown. Helper
-		 *        function to be called before accessing the mbedTLS object.
-		 *
-		 * @exception InvalidObjectException Thrown when the current instance is
-		 *                                   holding a null pointer for the C mbed TLS
-		 *                                   object.
-		 */
-		virtual void NullCheck() const
-		{
-			ObjectBase::NullCheck(typeid(MsgDigestBase).name());
-		}
-	};
-
 	class HasherBase : public MsgDigestBase
 	{
 	public:
@@ -161,6 +33,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief	Constructor. mbedtls_md_starts is called here.
 		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @param	mdInfo	Information describing the md.
 		 */
 		HasherBase(const mbedtls_md_info_t& mdInfo)  :
@@ -174,7 +47,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @param rhs The other HasherBase instance.
 		 */
-		HasherBase(HasherBase&& rhs) :
+		HasherBase(HasherBase&& rhs) noexcept :
 			MsgDigestBase(std::forward<MsgDigestBase>(rhs))
 		{}
 
@@ -190,7 +63,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other HasherBase instance.
 		 * @return HasherBase& A reference to this instance.
 		 */
-		HasherBase& operator=(HasherBase&& rhs)
+		HasherBase& operator=(HasherBase&& rhs) noexcept
 		{
 			MsgDigestBase::operator=(std::forward<MsgDigestBase>(rhs));
 
@@ -206,6 +79,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception InvalidObjectException Thrown when the current instance is
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @tparam ContainerType The type of the container that stores the data.
 		 * @param data The data to be hashed.
 		 */
@@ -223,6 +97,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Finishes the hash calculation and get the hash result.
 		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @return std::vector<uint8_t> The hash result.
 		 */
 		std::vector<uint8_t> Finish()
@@ -244,9 +122,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        will be wiped out. It's useful if you want to reuse the same
 		 *        hasher instance.
 		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 */
 		void Restart()
 		{
+			NullCheck();
+
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HasherBase::HasherBase, mbedtls_md_starts, Get());
 		}
 
@@ -261,7 +145,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
-
+	/**
+	 * @brief The hash calculator. Only accept C++ objects as parameters, and
+	 *        hash type must be specified at compile time.
+	 *
+	 * @tparam _HashTypeValue
+	 */
 	template<HashType _HashTypeValue>
 	class Hasher : public HasherBase
 	{
@@ -273,6 +162,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Construct a new Hasher object
 		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 */
 		Hasher() :
 			HasherBase(MsgDigestBase::GetMdInfo(_HashTypeValue))
@@ -290,8 +180,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @param rhs The other Hasher instance.
 		 */
-		Hasher(Hasher&& rhs) :
-			HasherBase(std::forward<HasherBase>(rhs))
+		Hasher(Hasher&& rhs) noexcept :
+			HasherBase(std::forward<HasherBase>(rhs)) //noexcept
 		{}
 
 		Hasher(const Hasher& rhs) = delete;
@@ -302,9 +192,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other Hasher instance.
 		 * @return Hasher& A reference to this instance.
 		 */
-		Hasher& operator=(Hasher&& rhs)
+		Hasher& operator=(Hasher&& rhs) noexcept
 		{
-			HasherBase::operator=(std::forward<HasherBase>(rhs));
+			HasherBase::operator=(std::forward<HasherBase>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -314,6 +204,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Finishes the hash calculation and get the hash result.
 		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @return Hash<_HashTypeValue> The hash result.
 		 */
 		Hash<_HashTypeValue> Finish()
@@ -329,6 +223,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        it will update the calculation state based on the existing state;
 		 *        Thus, you may need to call restart first.
 		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @tparam ListLen The length of the list.
 		 * @param list The list of Input Data Items.
 		 * @return Hash<_HashTypeValue> The hash result.
@@ -354,6 +252,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        it will update the calculation state based on the existing state;
 		 *        Thus, you may need to call restart first.
 		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @tparam Args The type of the container wrapped by ContCtnReadOnlyRef
 		 * @param args The container.
 		 * @return Hash<_HashTypeValue> The hash result.

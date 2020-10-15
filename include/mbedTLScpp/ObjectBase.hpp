@@ -16,12 +16,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	{
 	public:
 
+		//static constexpr void (*sk_dummyFreeFunction)(CObjType*) noexcept = nullptr;
 		/**
 		 * @brief The type of object free function, which is usually the free function
 		 *        defined in the mbedTLS.
+		 *        NOTE: this function MUST BE noexcept.
 		 *
 		 */
 		typedef void(*ObjectFreeFunction)(CObjType*);
+		//using ObjectFreeFunction = typename std::remove_cv<decltype(sk_dummyFreeFunction)>::type;
 
 		/**
 		 * @brief A function receives mbedTLS C object as parameter, but do nothing.
@@ -44,7 +47,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		ObjectBase(ObjectBase&& rhs) noexcept :
 			m_ptr(rhs.m_ptr),
-			m_objFreer(rhs.m_objFreer)
+			m_objFreer(std::forward<ObjectFreeFunction>(rhs.m_objFreer))
 		{
 			rhs.m_ptr = nullptr;
 			rhs.m_objFreer = nullptr;
@@ -133,7 +136,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		ObjectBase(ObjectFreeFunction objFreer) noexcept :
 			m_ptr(Internal::NewObject<CObjType>()),
-			m_objFreer(objFreer)
+			m_objFreer(std::forward<ObjectFreeFunction>(objFreer))
 		{}
 
 		/**
@@ -156,12 +159,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @return	A reference to this object.
 		 */
-		ObjectBase& operator=(ObjectBase&& rhs)
+		ObjectBase& operator=(ObjectBase&& rhs) noexcept
 		{
 			if (this != &rhs)
 			{
 				//Free the object to prevent memory leak.
-				Free();
+				FreeBaseObject(); //noexcept
 
 				m_ptr = rhs.m_ptr;
 				m_objFreer = rhs.m_objFreer;
@@ -173,9 +176,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/** @brief	Free the current object. */
-		void Free()
+		void FreeBaseObject() noexcept
 		{
-			FreeBaseObject();
+			if(m_objFreer != nullptr && m_ptr != nullptr)
+			{
+				(*m_objFreer)(m_ptr); //noexcept
+
+				Internal::DelObject(m_ptr); //noexcept
+			}
+			m_ptr = nullptr;
+			m_objFreer = nullptr;
 		}
 
 		/**
@@ -236,17 +246,5 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	private:
 		CObjType * m_ptr;
 		ObjectFreeFunction m_objFreer;
-
-		void FreeBaseObject()
-		{
-			if(m_objFreer != nullptr)
-			{
-				(*m_objFreer)(m_ptr);
-
-				Internal::DelObject(m_ptr);
-			}
-			m_ptr = nullptr;
-			m_objFreer = nullptr;
-		}
 	};
 }

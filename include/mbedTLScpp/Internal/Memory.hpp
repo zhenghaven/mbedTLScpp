@@ -46,12 +46,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param ptr The pointer to the object that needs to be deleted.
 		 */
 		template<typename T>
-		inline void DelObject(T* ptr)
+		inline void DelObject(T* ptr) noexcept
 		{
 #ifdef MBEDTLSCPP_TEST
 			gs_allocationLeft--;
 #endif
 
+			// noexcept based on https://en.cppreference.com/w/cpp/memory/new/operator_delete
 			delete ptr;
 		}
 	}
