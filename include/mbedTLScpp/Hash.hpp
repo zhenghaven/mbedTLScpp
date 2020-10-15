@@ -23,6 +23,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		SHA512,
 	};
 
+	/**
+	 * @brief Get the size (in bytes) of a given Hash type.
+	 *
+	 * @param type The type of the hash
+	 * @return constexpr uint8_t The size in bytes
+	 */
 	inline constexpr uint8_t GetHashByteSize(HashType type)
 	{
 		switch (type)
@@ -40,6 +46,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	}
 
+	/**
+	 * @brief The container type used to store the hash result (for a known hash type).
+	 *
+	 * @tparam _HashTypeValue The type of the hash.
+	 */
 	template<HashType _HashTypeValue>
 	using Hash = std::array<uint8_t, GetHashByteSize(_HashTypeValue)>;
 
@@ -160,7 +171,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other MsgDigestBase instance.
+		 * @param rhs The other HasherBase instance.
 		 */
 		HasherBase(HasherBase&& rhs) :
 			MsgDigestBase(std::forward<MsgDigestBase>(rhs))
@@ -175,8 +186,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other MsgDigestBase instance.
-		 * @return MsgDigestBase& A reference to this instance.
+		 * @param rhs The other HasherBase instance.
+		 * @return HasherBase& A reference to this instance.
 		 */
 		HasherBase& operator=(HasherBase&& rhs)
 		{
@@ -227,6 +238,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return hash;
 		}
 
+		/**
+		 * @brief Restart the hash calculation, so that the previous hash state
+		 *        will be wiped out. It's useful if you want to reuse the same
+		 *        hasher instance.
+		 *
+		 */
 		void Restart()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HasherBase::HasherBase, mbedtls_md_starts, Get());
@@ -252,17 +269,25 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	public:
 
+		/**
+		 * @brief Construct a new Hasher object
+		 *
+		 */
 		Hasher() :
 			HasherBase(MsgDigestBase::GetMdInfo(_HashTypeValue))
 		{}
 
+		/**
+		 * @brief Destroy the Hasher object
+		 *
+		 */
 		virtual ~Hasher()
 		{}
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other MsgDigestBase instance.
+		 * @param rhs The other Hasher instance.
 		 */
 		Hasher(Hasher&& rhs) :
 			HasherBase(std::forward<HasherBase>(rhs))
@@ -273,8 +298,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other MsgDigestBase instance.
-		 * @return MsgDigestBase& A reference to this instance.
+		 * @param rhs The other Hasher instance.
+		 * @return Hasher& A reference to this instance.
 		 */
 		Hasher& operator=(Hasher&& rhs)
 		{
@@ -285,6 +310,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		Hasher& operator=(const Hasher& other) = delete;
 
+		/**
+		 * @brief Finishes the hash calculation and get the hash result.
+		 *
+		 * @return Hash<_HashTypeValue> The hash result.
+		 */
 		Hash<_HashTypeValue> Finish()
 		{
 			NullCheck();
@@ -292,6 +322,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return FinishNoCheck();
 		}
 
+		/**
+		 * @brief Update the hash calculation with a list of Input Data Items.
+		 *        NOTE: This function will not clean the previous state, thus,
+		 *        it will update the calculation state based on the existing state;
+		 *        Thus, you may need to call restart first.
+		 *
+		 * @tparam ListLen The length of the list.
+		 * @param list The list of Input Data Items.
+		 * @return Hash<_HashTypeValue> The hash result.
+		 */
 		template<size_t ListLen>
 		Hash<_HashTypeValue> CalcList(const InDataList<ListLen>& list)
 		{
@@ -305,6 +345,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return FinishNoCheck();
 		}
 
+		/**
+		 * @brief Update the hash calculation with a sequence of containers wrapped
+		 *        by ContCtnReadOnlyRef. The sequence of containers can be in any
+		 *        length.
+		 *        NOTE: This function will not clean the previous state, thus,
+		 *        it will update the calculation state based on the existing state;
+		 *        Thus, you may need to call restart first.
+		 *
+		 * @tparam Args The type of the container wrapped by ContCtnReadOnlyRef
+		 * @param args The container.
+		 * @return Hash<_HashTypeValue> The hash result.
+		 */
 		template<class... Args>
 		Hash<_HashTypeValue> Calc(ContCtnReadOnlyRef<Args>... args)
 		{

@@ -1237,13 +1237,27 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 
-
+	/**
+	 * @brief Summarize a ContCtnReadOnlyRef<ContainerType> object into InDataListItem object.
+	 *
+	 * @tparam ContainerType The container type wrapped by ContCtnReadOnlyRef.
+	 * @param data The data.
+	 * @return constexpr InDataListItem The InDataListItem object.
+	 */
 	template<typename ContainerType>
 	inline constexpr InDataListItem ConstructInDataListItem(ContCtnReadOnlyRef<ContainerType> data)
 	{
 		return InDataListItem{ data.BeginPtr(), data.GetRegionSize() };
 	}
 
+	/**
+	 * @brief Convert a list of ContCtnReadOnlyRef<ContainerType> object into a
+	 *        list of InDataListItem object.
+	 *
+	 * @tparam Args The container type wrapped by ContCtnReadOnlyRef.
+	 * @param args The data.
+	 * @return constexpr InDataList<sizeof...(Args)> The list of InDataListItem object.
+	 */
 	template<class... Args>
 	inline constexpr InDataList<sizeof...(Args)> ConstructInDataList(ContCtnReadOnlyRef<Args>... args)
 	{
