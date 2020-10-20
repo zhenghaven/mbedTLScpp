@@ -84,7 +84,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		static std::string ConstructWhatMsg(int errorCode, const char* caller, const char* callee)
 		{
 			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
-			char errCodeHex[10];
+			char errCodeHex[12];  //%04X needs 8 bytes at max, based on compiler msg.
 			const char* highErrCStr = mbedtls_high_level_strerr(errorCode);
 			const char* lowErrCStr = mbedtls_low_level_strerr(errorCode);
 			std::string highErrStr(highErrCStr != nullptr ? highErrCStr : "N/A");
@@ -227,7 +227,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		try	{ \
 			errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
 		} catch(...) { \
-			char fallbackStr[] = "UNKNOWN ERROR CODE           "; \
+			char fallbackStr[] = "UNKNOWN ERROR CODE            "; \
 			throw mbedTLSRuntimeError(mbedTLSRuntimeError::ConstructFallbackMsg(ERROR_CODE, fallbackStr, sizeof(fallbackStr))); \
 		} \
 		throw mbedTLSRuntimeError(*errorStrPtr); \
