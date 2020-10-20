@@ -10,32 +10,86 @@ namespace mbedTLScpp
 namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
+
+	struct DefaultAllocBase
+	{
+		template<typename T, class... _Args>
+		static T* NewObject(_Args&&... __args)
+		{
+			return Internal::NewObject<T, _Args...>(std::forward<_Args>(__args)...);
+		}
+
+		template<typename T>
+		static void DelObject(T* ptr) noexcept
+		{
+			return Internal::DelObject(ptr);
+		}
+	};
+
+	template<typename _CObjType>
+	struct BorrowAllocBase : public DefaultAllocBase
+	{
+		typedef _CObjType      CObjType;
+
+		using DefaultAllocBase::NewObject;
+		using DefaultAllocBase::DelObject;
+
+		static void Init(CObjType* ptr)
+		{}
+
+		static void Free(CObjType* ptr) noexcept
+		{}
+	};
+
+	template<typename _CObjType,
+		typename _ObjAllocator,
+		bool _isBorrower,
+		bool _isConst>
+	struct ObjTraitBase
+	{
+		typedef _CObjType      CObjType;
+		typedef _ObjAllocator  ObjAllocator;
+
+		static constexpr bool sk_isBorrower = _isBorrower;
+		static constexpr bool sk_isConst    = _isConst;
+	};
+
 	/** @brief	An object base class for MbedTLS objects. */
-	template<typename CObjType>
+	template<typename _ObjTrait>
 	class ObjectBase
 	{
+	public: // Static members:
+
+		using ObjTrait = _ObjTrait;
+		using CObjType = typename ObjTrait::CObjType;
+		using Allocator = typename ObjTrait::ObjAllocator;
+
 	public:
 
-		//static constexpr void (*sk_dummyFreeFunction)(CObjType*) noexcept = nullptr;
 		/**
-		 * @brief The type of object free function, which is usually the free function
-		 *        defined in the mbedTLS.
-		 *        NOTE: this function MUST BE noexcept.
+		 * @brief Construct a new mbedTLS Object Base. Usually this object base
+		 *        owns the object (i.e., allocate & init at begining, free at exit).
 		 *
+		 * @exception Unclear may throw std::bad_alloc
 		 */
-		typedef void(*ObjectFreeFunction)(CObjType*);
-		//using ObjectFreeFunction = typename std::remove_cv<decltype(sk_dummyFreeFunction)>::type;
+		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isBorrower, int> = 0>
+		ObjectBase() :
+			m_ptr(Allocator::template NewObject<CObjType>())
+		{
+			Allocator::Init(m_ptr);
+		}
 
 		/**
-		 * @brief A function receives mbedTLS C object as parameter, but do nothing.
+		 * @brief Construct a new mbedTLS Object Base. Usually this object base
+		 *        DOES NOT own the object (i.e., no allocation, init, & free).
 		 *
 		 * @exception None No exception thrown
-		 * @param ptr mbedTLS C object
+		 * @param ptr The pointer to the not null mbedTLS C object.
 		 */
-		static void DoNoting(CObjType* ptr) noexcept {}
-
-	public:
-		ObjectBase() = delete;
+		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0>
+		ObjectBase(CObjType* ptr) noexcept :
+			m_ptr(ptr)
+		{}
 
 		ObjectBase(const ObjectBase& other) = delete;
 
@@ -46,11 +100,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param [in,out]	other	The other instance.
 		 */
 		ObjectBase(ObjectBase&& rhs) noexcept :
-			m_ptr(rhs.m_ptr),
-			m_objFreer(std::forward<ObjectFreeFunction>(rhs.m_objFreer))
+			m_ptr(rhs.m_ptr)
 		{
 			rhs.m_ptr = nullptr;
-			rhs.m_objFreer = nullptr;
 		}
 
 		/** @brief	Destructor */
@@ -60,6 +112,27 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		ObjectBase& operator=(const ObjectBase& other) = delete;
+
+		/**
+		 * @brief	Move assignment operator. The RHS will become empty afterwards.
+		 *
+		 * @param [in,out]	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
+		ObjectBase& operator=(ObjectBase&& rhs) noexcept
+		{
+			if (this != &rhs)
+			{
+				//Free the object to prevent memory leak.
+				FreeBaseObject(); //noexcept
+
+				m_ptr = rhs.m_ptr;
+
+				rhs.m_ptr = nullptr;
+			}
+			return *this;
+		}
 
 		/**
 		 * @brief	Gets the pointer to the MbedTLS object.
@@ -78,6 +151,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception None No exception thrown
 		 * @return	The pointer to the MbedTLS object.
 		 */
+		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isConst, int> = 0>
 		CObjType* Get() noexcept
 		{
 			return m_ptr;
@@ -90,12 +164,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception None No exception thrown
 		 * @return	The pointer to the MbedTLS object.
 		 */
+		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isConst, int> = 0>
 		CObjType* Release() noexcept
 		{
 			CObjType* tmp = m_ptr;
 
 			m_ptr = nullptr;
-			m_objFreer = nullptr;
 
 			return tmp;
 		}
@@ -108,7 +182,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual bool IsOwner() const noexcept
 		{
-			return m_objFreer != nullptr;
+			return ObjTrait::sk_isBorrower;
 		}
 
 		/**
@@ -122,71 +196,28 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return m_ptr == nullptr;
 		}
 
-	protected:
-
-		/**
-		 * @brief Construct a new mbedTLS Object Base. Usually this object base
-		 *        owns the object, so the object free function will be called in the
-		 *        destructor of this instance.
-		 *
-		 * @exception None No exception thrown
-		 * @param ptr      The pointer to the not null mbedTLS C object.
-		 * @param objFreer The object free function that will be called in the destructor
-		 *                 of this instance.
-		 */
-		ObjectBase(ObjectFreeFunction objFreer) noexcept :
-			m_ptr(Internal::NewObject<CObjType>()),
-			m_objFreer(std::forward<ObjectFreeFunction>(objFreer))
-		{}
-
-		/**
-		 * @brief Construct a new mbedTLS Object Base. Usually this object base
-		 *        DOES NOT own the object, so no free function will be called in the
-		 *        destructor.
-		 *
-		 * @exception None No exception thrown
-		 * @param ptr The pointer to the not null mbedTLS C object.
-		 */
-		ObjectBase(CObjType* ptr) noexcept :
-			m_ptr(ptr),
-			m_objFreer(nullptr)
-		{}
-
-		/**
-		 * @brief	Move assignment operator. The RHS will become empty afterwards.
-		 *
-		 * @param [in,out]	rhs	The right hand side.
-		 *
-		 * @return	A reference to this object.
-		 */
-		ObjectBase& operator=(ObjectBase&& rhs) noexcept
-		{
-			if (this != &rhs)
-			{
-				//Free the object to prevent memory leak.
-				FreeBaseObject(); //noexcept
-
-				m_ptr = rhs.m_ptr;
-				m_objFreer = rhs.m_objFreer;
-
-				rhs.m_ptr = nullptr;
-				rhs.m_objFreer = nullptr;
-			}
-			return *this;
-		}
-
 		/** @brief	Free the current object. */
 		void FreeBaseObject() noexcept
 		{
-			if(m_objFreer != nullptr && m_ptr != nullptr)
+			constexpr bool isBorrower = ObjTrait::sk_isBorrower;
+			if(!isBorrower)
 			{
-				(*m_objFreer)(m_ptr); //noexcept
+				if(m_ptr != nullptr)
+				{
+					Allocator::Free(m_ptr); //assume noexcept
 
-				Internal::DelObject(m_ptr); //noexcept
+					Allocator::DelObject(m_ptr); //noexcept
+
+					m_ptr = nullptr;
+				}
 			}
-			m_ptr = nullptr;
-			m_objFreer = nullptr;
+			else
+			{
+				m_ptr = nullptr;
+			}
 		}
+
+	protected:
 
 		/**
 		 * @brief	Swaps the given right hand side.
@@ -197,7 +228,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		void Swap(ObjectBase& rhs) noexcept
 		{
 			std::swap(m_ptr, rhs.m_ptr);
-			std::swap(m_objFreer, rhs.m_objFreer);
 		}
 
 		/**
@@ -209,17 +239,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		void SetPtr(CObjType* ptr) noexcept
 		{
 			m_ptr = ptr;
-		}
-
-		/**
-		 * @brief Set the Free Function for freeing the mbedTLS object.
-		 *
-		 * @exception None No exception thrown
-		 * @param objFreer The free function
-		 */
-		void SetFreeFunc(ObjectFreeFunction objFreer) noexcept
-		{
-			m_objFreer = objFreer;
 		}
 
 		/**
@@ -245,6 +264,5 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	private:
 		CObjType * m_ptr;
-		ObjectFreeFunction m_objFreer;
 	};
 }

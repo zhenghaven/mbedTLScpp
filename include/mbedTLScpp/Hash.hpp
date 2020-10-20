@@ -24,7 +24,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *        parameters, and hash type can be specified at runtime.
 	 *
 	 */
-	class HasherBase : public MsgDigestBase
+	class HasherBase : public MsgDigestBase<>
 	{
 	public:
 
@@ -165,7 +165,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 */
 		Hasher() :
-			HasherBase(MsgDigestBase::GetMdInfo(_HashTypeValue))
+			HasherBase(GetMdInfo(_HashTypeValue))
 		{}
 
 		/**

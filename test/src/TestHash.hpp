@@ -14,17 +14,17 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 {
 	{
 		// An invalid initialization should fail.
-		EXPECT_THROW({MsgDigestBase mdBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), false);}, mbedTLSRuntimeError);
+		EXPECT_THROW({MsgDigestBase<> mdBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), false);}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
 		EXPECT_EQ(Internal::gs_allocationLeft, 0);
 
-		MsgDigestBase mdBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
+		MsgDigestBase<> mdBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
-		MsgDigestBase mdBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
+		MsgDigestBase<> mdBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
@@ -40,7 +40,7 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		MsgDigestBase mdBase3(std::move(mdBase1));
+		MsgDigestBase<> mdBase3(std::move(mdBase1));
 
 		// This should success.
 		mdBase3.NullCheck();

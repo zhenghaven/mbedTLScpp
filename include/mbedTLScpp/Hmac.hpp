@@ -25,7 +25,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *        parameters, and hash type can be specified at runtime.
 	 *
 	 */
-	class HmacerBase : public MsgDigestBase
+	class HmacerBase : public MsgDigestBase<>
 	{
 	public:
 
@@ -183,7 +183,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename ContainerType>
 		Hmacer(ContSecretCtnReadOnlyRef<ContainerType> key) :
-			HmacerBase(MsgDigestBase::GetMdInfo(_HashTypeValue), key)
+			HmacerBase(GetMdInfo(_HashTypeValue), key)
 		{}
 
 		/**
