@@ -54,7 +54,6 @@ GTEST_TEST(TestSecretContainer, FullRange)
 {
 	SecretArray<uint8_t,  32> array8;
 	SecretArray<uint32_t, 8 > array32;
-	std::array <uint8_t,  32> stdArray;
 
 	auto range_array8  = SCtnFullR(array8);
 	auto range_array32 = SCtnFullR(array32);
@@ -83,7 +82,6 @@ GTEST_TEST(TestSecretContainer, StaticByteRange)
 {
 	SecretArray<uint8_t,  32> array8;
 	SecretArray<uint32_t, 8 > array32;
-	std::array <uint8_t,  32> stdArray;
 
 	{
 		auto range_array8  = SCtnByteRangeR<3 * sizeof(uint8_t) , 15 * sizeof(uint8_t)>(array8);
@@ -136,7 +134,6 @@ GTEST_TEST(TestSecretContainer, StaticItemAndByteRange)
 {
 	SecretArray<uint8_t,  32> array8;
 	SecretArray<uint32_t, 8 > array32;
-	std::array <uint8_t,  32> stdArray;
 
 	{
 		auto brange_array8  = SCtnByteRangeR<3 * sizeof(uint8_t) , 15 * sizeof(uint8_t)>(array8);
@@ -195,7 +192,6 @@ GTEST_TEST(TestSecretContainer, DynByteRange)
 {
 	SecretArray<uint8_t,  32> array8;
 	SecretArray<uint32_t, 8 > array32;
-	std::array <uint8_t,  32> stdArray;
 
 	{
 		auto range_array8  = SCtnByteRangeR(array8,  3 * sizeof(uint8_t) , 15 * sizeof(uint8_t));
@@ -248,24 +244,23 @@ GTEST_TEST(TestSecretContainer, DynItemAndByteRange)
 {
 	SecretArray<uint8_t,  32> array8;
 	SecretArray<uint32_t, 8 > array32;
-	std::array <uint8_t,  32> stdArray;
 
 	{
-		EXPECT_THROW(({SCtnByteRangeR(array8,  3 * sizeof(uint8_t) , 33 * sizeof(uint8_t ));}), std::out_of_range);
-		EXPECT_THROW(({SCtnByteRangeR(array32, 2 * sizeof(uint32_t) , 9 * sizeof(uint32_t));}), std::out_of_range);
-		EXPECT_THROW(({SCtnByteRangeR(array8,  33 * sizeof(uint8_t) , 33 * sizeof(uint8_t ));}), std::out_of_range);
-		EXPECT_THROW(({SCtnByteRangeR(array32,  9 * sizeof(uint32_t) , 9 * sizeof(uint32_t));}), std::out_of_range);
+		EXPECT_THROW((SCtnByteRangeR(array8,  3 * sizeof(uint8_t) , 33 * sizeof(uint8_t ))), std::out_of_range);
+		EXPECT_THROW((SCtnByteRangeR(array32, 2 * sizeof(uint32_t) , 9 * sizeof(uint32_t))), std::out_of_range);
+		EXPECT_THROW((SCtnByteRangeR(array8,  33 * sizeof(uint8_t) , 33 * sizeof(uint8_t ))), std::out_of_range);
+		EXPECT_THROW((SCtnByteRangeR(array32,  9 * sizeof(uint32_t) , 9 * sizeof(uint32_t))), std::out_of_range);
 
-		EXPECT_THROW(({SCtnByteRangeR(array8,  32 * sizeof(uint8_t) , 30 * sizeof(uint8_t ));}), std::invalid_argument);
-		EXPECT_THROW(({SCtnByteRangeR(array32,  8 * sizeof(uint32_t) , 7 * sizeof(uint32_t));}), std::invalid_argument);
+		EXPECT_THROW((SCtnByteRangeR(array8,  32 * sizeof(uint8_t) , 30 * sizeof(uint8_t ))), std::invalid_argument);
+		EXPECT_THROW((SCtnByteRangeR(array32,  8 * sizeof(uint32_t) , 7 * sizeof(uint32_t))), std::invalid_argument);
 
-		EXPECT_THROW(({SCtnItemRangeR(array8,  3, 33);}), std::out_of_range);
-		EXPECT_THROW(({SCtnItemRangeR(array32, 2,  9);}), std::out_of_range);
-		EXPECT_THROW(({SCtnItemRangeR(array8,  33, 33);}), std::out_of_range);
-		EXPECT_THROW(({SCtnItemRangeR(array32,  9,  9);}), std::out_of_range);
+		EXPECT_THROW((SCtnItemRangeR(array8,  3, 33)), std::out_of_range);
+		EXPECT_THROW((SCtnItemRangeR(array32, 2,  9)), std::out_of_range);
+		EXPECT_THROW((SCtnItemRangeR(array8,  33, 33)), std::out_of_range);
+		EXPECT_THROW((SCtnItemRangeR(array32,  9,  9)), std::out_of_range);
 
-		EXPECT_THROW(({SCtnItemRangeR(array8,  32 * sizeof(uint8_t) , 30 * sizeof(uint8_t ));}), std::invalid_argument);
-		EXPECT_THROW(({SCtnItemRangeR(array32,  8 * sizeof(uint32_t) , 7 * sizeof(uint32_t));}), std::invalid_argument);
+		EXPECT_THROW((SCtnItemRangeR(array8,  32 * sizeof(uint8_t) , 30 * sizeof(uint8_t ))), std::invalid_argument);
+		EXPECT_THROW((SCtnItemRangeR(array32,  8 * sizeof(uint32_t) , 7 * sizeof(uint32_t))), std::invalid_argument);
 
 		auto brange_array8  = SCtnByteRangeR(array8,  3 * sizeof(uint8_t) , 15 * sizeof(uint8_t ));
 		auto brange_array32 = SCtnByteRangeR(array32, 2 * sizeof(uint32_t), 5  * sizeof(uint32_t));

@@ -902,7 +902,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset, size_t endOffset,
 		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -926,12 +926,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset,
 		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType> CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(CtnType<ContainerType>::IsStaticAndInRange(beginOffset), "The begining of the range is outside of the container.");
 
-		constexpr size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
@@ -1059,7 +1059,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount, size_t endCount,
 		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -1087,13 +1087,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount,
 		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::IsStaticAndInRange(0), int> = 0>
+		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType> CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= CtnType<ContainerType>::sk_itemCount, "The begining of the range is outside of the container.");
 
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
-		constexpr size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
+		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 

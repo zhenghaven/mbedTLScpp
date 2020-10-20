@@ -137,8 +137,8 @@ GTEST_TEST(TestContainer, ContainerFull)
 
 GTEST_TEST(TestContainer, ContainerByteStaticRangeWithBothEnds)
 {
-	constexpr uint16_t cArrayCtn[100] = { 0 };
-	constexpr std::array<uint16_t, 101> stdArrayCtn = { 0 };
+	uint16_t cArrayCtn[100] = { 0 };
+	std::array<uint16_t, 101> stdArrayCtn = { 0 };
 	std::vector<uint16_t> vecCtn;
 	std::string strCtn;
 
