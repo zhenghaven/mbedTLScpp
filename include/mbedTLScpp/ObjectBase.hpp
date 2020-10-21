@@ -11,6 +11,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
 
+	/**
+	 * @brief The base of normal allocators
+	 *
+	 */
 	struct DefaultAllocBase
 	{
 		template<typename T, class... _Args>
@@ -26,6 +30,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
+	/**
+	 * @brief The base allocator for a type of borrowed object
+	 *
+	 * @tparam _CObjType The type of the mbed TLS C object.
+	 */
 	template<typename _CObjType>
 	struct BorrowAllocBase : public DefaultAllocBase
 	{
@@ -41,6 +50,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{}
 	};
 
+	/**
+	 * @brief The trait template, for easier defining the trait for mbed TLS cpp object.
+	 *
+	 * @tparam _CObjType     The type of the mbed TLS C object.
+	 * @tparam _ObjAllocator The allocator for the mbed TLS C object.
+	 * @tparam _isBorrower   Is the type a borrower?
+	 * @tparam _isConst      Is the inner mbed TLS C object a constant?
+	 */
 	template<typename _CObjType,
 		typename _ObjAllocator,
 		bool _isBorrower,

@@ -10,11 +10,11 @@ project(mbedTLScpp_test VERSION 0.1 LANGUAGES CXX)
 ################################################################################
 
 if(MSVC)
-	set(COMMON_OPTIONS /W3 /wd4996 /we4239 /we4002 /we4700 /we4305 /EHsc /MP)
+	set(COMMON_OPTIONS /W3 /wd4996 /we4239 /we4002 /we4700 /we4305 /EHsc /MP /DMBEDTLS_CMAC_C)
 	set(DEBUG_OPTIONS /MTd /Od /Zi /DDEBUG)
 	set(RELEASE_OPTIONS /MT /Ox /Oi /Ob2 /fp:fast /GR- /DEDEBUG)# /DNDEBUG
 else()
-	set(COMMON_OPTIONS -pthread)
+	set(COMMON_OPTIONS -pthread -DMBEDTLS_CMAC_C)
 	set(DEBUG_OPTIONS -O0 -g -DDEBUG -UNDEBUG -UEDEBUG)
 	set(RELEASE_OPTIONS -O2 -DEDEBUG -UDEBUG) #-DNDEBUG defined by default
 endif()

@@ -195,10 +195,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	{
 	public:
 
+		/**
+		 * @brief Construct a new Invalid Argument Exception object
+		 *
+		 * @param what_arg explanatory string
+		 */
 		InvalidArgumentException(const char* what_arg) :
 			RuntimeException(what_arg)
 		{}
 
+		/**
+		 * @brief Construct a new Invalid Argument Exception object
+		 *
+		 * @param what_arg explanatory string
+		 */
 		InvalidArgumentException(const std::string& what_arg) :
 			RuntimeException(what_arg)
 		{}
@@ -208,10 +218,51 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{}
 
 		/**
-		 * @brief Destroy the Invalid Object Exception object
+		 * @brief Destroy the Invalid Argument Exception object
 		 *
 		 */
 		virtual ~InvalidArgumentException()
+		{}
+	};
+
+	/**
+	 * @brief An exception class that is thrown when unexpected error occurs.
+	 *        An unexpected error should not occurs if both mbed TLS and mbed TLS
+	 *        cpp are implemented correctly. But just in case if there might be bugs
+	 *        in the library.
+	 *
+	 */
+	class UnexpectedErrorException : public RuntimeException
+	{
+	public:
+
+		/**
+		 * @brief Construct a new Unexpected Error Exception object
+		 *
+		 * @param what_arg explanatory string
+		 */
+		UnexpectedErrorException(const char* what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		/**
+		 * @brief Construct a new Unexpected Error Exception object
+		 *
+		 * @param what_arg explanatory string
+		 */
+		UnexpectedErrorException(const std::string& what_arg) :
+			RuntimeException(what_arg)
+		{}
+
+		UnexpectedErrorException(const UnexpectedErrorException& other) noexcept :
+			RuntimeException(other)
+		{}
+
+		/**
+		 * @brief Destroy the Unexpected Error Exception object
+		 *
+		 */
+		virtual ~UnexpectedErrorException()
 		{}
 	};
 }

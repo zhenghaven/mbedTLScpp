@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MegDigestBase.hpp"
+#include "MsgDigestBase.hpp"
 
 #include "Container.hpp"
 #include "Exceptions.hpp"
@@ -33,7 +33,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief	Constructor. mbedtls_md_starts is called here.
 		 *
-		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception mbedTLSRuntimeError  Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc       Thrown when memory allocation failed.
 		 * @param	mdInfo	The md info provided by mbed TLS library.
 		 */
 		HasherBase(const mbedtls_md_info_t& mdInfo)  :
@@ -108,6 +109,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			NullCheck();
 
 			const size_t size = mbedtls_md_get_size(Get()->md_info);
+			if (size == 0)
+			{
+				throw UnexpectedErrorException("HasherBase is not null, but mbedtls_md_get_size returns zero.");
+			}
+
 			std::vector<uint8_t> hash(size);
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HasherBase::Finish, mbedtls_md_finish,
@@ -162,7 +168,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Construct a new Hasher object
 		 *
-		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception mbedTLSRuntimeError  Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc       Thrown when memory allocation failed.
 		 */
 		Hasher() :
 			HasherBase(GetMdInfo(_HashTypeValue))

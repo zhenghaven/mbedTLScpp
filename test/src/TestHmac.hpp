@@ -113,7 +113,7 @@ GTEST_TEST(TestHmac, HmacerClass)
 
 	{
 		Hmacer<HashType::SHA256> hmac2561(SCtnFullR(testKey));
-		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);

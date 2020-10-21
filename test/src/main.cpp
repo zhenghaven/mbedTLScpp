@@ -8,6 +8,9 @@
 #include "TestHash.hpp"
 #include "TestHmac.hpp"
 
+#include "TestCipher.hpp"
+#include "TestCmac.hpp"
+
 int main(int argc, char** argv)
 {
 	testing::InitGoogleTest(&argc, argv);

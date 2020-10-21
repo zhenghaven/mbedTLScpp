@@ -102,7 +102,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	using DefaultMdObjTrait = ObjTraitBase<mbedtls_md_context_t,
-	                                MdAllocator,
+									MdAllocator,
 									false,
 									false>;
 
@@ -112,20 +112,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	template<typename _MdObjTrait = DefaultMdObjTrait>
 	class MsgDigestBase : public ObjectBase<_MdObjTrait>
 	{
-	public:
-		using MdObjTrait = _MdObjTrait;
+	public: // Static members:
+
+		using MdBaseTrait = _MdObjTrait;
 
 	public:
 
 		/**
 		 * @brief Construct a new Msgessage Digest Base object.
 		 *
-		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception mbedTLSRuntimeError  Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc       Thrown when memory allocation failed.
 		 * @param mdInfo   The md info provided by mbed TLS library.
 		 * @param needHmac Is HMAC calculation needed?
 		 */
 		MsgDigestBase(const mbedtls_md_info_t& mdInfo, bool needHmac) :
-			ObjectBase<MdObjTrait>::ObjectBase()
+			ObjectBase<MdBaseTrait>::ObjectBase()
 		{
 			static_assert(false == 0, "The value of false is different with the one expected in mbedTLS.");
 
@@ -138,10 +140,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other MsgDigestBase instance.
 		 */
 		MsgDigestBase(MsgDigestBase&& rhs) noexcept :
-			ObjectBase<MdObjTrait>::ObjectBase(std::forward<ObjectBase<MdObjTrait> >(rhs)) //noexcept
+			ObjectBase<MdBaseTrait>::ObjectBase(std::forward<ObjectBase<MdBaseTrait> >(rhs)) //noexcept
 		{}
 
 		MsgDigestBase(const MsgDigestBase& rhs) = delete;
+
+		/** @brief	Destructor */
+		virtual ~MsgDigestBase()
+		{}
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -151,16 +157,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		MsgDigestBase& operator=(MsgDigestBase&& rhs) noexcept
 		{
-			ObjectBase<MdObjTrait>::operator=(std::forward<ObjectBase<MdObjTrait> >(rhs)); //noexcept
+			ObjectBase<MdBaseTrait>::operator=(std::forward<ObjectBase<MdBaseTrait> >(rhs)); //noexcept
 
 			return *this;
 		}
 
 		MsgDigestBase& operator=(const MsgDigestBase& other) = delete;
-
-		/** @brief	Destructor */
-		virtual ~MsgDigestBase()
-		{}
 
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
@@ -173,9 +175,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<MdObjTrait>::NullCheck(typeid(MsgDigestBase).name());
+			ObjectBase<MdBaseTrait>::NullCheck(typeid(MsgDigestBase).name());
 		}
 
-		using ObjectBase<MdObjTrait>::Get;
+		using ObjectBase<MdBaseTrait>::Get;
 	};
 }

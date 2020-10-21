@@ -1,6 +1,8 @@
 #pragma once
 
-#include "MsgDigestBase.hpp"
+#include "CipherBase.hpp"
+
+#include <mbedtls/cmac.h>
 
 #include "Container.hpp"
 #include "SecretContainer.hpp"
@@ -13,73 +15,75 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
 	/**
-	 * @brief The container type used to store the HMAC result (for a known hash type).
+	 * @brief The container type used to store the CMAC result (for a known cipher type).
 	 *
-	 * @tparam _HashTypeValue The type of the hash.
+	 * @tparam _cipherType The type of the cipher.
+	 * @tparam _bitSize    The size of the cipher key in bits.
+	 * @tparam _cipherMode The cipher mode.
 	 */
-	template<HashType _HashTypeValue>
-	using Hmac = std::array<uint8_t, GetHashByteSize(_HashTypeValue)>;
+	template<CipherType _cipherType, size_t _bitSize, CipherMode _cipherMode>
+	using Cmac = std::array<uint8_t, GetCipherBlockSize(_cipherType, _bitSize, _cipherMode)>;
 
 	/**
-	 * @brief The base class for HMAC calculator. It can accept some raw pointer
-	 *        parameters, and hash type can be specified at runtime.
+	 * @brief The base class for CMAC calculator. It can accept some raw pointer
+	 *        parameters, and cipher type can be specified at runtime.
 	 *
 	 */
-	class HmacerBase : public MsgDigestBase<>
+	class CmacerBase : public CipherBase<>
 	{
 	public:
 
-		HmacerBase() = delete;
+		CmacerBase() = delete;
 
 		/**
-		 * @brief Construct a new HMACer Base object
+		 * @brief Construct a new CMACer Base object
 		 *
 		 * @exception mbedTLSRuntimeError  Thrown when mbed TLS C function call failed.
 		 * @exception std::bad_alloc       Thrown when memory allocation failed.
 		 * @tparam ContainerType The container that used to store the key.
-		 * @param mdInfo The md info provided by mbed TLS library.
-		 * @param key    The secret key for HMAC.
+		 * @param cipherInfo The cipher info provided by mbed TLS library.
+		 * @param key        The secret key for CMAC.
 		 */
 		template<typename ContainerType>
-		HmacerBase(const mbedtls_md_info_t& mdInfo, ContSecretCtnReadOnlyRef<ContainerType> key) :
-			MsgDigestBase(mdInfo, true)
+		CmacerBase(const mbedtls_cipher_info_t& cipherInfo, ContSecretCtnReadOnlyRef<ContainerType> key) :
+			CipherBase(cipherInfo)
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::HmacerBase,
-				mbedtls_md_hmac_starts,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::CmacerBase,
+				mbedtls_cipher_cmac_starts,
 				Get(),
 				static_cast<const unsigned char*>(key.BeginPtr()),
-				key.GetRegionSize());
+				key.GetRegionSize() * gsk_bitsPerByte);
 		}
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other HmacerBase instance.
+		 * @param rhs The other CmacerBase instance.
 		 */
-		HmacerBase(HmacerBase&& rhs) noexcept :
-			MsgDigestBase(std::forward<MsgDigestBase>(rhs)) //noexcept
+		CmacerBase(CmacerBase&& rhs) noexcept :
+			CipherBase(std::forward<CipherBase>(rhs)) //noexcept
 		{}
 
-		HmacerBase(const HmacerBase& rhs) = delete;
+		CmacerBase(const CmacerBase& rhs) = delete;
 
 		/** @brief Destructor */
-		virtual ~HmacerBase()
+		virtual ~CmacerBase()
 		{}
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other HmacerBase instance.
-		 * @return HmacerBase& A reference to this instance.
+		 * @param rhs The other CmacerBase instance.
+		 * @return CmacerBase& A reference to this instance.
 		 */
-		HmacerBase& operator=(HmacerBase&& rhs) noexcept
+		CmacerBase& operator=(CmacerBase&& rhs) noexcept
 		{
-			MsgDigestBase::operator=(std::forward<MsgDigestBase>(rhs)); //noexcept
+			CipherBase::operator=(std::forward<CipherBase>(rhs)); //noexcept
 
 			return *this;
 		}
 
-		HmacerBase& operator=(const HmacerBase& other) = delete;
+		CmacerBase& operator=(const CmacerBase& other) = delete;
 
 		/**
 		 * @brief Updates the calculation with the given data.
@@ -97,42 +101,42 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::Update, mbedtls_md_hmac_update,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::Update, mbedtls_cipher_cmac_update,
 				Get(),
 				static_cast<const unsigned char*>(data.BeginPtr()),
 				data.GetRegionSize());
 		}
 
 		/**
-		 * @brief Finishes the HMAC calculation and get the HMAC result.
+		 * @brief Finishes the CMAC calculation and get the CMAC result.
 		 *
 		 * @exception InvalidObjectException Thrown when the current instance is
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
-		 * @return std::vector<uint8_t> The HMAC result.
+		 * @return std::vector<uint8_t> The CMAC result.
 		 */
 		std::vector<uint8_t> Finish()
 		{
 			NullCheck();
 
-			const size_t size = mbedtls_md_get_size(Get()->md_info);
+			const size_t size = mbedtls_cipher_get_block_size(Get());
 			if (size == 0)
 			{
-				throw UnexpectedErrorException("HMACerBase is not null, but mbedtls_md_get_size returns zero.");
+				throw UnexpectedErrorException("CMACerBase is not null, but mbedtls_cipher_get_block_size returns zero.");
 			}
 
-			std::vector<uint8_t> hmac(size);
+			std::vector<uint8_t> cmac(size);
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::Finish, mbedtls_md_hmac_finish,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::Finish, mbedtls_cipher_cmac_finish,
 				Get(),
-				static_cast<unsigned char*>(hmac.data()));
+				static_cast<unsigned char*>(cmac.data()));
 
-			return hmac;
+			return cmac;
 		}
 
 		/**
-		 * @brief Restart the hmac calculation, so that the previous hmac state
+		 * @brief Restart the CMAC calculation, so that the previous CMAC state
 		 *        will be wiped out. It's useful if you want to reuse the same
 		 *        hmacer instance.
 		 *
@@ -140,26 +144,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
-		 * @tparam ContainerType The container that used to store the key.
-		 * @param key    The secret key for HMAC.
 		 */
-		template<typename ContainerType>
-		void Restart(ContSecretCtnReadOnlyRef<ContainerType> key)
+		void Restart()
 		{
 			NullCheck();
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::Restart,
-				mbedtls_md_hmac_starts,
-				Get(),
-				static_cast<const unsigned char*>(key.BeginPtr()),
-				key.GetRegionSize());
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::Restart,
+				mbedtls_cipher_cmac_reset,
+				Get());
 		}
 
 	protected:
 
 		void UpdateNoCheck(const void* data, size_t size)
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::UpdateNoCheck, mbedtls_md_hmac_update,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::UpdateNoCheck, mbedtls_cipher_cmac_update,
 				Get(),
 				static_cast<const unsigned char*>(data),
 				size);
@@ -167,75 +166,74 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	/**
-	 * @brief The HMAC calculator. Only accept C++ objects as parameters, and
-	 *        hash type must be specified at compile time.
+	 * @brief  The CMAC calculator. Only accept C++ objects as parameters, and
+	 *        cipher type must be specified at compile time.
 	 *
-	 * @tparam _HashTypeValue Type of the hash
+	 * @tparam _cipherType The type of the cipher.
+	 * @tparam _bitSize    The size of the cipher key in bits.
+	 * @tparam _cipherMode The cipher mode.
 	 */
-	template<HashType _HashTypeValue>
-	class Hmacer : public HmacerBase
+	template<CipherType _cipherType, size_t _bitSize, CipherMode _cipherMode>
+	class Cmacer : public CmacerBase
 	{
-	public: //static members:
-		static constexpr size_t sk_hashByteSize = GetHashByteSize(_HashTypeValue);
-
 	public:
 
 		/**
-		 * @brief Construct a new Hmacer object
+		 * @brief Construct a new Cmacer object
 		 *
 		 * @exception mbedTLSRuntimeError  Thrown when mbed TLS C function call failed.
 		 * @exception std::bad_alloc       Thrown when memory allocation failed.
 		 * @tparam ContainerType The container that used to store the key.
-		 * @param key The secret key for HMAC.
+		 * @param key The secret key for CMAC.
 		 */
 		template<typename ContainerType>
-		Hmacer(ContSecretCtnReadOnlyRef<ContainerType> key) :
-			HmacerBase(GetMdInfo(_HashTypeValue), key)
+		Cmacer(ContSecretCtnReadOnlyRef<ContainerType> key) :
+			CmacerBase(GetCipherInfo(_cipherType, _bitSize, _cipherMode), key)
 		{}
 
 		/**
-		 * @brief Destroy the Hmacer object
+		 * @brief Destroy the Cmacer object
 		 *
 		 */
-		virtual ~Hmacer()
+		virtual ~Cmacer()
 		{}
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other Hmacer instance.
+		 * @param rhs The other Cmacer instance.
 		 */
-		Hmacer(Hmacer&& rhs) noexcept :
-			HmacerBase(std::forward<HmacerBase>(rhs)) //noexcept
+		Cmacer(Cmacer&& rhs) noexcept :
+			CmacerBase(std::forward<CmacerBase>(rhs)) //noexcept
 		{}
 
-		Hmacer(const Hmacer& rhs) = delete;
+		Cmacer(const Cmacer& rhs) = delete;
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
-		 * @param rhs The other Hmacer instance.
-		 * @return Hmacer& A reference to this instance.
+		 * @param rhs The other Cmacer instance.
+		 * @return Cmacer& A reference to this instance.
 		 */
-		Hmacer& operator=(Hmacer&& rhs) noexcept
+		Cmacer& operator=(Cmacer&& rhs) noexcept
 		{
-			HmacerBase::operator=(std::forward<HmacerBase>(rhs)); //noexcept
+			CmacerBase::operator=(std::forward<CmacerBase>(rhs)); //noexcept
 
 			return *this;
 		}
 
-		Hmacer& operator=(const Hmacer& other) = delete;
+		Cmacer& operator=(const Cmacer& other) = delete;
 
 		/**
-		 * @brief Finishes the HMAC calculation and get the HMAC result.
+		 * @brief Finishes the CMAC calculation and get the CMAC result.
 		 *
 		 * @exception InvalidObjectException Thrown when the current instance is
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
-		 * @return Hmac<_HashTypeValue> The HMAC result.
+		 * @return Cmac<_HashTypeValue> The CMAC result.
 		 */
-		Hmac<_HashTypeValue> Finish()
+		Cmac<_cipherType, _bitSize, _cipherMode> Finish()
 		{
 			NullCheck();
 
@@ -243,7 +241,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief Update the HMAC calculation with a list of Input Data Items.
+		 * @brief Update the CMAC calculation with a list of Input Data Items.
 		 *        NOTE: This function will not clean the previous state, thus,
 		 *        it will update the calculation state based on the existing state;
 		 *        Thus, you may need to call restart first.
@@ -254,10 +252,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @tparam ListLen The length of the list.
 		 * @param list The list of Input Data Items.
-		 * @return Hmac<_HashTypeValue> The HMAC result.
+		 * @return Cmac<_HashTypeValue> The CMAC result.
 		 */
 		template<size_t ListLen>
-		Hmac<_HashTypeValue> CalcList(const InDataList<ListLen>& list)
+		Cmac<_cipherType, _bitSize, _cipherMode> CalcList(const InDataList<ListLen>& list)
 		{
 			NullCheck();
 
@@ -270,7 +268,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief Update the HMAC calculation with a sequence of containers wrapped
+		 * @brief Update the CMAC calculation with a sequence of containers wrapped
 		 *        by ContCtnReadOnlyRef. The sequence of containers can be in any
 		 *        length.
 		 *        NOTE: This function will not clean the previous state, thus,
@@ -283,25 +281,25 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @tparam Args The type of the container wrapped by ContCtnReadOnlyRef
 		 * @param args The container.
-		 * @return Hmac<_HashTypeValue> The HMAC result.
+		 * @return Cmac<_HashTypeValue> The CMAC result.
 		 */
 		template<class... Args>
-		Hmac<_HashTypeValue> Calc(ContCtnReadOnlyRef<Args>... args)
+		Cmac<_cipherType, _bitSize, _cipherMode> Calc(ContCtnReadOnlyRef<Args>... args)
 		{
 			return CalcList(ConstructInDataList(args...));
 		}
 
 	private:
 
-		Hmac<_HashTypeValue> FinishNoCheck()
+		Cmac<_cipherType, _bitSize, _cipherMode> FinishNoCheck()
 		{
-			Hmac<_HashTypeValue> hmac;
+			Cmac<_cipherType, _bitSize, _cipherMode> cmac;
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(Hmacer::FinishNoCheck, mbedtls_md_hmac_finish,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(Cmacer::FinishNoCheck, mbedtls_cipher_cmac_finish,
 				Get(),
-				static_cast<unsigned char*>(hmac.data()));
+				static_cast<unsigned char*>(cmac.data()));
 
-			return hmac;
+			return cmac;
 		}
 	};
 }
