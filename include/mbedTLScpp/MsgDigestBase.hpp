@@ -101,8 +101,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
-	using DefaultMdObjTrait = ObjTraitBase<mbedtls_md_context_t,
-									MdAllocator,
+	using DefaultMdObjTrait = ObjTraitBase<MdAllocator,
 									false,
 									false>;
 

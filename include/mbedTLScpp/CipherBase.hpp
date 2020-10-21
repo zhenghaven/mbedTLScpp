@@ -186,8 +186,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @brief The trait for normal cipher objects.
 	 *
 	 */
-	using DefaultCipherObjTrait = ObjTraitBase<mbedtls_cipher_context_t,
-									CipherAllocator,
+	using DefaultCipherObjTrait = ObjTraitBase<CipherAllocator,
 									false,
 									false>;
 

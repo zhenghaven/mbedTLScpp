@@ -58,14 +58,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @tparam _isBorrower   Is the type a borrower?
 	 * @tparam _isConst      Is the inner mbed TLS C object a constant?
 	 */
-	template<typename _CObjType,
-		typename _ObjAllocator,
+	template<typename _ObjAllocator,
 		bool _isBorrower,
 		bool _isConst>
 	struct ObjTraitBase
 	{
-		typedef _CObjType      CObjType;
 		typedef _ObjAllocator  ObjAllocator;
+
+		typedef typename ObjAllocator::CObjType     CObjType;
 
 		static constexpr bool sk_isBorrower = _isBorrower;
 		static constexpr bool sk_isConst    = _isConst;
