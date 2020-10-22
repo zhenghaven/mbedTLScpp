@@ -108,7 +108,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	/** @brief	Message Digest Base class. It will be further inherited by the
 	 *          hash calculator and HMAC calculator.
 	 */
-	template<typename _MdObjTrait = DefaultMdObjTrait>
+	template<typename _MdObjTrait = DefaultMdObjTrait,
+		enable_if_t<std::is_same<typename _MdObjTrait::CObjType, mbedtls_md_context_t>::value, int> = 0>
 	class MsgDigestBase : public ObjectBase<_MdObjTrait>
 	{
 	public: // Static members:

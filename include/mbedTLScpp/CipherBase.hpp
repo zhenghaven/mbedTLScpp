@@ -195,7 +195,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *
 	 * @tparam _CipherTrait The trait used for the cipher object.
 	 */
-	template<typename _CipherTrait = DefaultCipherObjTrait>
+	template<typename _CipherTrait = DefaultCipherObjTrait,
+		enable_if_t<std::is_same<typename _CipherTrait::CObjType, mbedtls_cipher_context_t>::value, int> = 0>
 	class CipherBase : public ObjectBase<_CipherTrait>
 	{
 	public: // Static members:
