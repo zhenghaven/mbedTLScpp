@@ -11,6 +11,8 @@
 #include "TestCipher.hpp"
 #include "TestCmac.hpp"
 
+#include "TestBigNumber.hpp"
+
 int main(int argc, char** argv)
 {
 	testing::InitGoogleTest(&argc, argv);
