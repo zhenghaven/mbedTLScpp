@@ -83,6 +83,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		throw InvalidArgumentException("Hash type given is not supported.");
 	}
 
+	/**
+	 * @brief Normal MsgDigest allocator.
+	 *
+	 */
 	struct MdAllocator : DefaultAllocBase
 	{
 		typedef mbedtls_md_context_t      CObjType;
@@ -101,6 +105,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
+	/**
+	 * @brief Normal MsgDigest Trait.
+	 *
+	 */
 	using DefaultMdObjTrait = ObjTraitBase<MdAllocator,
 									false,
 									false>;

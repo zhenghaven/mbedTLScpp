@@ -398,7 +398,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline ContSecretCtnReadOnlyRef<ContainerType> SCtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
-		static_assert(endOffset < IsStaticSecretContainer<ContainerType>::sk_ctnSize, "The end of the range is outside of the container.");
+		static_assert(endOffset <= IsStaticSecretContainer<ContainerType>::sk_ctnSize, "The end of the range is outside of the container.");
 
 		return ContSecretCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
@@ -421,7 +421,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		enable_if_t<IsStaticSecretContainer<ContainerType>::value, int> = 0>
 	inline ContSecretCtnReadOnlyRef<ContainerType> SCtnByteRangeR(const ContainerType& ctn) noexcept
 	{
-		static_assert(beginOffset < IsStaticSecretContainer<ContainerType>::sk_ctnSize, "The begining of the range is outside of the container.");
+		static_assert(beginOffset <= IsStaticSecretContainer<ContainerType>::sk_ctnSize, "The begining of the range is outside of the container.");
 
 		constexpr size_t endOffset = IsStaticSecretContainer<ContainerType>::sk_ctnSize;
 		return ContSecretCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
