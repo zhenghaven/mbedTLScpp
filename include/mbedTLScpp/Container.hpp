@@ -56,7 +56,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief The pointer to the begining of the array
 		 *
 		 */
-		void* m_data;
+		_ValType* m_data;
 
 		/**
 		 * @brief Number of items that the array can hold

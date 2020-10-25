@@ -242,7 +242,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception None No exception thrown
 		 * @param [in,out]	rhs	The right hand side.
 		 */
-		void Swap(ObjectBase& rhs) noexcept
+		virtual void Swap(ObjectBase& rhs) noexcept
 		{
 			std::swap(m_ptr, rhs.m_ptr);
 		}
@@ -277,6 +277,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				throw InvalidObjectException(objTypeName);
 			}
+		}
+
+		/**
+		 * @brief	Gets the pointer to the MbedTLS object. It's used by child
+		 *          class who is "const" specified by trait and knows how to protect
+		 *          the inner const object, but still need to access the non-const pointer.
+		 *
+		 * @exception None No exception thrown
+		 * @return	The pointer to the MbedTLS object.
+		 */
+		CObjType* InternalGet() noexcept
+		{
+			return m_ptr;
 		}
 
 	private:

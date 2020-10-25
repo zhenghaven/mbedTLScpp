@@ -68,15 +68,28 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in upper case and
 		 *        big endian.
 		 *
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it always output
+		 *                       to actual length.
+		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
 		 * @tparam ContainerType The type of container storing the bytes.
 		 * @param cnt The data container.
 		 * @return std::string The hex string.
 		 */
-		template<typename ContainerType>
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2HEXBigEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
-			res.reserve(cnt.GetRegionSize() * 2);
+			const size_t actualWidth = cnt.GetRegionSize() * 2;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
+
+			// Big Endian, padding @ left hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				res.push_back(HiBit2Hex(_PaddingVal));
+				res.push_back(HiBit2Hex(_PaddingVal));
+			}
 
 			for(const uint8_t* it = cnt.EndBytePtr(); it > cnt.BeginBytePtr(); --it)
 			{
@@ -91,20 +104,33 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in upper case and
 		 *        small endian.
 		 *
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it always output
+		 *                       to actual length.
+		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
 		 * @tparam ContainerType The type of container storing the bytes.
 		 * @param cnt The data container.
 		 * @return std::string The hex string.
 		 */
-		template<typename ContainerType>
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2HEXSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
-			res.reserve(cnt.GetRegionSize() * 2);
+			const size_t actualWidth = cnt.GetRegionSize() * 2;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
 
 			for(const uint8_t* it = cnt.BeginBytePtr(); it < cnt.EndBytePtr(); ++it)
 			{
 				res.push_back(HiBit2HEX(*it));
 				res.push_back(LoBit2HEX(*it));
+			}
+
+			// Small Endian, padding @ right hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				res.push_back(HiBit2Hex(_PaddingVal));
+				res.push_back(HiBit2Hex(_PaddingVal));
 			}
 
 			return res;
@@ -114,15 +140,28 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in lower case and
 		 *        big endian.
 		 *
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it always output
+		 *                       to actual length.
+		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
 		 * @tparam ContainerType The type of container storing the bytes.
 		 * @param cnt The data container.
 		 * @return std::string The hex string.
 		 */
-		template<typename ContainerType>
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2HexBigEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
-			res.reserve(cnt.GetRegionSize() * 2);
+			const size_t actualWidth = cnt.GetRegionSize() * 2;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
+
+			// Big Endian, padding @ left hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				res.push_back(HiBit2Hex(_PaddingVal));
+				res.push_back(HiBit2Hex(_PaddingVal));
+			}
 
 			for(const uint8_t* it = cnt.EndBytePtr(); it > cnt.BeginBytePtr(); --it)
 			{
@@ -137,20 +176,115 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in lower case and
 		 *        small endian.
 		 *
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it always output
+		 *                       to actual length.
+		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
 		 * @tparam ContainerType The type of container storing the bytes.
 		 * @param cnt The data container.
 		 * @return std::string The hex string.
 		 */
-		template<typename ContainerType>
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2HexSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
-			res.reserve(cnt.GetRegionSize() * 2);
+			const size_t actualWidth = cnt.GetRegionSize() * 2;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
 
 			for(const uint8_t* it = cnt.BeginBytePtr(); it < cnt.EndBytePtr(); ++it)
 			{
 				res.push_back(HiBit2Hex(*it));
 				res.push_back(LoBit2Hex(*it));
+			}
+
+			// Small Endian, padding @ right hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				res.push_back(HiBit2Hex(_PaddingVal));
+				res.push_back(HiBit2Hex(_PaddingVal));
+			}
+
+			return res;
+		}
+
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
+		inline std::string Bytes2BinSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
+		{
+			std::string res;
+			const size_t actualWidth = cnt.GetRegionSize() * 8;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
+
+			for(const uint8_t* it = cnt.BeginBytePtr(); it < cnt.EndBytePtr(); ++it)
+			{
+				// High bits
+				res.push_back((*it & 0x80) ? '1' : '0');
+				res.push_back((*it & 0x40) ? '1' : '0');
+				res.push_back((*it & 0x20) ? '1' : '0');
+				res.push_back((*it & 0x10) ? '1' : '0');
+
+				// Low bits
+				res.push_back((*it & 0x08) ? '1' : '0');
+				res.push_back((*it & 0x04) ? '1' : '0');
+				res.push_back((*it & 0x02) ? '1' : '0');
+				res.push_back((*it & 0x01) ? '1' : '0');
+			}
+
+			// Small Endian, padding @ right hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				// High bits
+				res.push_back((_PaddingVal & 0x80) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x40) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x20) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x10) ? '1' : '0');
+
+				// Low bits
+				res.push_back((_PaddingVal & 0x08) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x04) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x02) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x01) ? '1' : '0');
+			}
+
+			return res;
+		}
+
+		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
+		inline std::string Bytes2BinBigEnd(ContCtnReadOnlyRef<ContainerType> cnt)
+		{
+			std::string res;
+			const size_t actualWidth = cnt.GetRegionSize() * 8;
+			res.reserve(actualWidth > _MinWidth ? actualWidth : _MinWidth);
+
+			// Big Endian, padding @ left hand side
+			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
+			{
+				// High bits
+				res.push_back((_PaddingVal & 0x80) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x40) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x20) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x10) ? '1' : '0');
+
+				// Low bits
+				res.push_back((_PaddingVal & 0x08) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x04) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x02) ? '1' : '0');
+				res.push_back((_PaddingVal & 0x01) ? '1' : '0');
+			}
+
+			for(const uint8_t* it = cnt.EndBytePtr(); it > cnt.BeginBytePtr(); --it)
+			{
+				// High bits
+				res.push_back((*(it - 1) & 0x80) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x40) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x20) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x10) ? '1' : '0');
+
+				// Low bits
+				res.push_back((*(it - 1) & 0x08) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x04) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x02) ? '1' : '0');
+				res.push_back((*(it - 1) & 0x01) ? '1' : '0');
 			}
 
 			return res;
