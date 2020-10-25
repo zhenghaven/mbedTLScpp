@@ -58,8 +58,8 @@ GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 	static constexpr uint8_t bignumBytes2[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
 
 	{
-		EXPECT_THROW(({ConstBigNumber bigNum(CtnFullR(bignumBytesE1));}), InvalidArgumentException);
-		EXPECT_THROW(({ConstBigNumber bigNum(CtnFullR(bignumBytesE2));}), InvalidArgumentException);
+		EXPECT_THROW({ConstBigNumber bigNum(CtnFullR(bignumBytesE1));}, InvalidArgumentException);
+		EXPECT_THROW({ConstBigNumber bigNum(CtnFullR(bignumBytesE2));}, InvalidArgumentException);
 
 		ConstBigNumber bigNum1(CtnFullR(bignumBytes1));
 
@@ -217,7 +217,7 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 
 		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), 11640895);
 		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), 11640895U);
-		EXPECT_TRUE(sizeof(0UL) >= sizeof(mbedtls_mpi_sint));
+		EXPECT_TRUE(sizeof(uint64_t) >= sizeof(mbedtls_mpi_sint));
 		//BigNumber(CtnFullR(bignumBytesE1)) == 11640895ULL;
 		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1), false), -11640895);
 		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), 512905);
