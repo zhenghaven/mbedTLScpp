@@ -48,6 +48,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 									false,
 									false>;
 
+	/**
+	 * @brief The base class for big number objects. It defines all the basic and
+	 *        constant (immutable) operations.
+	 *
+	 * @tparam _BigNumTrait The trait of big number.
+	 */
 	template<typename _BigNumTrait,
 		enable_if_t<std::is_same<typename _BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	class BigNumberBase : public ObjectBase<_BigNumTrait>
@@ -65,6 +71,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other Hasher instance.
 		 */
 		BigNumberBase(BigNumberBase&& rhs) noexcept :
@@ -83,6 +90,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other BigNumberBase instance.
 		 * @return BigNumberBase& A reference to this instance.
 		 */
@@ -111,36 +119,90 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using ObjectBase<BigNumTrait>::Get;
 
+		/**
+		 * @brief Swap the internal pointer of a Big Number base object with the
+		 *        same trait.
+		 *
+		 * @exception None No exception thrown
+		 * @param other The other big number object to swap with
+		 */
 		virtual void Swap(BigNumberBase& other) noexcept
 		{
 			ObjectBase<_BigNumTrait>::Swap(other);
 		}
 
+		/**
+		 * @brief Is the big number positive?
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @return true If it's positive number
+		 * @return false If it's negative number
+		 */
 		bool IsPositive() const
 		{
 			NullCheck();
 			return Get()->s > 0;
 		}
 
-
+		/**
+		 * @brief Get the size of the number in granularity of bytes.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @return size_t the size of the number in bytes.
+		 */
 		size_t GetSize() const
 		{
 			NullCheck();
 			return mbedtls_mpi_size(Get());
 		}
 
+		/**
+		 * @brief Get the size of the number in granularity of bits.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @return size_t the size of the number in bits.
+		 */
 		size_t GetBitSize() const
 		{
 			NullCheck();
 			return mbedtls_mpi_bitlen(Get());
 		}
 
+		/**
+		 * @brief Get the value of a individual bit.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @param pos The position of the bit to get.
+		 * @return bool true - 1, false - 0;
+		 */
 		bool GetBit(const size_t pos) const
 		{
 			NullCheck();
 			return mbedtls_mpi_get_bit(Get(), pos) == 1;
 		}
 
+		/**
+		 * @brief Compare this big number with another big number.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side of the comparasion.
+		 *
+		 * @return \c 1  if \p this is greater than \p rhs.
+		 * @return \c -1 if \p this is lesser than  \p rhs.
+		 * @return \c 0  if \p this is equal to     \p rhs.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		int Compare(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -150,6 +212,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return mbedtls_mpi_cmp_mpi(Get(), rhs.Get());
 		}
 
+		/**
+		 * @brief Overloading \p operator== .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if both side are equal; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator==(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -157,6 +230,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) == 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator!= .
+		 *
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if both side are not equal; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator!=(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -164,6 +245,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) != 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator< .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is less than \p RHS; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator<(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -171,6 +263,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) < 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator<= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is less than or equal to \p RHS; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator<=(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -178,6 +281,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) <= 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator> .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is greater than \p RHS; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator>(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -185,6 +299,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) > 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator>= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+		 *                          right hand side.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is greater than or equal to \p RHS; \c false if otherwise.
+		 */
 		template<typename _rhs_BigNumTrait,
 				enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		bool operator>=(const BigNumberBase<_rhs_BigNumTrait> & rhs) const
@@ -192,6 +317,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) >= 0;
 		}
 
+		/**
+		 * @brief Compare this big number with a integral number.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side of the comparasion.
+		 *
+		 * @return \c 1  if \p this is greater than \p rhs.
+		 * @return \c -1 if \p this is lesser than  \p rhs.
+		 * @return \c 0  if \p this is equal to     \p rhs.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -202,6 +340,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return mbedtls_mpi_cmp_int(Get(), rhsVal);
 		}
 
+		/**
+		 * @brief Overloading \p operator== .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if both side are equal; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -210,6 +358,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) == 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator!= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if both side are not equal; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -218,6 +376,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) != 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator< .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is less than \p RHS; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -226,6 +394,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) < 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator<= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is less than or equal to \p RHS; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -234,6 +412,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) <= 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator> .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is greater than \p RHS; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -242,6 +430,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) > 0;
 		}
 
+		/**
+		 * @brief Overloading \p operator>= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return bool \c true if \p LHS is greater than or equal to \p RHS; \c false if otherwise.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -250,6 +448,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return Compare(rhs) >= 0;
 		}
 
+		/**
+		 * @brief Calculate the modulo value with a given integral number.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return _ValType The result of calculation.
+		 */
 		template<typename _ValType,
 			enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -264,6 +473,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return static_cast<_ValType>(res);
 		}
 
+		/**
+		 * @brief Convert this big number to a hex string. This string doesn't
+		 *        contain neither the \c '0x' prefix nor the negative sign.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
+		 * @tparam _LowerCase Should output alphabet in lower case? (Default to \c true )
+		 * @tparam _MinWidth The minmum width of the output string, in bytes. (Default to \c 0 )
+		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
+		 * @return std::string The output hex string.
+		 */
 		template<bool _SmlEndian = true, bool _LowerCase = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Hex() const
 		{
@@ -303,6 +526,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
+		/**
+		 * @brief Convert this big number to a binary string with \c 0 's and \c 1 's.
+		 *        This string doesn't contain neither \c '0b' prefix nor the negative sign.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
+		 * @tparam _MinWidth The minmum width of the output string, in bytes. (Default to \c 0 )
+		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
+		 * @return std::string The output binary string.
+		 */
 		template<bool _SmlEndian = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Bin() const
 		{
@@ -326,6 +562,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
+		/**
+		 * @brief Convert this big number to a human-readable decimal number string.
+		 *        This string contain the negative sign.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _MinWidth The minmum width of the output string, in number of chractors. (Default to \c 0 )
+		 * @tparam _PaddingCh The chractor used for padding to get to the minimum width.
+		 * @return std::string The output string.
+		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingCh = '0'>
 		std::string Dec() const
 		{
@@ -390,6 +639,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return res;
 		}
 
+		/**
+		 * @brief Convert this big number to an array of bytes.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
+		 * @return std::vector<uint8_t> The output array of bytes.
+		 */
 		template<bool _SmlEndian = true>
 		std::vector<uint8_t> Bytes() const
 		{
@@ -437,10 +697,29 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 									false,
 									true>;
 
+	/**
+	 * @brief A big number class used to share a small endian bytes array to use
+	 *        as a big number object.
+	 *        NOTE: This object doesn't own the array, instead, it only share the
+	 *        array. Thus, the array shared with must be alive before this object
+	 *        is destroyed.
+	 *
+	 */
 	class ConstBigNumber : public BigNumberBase<ConstBigNumObjTrait>
 	{
 	public:
 
+		/**
+		 * @brief Construct a new Const Big Number object with a reference to an
+		 *        existing container.
+		 *
+		 * @exception InvalidArgumentException Thrown when data size can't fit in whole mbedtls_mpi_uint.
+		 * @exception std::bad_alloc           Thrown when memory allocation failed.
+		 * @tparam ContainerType The type of the container.
+		 * @param data The container stores the data.
+		 * @param isPositive Should it be a positive number (since we assume the
+		 *                   byte array only stores unsigned value)?
+		 */
 		template<typename ContainerType>
 		ConstBigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true) :
 			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
@@ -458,6 +737,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other Hasher instance.
 		 */
 		ConstBigNumber(ConstBigNumber&& rhs) noexcept :
@@ -476,6 +756,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other ConstBigNumber instance.
 		 * @return ConstBigNumber& A reference to this instance.
 		 */
@@ -488,6 +769,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		ConstBigNumber& operator=(const ConstBigNumber& other) = delete;
 
+		/**
+		 * @brief Flip the sign of the big number. The sign is a extra piece info
+		 *        owned only by this object, thus, we can mutate it.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @return ConstBigNumber& A reference to this instance.
+		 */
 		ConstBigNumber& FlipSign()
 		{
 			NullCheck();
@@ -497,14 +787,35 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
+	/**
+	 * @brief The class for a normal Big Number object.
+	 *
+	 */
 	class BigNumber : public BigNumberBase<DefaultBigNumObjTrait>
 	{
 	public:
 
+		/**
+		 * @brief Construct a new Big Number object, which is initialized, but
+		 *        with zero value.
+		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 *
+		 */
 		BigNumber() :
 			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
 		{}
 
+		/**
+		 * @brief Construct a new Big Number object by copying other BigNumber.
+		 *        If \c other is null, then this instance will be null as well.
+		 *        Otherwise, deep copy will be performed.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _other_BigNumTrait The trait used by the other big number.
+		 * @param other The other big number to copy from.
+		 */
 		template<typename _other_BigNumTrait,
 			enable_if_t<std::is_same<typename _other_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber(const BigNumberBase<_other_BigNumTrait>& other) :
@@ -520,6 +831,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
+		/**
+		 * @brief Construct a new Big Number object by copying bytes from a byte array.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam ContainerType The type of the data container.
+		 * @param data The reference to data container.
+		 * @param isPositive Should the constructed big number be positive?
+		 *                   (since we assume the byte array only stores
+		 *                   unsigned value)
+		 * @param isSmallEndian Is the input bytes in small endian format?
+		 */
 		template<typename ContainerType>
 		BigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true, bool isSmallEndian = true) :
 			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
@@ -545,6 +868,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			Get()->s = isPositive ? 1 : -1;
 		}
 
+		/**
+		 * @brief Construct a new Big Number object by copying value from a native integral value.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @param val The value to copy from.
+		 * @param isPositive Should the constructed big number be positive?
+		 *                   (since here we accpet an unsigned value)
+		 */
 		BigNumber(mbedtls_mpi_uint val, bool isPositive = true) :
 			BigNumber(CtnFullR(CDynArray<mbedtls_mpi_uint>{
 						&val,
@@ -553,12 +885,31 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			isPositive, true)
 		{}
 
+
+		/**
+		 * @brief Construct a new Big Number object by copying value from a native integral value.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _ValType The type of the integral number.
+		 *                  It should be an unsigned type.
+		 *                  Thus, the constructed big number will be positive.
+		 * @param val The value to copy from.
+		 */
 		template<typename _ValType,
 			enable_if_t<std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_uint), int> = 0>
 		BigNumber(_ValType val)
 			: BigNumber(static_cast<mbedtls_mpi_uint>(val), true)
 		{}
 
+		/**
+		 * @brief Construct a new Big Number object by copying value from a native integral value.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _ValType The type of the integral number. It should be an signed type.
+		 * @param val The value to copy from.
+		 */
 		template<typename _ValType,
 			enable_if_t<std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_uint), int> = 0>
 		BigNumber(_ValType val)
@@ -568,6 +919,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other Hasher instance.
 		 */
 		BigNumber(BigNumber&& rhs) noexcept :
@@ -584,6 +936,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
+		 * @exception None No exception thrown
 		 * @param rhs The other BigNumber instance.
 		 * @return BigNumber& A reference to this instance.
 		 */
@@ -594,6 +947,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Copy assignment. If \c RHS is null, then this instance will become
+		 *        null as well. Otherwise, deep copy will be performed.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the \c RHS big number.
+		 * @param rhs The number in right hand side.
+		 * @return BigNumber& The reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -612,11 +974,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Swap the internal pointer of a Big Number base object with the
+		 *        same trait.
+		 *
+		 * @exception None No exception thrown
+		 * @param other The other big number object to swap with
+		 */
 		virtual void Swap(BigNumber& other) noexcept
 		{
 			BigNumberBase<DefaultBigNumObjTrait>::Swap(other);
 		}
 
+		/**
+		 * @brief Flip the sign of the big number.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @return ConstBigNumber& A reference to this instance.
+		 */
 		BigNumber& FlipSign()
 		{
 			NullCheck();
@@ -625,6 +1002,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator<<= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber & operator<<=(size_t rhs)
 		{
 			NullCheck();
@@ -634,6 +1021,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator>>= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber & operator>>=(size_t rhs)
 		{
 			NullCheck();
@@ -643,6 +1040,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator+= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+		 *                          right hand side.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator+=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -656,6 +1065,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator+= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_ValType,
 			enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -670,6 +1090,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator-= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+		 *                          right hand side.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator-=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -683,6 +1115,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator-= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_ValType,
 			enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -697,6 +1140,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator*= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+		 *                          right hand side.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator*=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -710,6 +1165,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator*= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_ValType,
 			enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_uint)) ||
 			(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_uint)), int> = 0>
@@ -729,6 +1195,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator/= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+		 *                          right hand side.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator/=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -744,6 +1222,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator/= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_ValType,
 			enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -760,6 +1249,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator%= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+		 *                          right hand side.
+		 * @param rhs The value on right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_BigNumTrait,
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator%=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -775,6 +1276,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator%= .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @tparam _rhs_ValType The type of the integral number.
+		 * @param rhs The right hand side.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		template<typename _rhs_ValType,
 			enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 			(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
@@ -791,6 +1303,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator++ .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber& operator++()
 		{
 			*this += 1;
@@ -798,6 +1319,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator-- .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber& operator--()
 		{
 			*this -= 1;
@@ -805,6 +1335,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		/**
+		 * @brief Overloading \p operator++ .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber operator++(int)
 		{
 			NullCheck();
@@ -817,6 +1356,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return res;
 		}
 
+		/**
+		 * @brief Overloading \p operator-- .
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber operator--(int)
 		{
 			NullCheck();
@@ -829,6 +1377,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return res;
 		}
 
+		/**
+		 * @brief Set an individual bit in the big number.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @param pos The position of the bit to set.
+		 * @param bit The bit value: \c true - 1, \c false - 0.
+		 * @return BigNumber& A reference to this instance.
+		 */
 		BigNumber & SetBit(size_t pos, bool bit)
 		{
 			NullCheck();
@@ -841,6 +1400,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	};
 
+	/**
+	 * @brief Overloading \p operator== .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if both side are equal; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -850,6 +1423,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs == lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator!= .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if both side are not equal; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -859,6 +1446,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs != lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator>= .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if \p LHS is greater than or equal to \p RHS; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -869,6 +1470,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs <= lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator> .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if \p LHS is greater than \p RHS; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -879,6 +1494,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs < lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator< .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if \p LHS is less than or equal to \p RHS; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -889,6 +1518,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs >= lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator< .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _ValType The type of the native integral number on left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number in
+	 *                          right hand side.
+	 * @param lhs The left hand side.
+	 * @param rhs The right hand side.
+	 * @return bool \c true if \p LHS is less than \p RHS; \c false if otherwise.
+	 */
 	template<typename _ValType, typename _BigNumTrait,
 		enable_if_t<(std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0,
@@ -899,6 +1542,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs > lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator+ .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -914,6 +1572,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator- .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -929,6 +1602,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator- (negation operator).
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	inline BigNumber operator-(const BigNumberBase<_rhs_BigNumTrait>& rhs)
@@ -938,6 +1623,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return cpy;
 	}
 
+	/**
+	 * @brief Overloading \p operator* .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -953,6 +1653,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator/ .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -968,6 +1683,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator% .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -983,6 +1713,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Calculate modulo of two big numbers.
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
@@ -998,6 +1743,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator+ .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_ValType     The type of the native integral number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1014,6 +1774,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator- .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_ValType     The type of the native integral number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1030,6 +1805,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator* .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_ValType     The type of the native integral number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_uint)) ||
@@ -1052,6 +1842,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator/ .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_ValType     The type of the native integral number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1068,6 +1873,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator% .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @tparam _rhs_ValType     The type of the native integral number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1084,6 +1904,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator+ .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_ValType     The type of the native integral number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1093,6 +1928,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs + lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator- .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_ValType     The type of the native integral number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1102,6 +1952,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return lhs + (-rhs);
 	}
 
+	/**
+	 * @brief Overloading \p operator* .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_ValType     The type of the native integral number on
+	 *                          left hand side.
+	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
+	 *                          right hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
@@ -1111,6 +1976,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return rhs * lhs;
 	}
 
+	/**
+	 * @brief Overloading \p operator<< .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	inline BigNumber operator<<(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
@@ -1120,6 +1998,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return res;
 	}
 
+	/**
+	 * @brief Overloading \p operator>> .
+	 *
+	 * @exception InvalidObjectException Thrown when one or more given objects are
+	 *                                   holding a null pointer for the C mbed TLS
+	 *                                   object.
+	 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+	 * @tparam _lhs_BigNumTrait The trait used by the other big number on
+	 *                          left hand side.
+	 * @param lhs The value on left hand side.
+	 * @param rhs The value on right hand side.
+	 * @return BigNumber The result of calculation, a new Big Number object.
+	 */
 	template<typename _lhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	inline BigNumber operator>>(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)

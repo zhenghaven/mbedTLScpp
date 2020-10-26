@@ -20,10 +20,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert the higher bit of a single byte into a single hex
 		 *        character in upper case.
 		 *
+		 * @exception None No exception thrown
 		 * @param byte The byte to convert.
 		 * @return constexpr char The hex character in upper case.
 		 */
-		inline constexpr char HiBit2HEX(uint8_t byte)
+		inline constexpr char HiBit2HEX(uint8_t byte) noexcept
 		{
 			return gsk_hEXLUT[(byte >> 4) & 0x0F];
 		}
@@ -32,10 +33,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert the lower bit of a single byte into a single hex
 		 *        character in upper case.
 		 *
+		 * @exception None No exception thrown
 		 * @param byte The byte to convert.
 		 * @return constexpr char The hex character in upper case.
 		 */
-		inline constexpr char LoBit2HEX(uint8_t byte)
+		inline constexpr char LoBit2HEX(uint8_t byte) noexcept
 		{
 			return gsk_hEXLUT[byte &        0x0F];
 		}
@@ -44,10 +46,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert the higher bit of a single byte into a single hex
 		 *        character in lower case.
 		 *
+		 * @exception None No exception thrown
 		 * @param byte The byte to convert.
 		 * @return constexpr char The hex character in lower case.
 		 */
-		inline constexpr char HiBit2Hex(uint8_t byte)
+		inline constexpr char HiBit2Hex(uint8_t byte) noexcept
 		{
 			return gsk_hexLUT[(byte >> 4) & 0x0F];
 		}
@@ -56,10 +59,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert the lower bit of a single byte into a single hex
 		 *        character in lower case.
 		 *
+		 * @exception None No exception thrown
 		 * @param byte The byte to convert.
 		 * @return constexpr char The hex character in lower case.
 		 */
-		inline constexpr char LoBit2Hex(uint8_t byte)
+		inline constexpr char LoBit2Hex(uint8_t byte) noexcept
 		{
 			return gsk_hexLUT[byte &        0x0F];
 		}
@@ -68,6 +72,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in upper case and
 		 *        big endian.
 		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
 		 *                       longer than it, this function will output to the
 		 *                       actual length. Default to 0, so it always output
@@ -104,6 +109,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in upper case and
 		 *        small endian.
 		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
 		 *                       longer than it, this function will output to the
 		 *                       actual length. Default to 0, so it always output
@@ -140,6 +146,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in lower case and
 		 *        big endian.
 		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
 		 *                       longer than it, this function will output to the
 		 *                       actual length. Default to 0, so it always output
@@ -176,10 +183,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Convert an array of bytes into a hex string in lower case and
 		 *        small endian.
 		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
 		 *                       longer than it, this function will output to the
-		 *                       actual length. Default to 0, so it always output
-		 *                       to actual length.
+		 *                       actual length. Default to 0, so it output actual
+		 *                       length by default.
 		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
 		 * @tparam ContainerType The type of container storing the bytes.
 		 * @param cnt The data container.
@@ -208,6 +216,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return res;
 		}
 
+		/**
+		 * @brief Convert an array of bytes into a small-endian binary string
+		 *        (with \c 0 's and \c 1 's)
+		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it output actual
+		 *                       length by default.
+		 * @tparam _PaddingVal   The value used to pad to right hand side. Default to 0.
+		 * @tparam ContainerType The type of container storing the bytes.
+		 * @param cnt The data container.
+		 * @return std::string The binary string.
+		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2BinSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
@@ -249,6 +271,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return res;
 		}
 
+		/**
+		 * @brief Convert an array of bytes into a big-endian binary string
+		 *        (with \c 0 's and \c 1 's)
+		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
+		 *                       longer than it, this function will output to the
+		 *                       actual length. Default to 0, so it output actual
+		 *                       length by default.
+		 * @tparam _PaddingVal   The value used to pad to left hand side. Default to 0.
+		 * @tparam ContainerType The type of container storing the bytes.
+		 * @param cnt The data container.
+		 * @return std::string The binary string.
+		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
 		inline std::string Bytes2BinBigEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
