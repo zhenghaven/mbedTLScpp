@@ -4,6 +4,8 @@
 
 #include <mbedTLScpp/Hash.hpp>
 
+#include "MemoryTest.hpp"
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
@@ -17,27 +19,27 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 		EXPECT_THROW({MsgDigestBase<> mdBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), false);}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		EXPECT_EQ(Internal::gs_allocationLeft, 0);
+		MEMORY_LEAK_TEST_COUNT(0);
 
 		MsgDigestBase<> mdBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		MsgDigestBase<> mdBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		mdBase1 = std::move(mdBase1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		mdBase1 = std::move(mdBase2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		MsgDigestBase<> mdBase3(std::move(mdBase1));
@@ -51,7 +53,7 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHash, HasherBaseClass)
@@ -61,27 +63,27 @@ GTEST_TEST(TestHash, HasherBaseClass)
 		EXPECT_THROW({HasherBase hashBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		EXPECT_EQ(Internal::gs_allocationLeft, 0);
+		MEMORY_LEAK_TEST_COUNT(0);
 
 		HasherBase hashBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		HasherBase hashBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hashBase1 = std::move(hashBase1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hashBase2 = std::move(hashBase1);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		HasherBase hashBase3(std::move(hashBase2));
@@ -95,7 +97,7 @@ GTEST_TEST(TestHash, HasherBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHash, HasherBaseCalc)
@@ -139,7 +141,7 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHash, HasherClass)
@@ -149,22 +151,22 @@ GTEST_TEST(TestHash, HasherClass)
 		Hasher<HashType::SHA256> hash2561;
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		Hasher<HashType::SHA256> hash2562;
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hash2561 = std::move(hash2561);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hash2562 = std::move(hash2561);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Hasher<HashType::SHA256> hash2563(std::move(hash2562));
@@ -178,7 +180,7 @@ GTEST_TEST(TestHash, HasherClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHash, HasherCalc)
@@ -273,5 +275,5 @@ GTEST_TEST(TestHash, HasherCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }

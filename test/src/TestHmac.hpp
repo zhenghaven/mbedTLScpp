@@ -5,6 +5,8 @@
 #include <mbedTLScpp/Hmac.hpp>
 #include <mbedTLScpp/Internal/Codec.hpp>
 
+#include "MemoryTest.hpp"
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
@@ -20,27 +22,27 @@ GTEST_TEST(TestHmac, HmacerBaseClass)
 		EXPECT_THROW({HmacerBase hmacBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), SCtnFullR(testKey));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		EXPECT_EQ(Internal::gs_allocationLeft, 0);
+		MEMORY_LEAK_TEST_COUNT(0);
 
 		HmacerBase hmacBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), SCtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		HmacerBase hmacBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), SCtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hmacBase1 = std::move(hmacBase1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hmacBase2 = std::move(hmacBase1);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		HmacerBase hmacBase3(std::move(hmacBase2));
@@ -54,7 +56,7 @@ GTEST_TEST(TestHmac, HmacerBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHmac, HmacerBaseCalc)
@@ -102,7 +104,7 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHmac, HmacerClass)
@@ -116,23 +118,23 @@ GTEST_TEST(TestHmac, HmacerClass)
 		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		Hmacer<HashType::SHA256> hmac2562(SCtnFullR(testKey));
 		hmac2562.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hmac2561 = std::move(hmac2561);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		hmac2562 = std::move(hmac2561);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Hmacer<HashType::SHA256> hmac2563(std::move(hmac2562));
@@ -148,7 +150,7 @@ GTEST_TEST(TestHmac, HmacerClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHmac, HmacerCalc)
@@ -250,5 +252,5 @@ GTEST_TEST(TestHmac, HmacerCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }

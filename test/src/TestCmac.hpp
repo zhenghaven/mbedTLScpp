@@ -4,6 +4,8 @@
 
 #include <mbedTLScpp/Cmac.hpp>
 
+#include "MemoryTest.hpp"
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
@@ -19,27 +21,27 @@ GTEST_TEST(TestCipher, CmacerBaseClass)
 		EXPECT_THROW({CmacerBase cmacBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE), SCtnFullR(testKey));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		EXPECT_EQ(Internal::gs_allocationLeft, 0);
+		MEMORY_LEAK_TEST_COUNT(0);
 
 		CmacerBase cmacBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), SCtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		CmacerBase cmacBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), SCtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cmacBase1 = std::move(cmacBase1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cmacBase1 = std::move(cmacBase2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		CmacerBase cmacBase3(std::move(cmacBase1));
@@ -53,7 +55,7 @@ GTEST_TEST(TestCipher, CmacerBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestCmac, CmacerBaseCalc)
@@ -128,7 +130,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestHmac, CmacerClass)
@@ -143,23 +145,23 @@ GTEST_TEST(TestHmac, CmacerClass)
 		cmac1281.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1282(SCtnFullR(test128Key));
 		cmac1282.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cmac1281 = std::move(cmac1281);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cmac1281 = std::move(cmac1282);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1283(std::move(cmac1281));
@@ -175,7 +177,7 @@ GTEST_TEST(TestHmac, CmacerClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestCmac, CmacerCalc)
@@ -228,5 +230,5 @@ GTEST_TEST(TestCmac, CmacerCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }

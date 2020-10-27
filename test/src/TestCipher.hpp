@@ -4,6 +4,8 @@
 
 #include <mbedTLScpp/CipherBase.hpp>
 
+#include "MemoryTest.hpp"
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
@@ -41,27 +43,27 @@ GTEST_TEST(TestCipher, CipherBaseClass)
 		EXPECT_THROW({CipherBase<> cpBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		EXPECT_EQ(Internal::gs_allocationLeft, 0);
+		MEMORY_LEAK_TEST_COUNT(0);
 
 		CipherBase<> cpBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::GCM));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		CipherBase<> cpBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::GCM));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cpBase1 = std::move(cpBase1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		cpBase1 = std::move(cpBase2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		CipherBase<> cpBase3(std::move(cpBase1));
@@ -75,5 +77,5 @@ GTEST_TEST(TestCipher, CipherBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }

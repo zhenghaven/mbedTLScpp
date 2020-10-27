@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef MBEDTLSCPP_TEST
+#ifdef MBEDTLSCPP_MEMORY_TEST
 #include <atomic> //size_t
 #endif
 
@@ -12,7 +12,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 {
 	namespace Internal
 	{
-#ifdef MBEDTLSCPP_TEST
+#ifdef MBEDTLSCPP_MEMORY_TEST
 		/**
 		 * @brief The count for memory allocation.
 		 *        It's only used for memory leak testing.
@@ -32,7 +32,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename T, class... _Args>
 		inline T* NewObject(_Args&&... __args)
 		{
-#ifdef MBEDTLSCPP_TEST
+#ifdef MBEDTLSCPP_MEMORY_TEST
 			gs_allocationLeft++;
 #endif
 
@@ -48,7 +48,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename T>
 		inline void DelObject(T* ptr) noexcept
 		{
-#ifdef MBEDTLSCPP_TEST
+#ifdef MBEDTLSCPP_MEMORY_TEST
 			gs_allocationLeft--;
 #endif
 

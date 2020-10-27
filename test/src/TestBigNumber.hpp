@@ -6,6 +6,8 @@
 
 #include <random>
 
+#include "MemoryTest.hpp"
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
@@ -18,22 +20,22 @@ GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 		BigNumberBase<DefaultBigNumObjTrait> bigNum1;
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		BigNumberBase<DefaultBigNumObjTrait> bigNum2;
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		BigNumberBase<DefaultBigNumObjTrait> bigNum3(std::move(bigNum1));
@@ -47,7 +49,7 @@ GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestBigNumber, ConstBigNumberClass)
@@ -64,22 +66,22 @@ GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 		ConstBigNumber bigNum1(CtnFullR(bignumBytes1));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		ConstBigNumber bigNum2(CtnFullR(bignumBytes2));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		ConstBigNumber bigNum3(std::move(bigNum1));
@@ -93,7 +95,7 @@ GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestBigNumber, ConstBigNumber)
@@ -159,7 +161,7 @@ GTEST_TEST(TestBigNumber, ConstBigNumber)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestBigNumber, BigNumberClass)
@@ -176,22 +178,22 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		BigNumber bigNum1(CtnFullR(bignumBytes1));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		BigNumber bigNum2(CtnFullR(bignumBytes2));
 
 		// after successful initialization, we should have its allocation remains.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		EXPECT_EQ(Internal::gs_allocationLeft, 2);
+		MEMORY_LEAK_TEST_COUNT(2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		EXPECT_EQ(Internal::gs_allocationLeft, 1);
+		MEMORY_LEAK_TEST_COUNT(1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		BigNumber bigNum3(std::move(bigNum1));
@@ -230,7 +232,7 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
 
 GTEST_TEST(TestBigNumber, BigNumberCalc)
@@ -390,5 +392,5 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	EXPECT_EQ(Internal::gs_allocationLeft, 0);
+	MEMORY_LEAK_TEST_COUNT(0);
 }
