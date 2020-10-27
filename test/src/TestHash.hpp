@@ -78,13 +78,13 @@ GTEST_TEST(TestHash, HasherBaseClass)
 		// Nothing moved, allocation should stay the same.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
 
-		hashBase1 = std::move(hashBase2);
+		hashBase2 = std::move(hashBase1);
 
 		// Moved, allocation should reduce.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		HasherBase hashBase3(std::move(hashBase1));
+		HasherBase hashBase3(std::move(hashBase2));
 
 		// This should success.
 		hashBase3.NullCheck();
@@ -161,13 +161,13 @@ GTEST_TEST(TestHash, HasherClass)
 		// Nothing moved, allocation should stay the same.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
 
-		hash2561 = std::move(hash2562);
+		hash2562 = std::move(hash2561);
 
 		// Moved, allocation should reduce.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		Hasher<HashType::SHA256> hash2563(std::move(hash2561));
+		Hasher<HashType::SHA256> hash2563(std::move(hash2562));
 
 		// This should success.
 		hash2563.NullCheck();

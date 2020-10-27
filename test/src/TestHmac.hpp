@@ -37,13 +37,13 @@ GTEST_TEST(TestHmac, HmacerBaseClass)
 		// Nothing moved, allocation should stay the same.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
 
-		hmacBase1 = std::move(hmacBase2);
+		hmacBase2 = std::move(hmacBase1);
 
 		// Moved, allocation should reduce.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		HmacerBase hmacBase3(std::move(hmacBase1));
+		HmacerBase hmacBase3(std::move(hmacBase2));
 
 		// This should success.
 		hmacBase3.NullCheck();
@@ -113,13 +113,13 @@ GTEST_TEST(TestHmac, HmacerClass)
 
 	{
 		Hmacer<HashType::SHA256> hmac2561(SCtnFullR(testKey));
-		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage2"));
+		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		Hmacer<HashType::SHA256> hmac2562(SCtnFullR(testKey));
-		hmac2562.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hmac2562.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
@@ -129,13 +129,13 @@ GTEST_TEST(TestHmac, HmacerClass)
 		// Nothing moved, allocation should stay the same.
 		EXPECT_EQ(Internal::gs_allocationLeft, 2);
 
-		hmac2561 = std::move(hmac2562);
+		hmac2562 = std::move(hmac2561);
 
 		// Moved, allocation should reduce.
 		EXPECT_EQ(Internal::gs_allocationLeft, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		Hmacer<HashType::SHA256> hmac2563(std::move(hmac2561));
+		Hmacer<HashType::SHA256> hmac2563(std::move(hmac2562));
 
 		// This should success.
 		auto hmac = hmac2563.Finish();

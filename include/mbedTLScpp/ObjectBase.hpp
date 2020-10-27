@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common.hpp"
 #include "Exceptions.hpp"
 
 #include "Internal/Memory.hpp"
@@ -40,8 +41,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	{
 		typedef _CObjType      CObjType;
 
-		using DefaultAllocBase::NewObject;
-		using DefaultAllocBase::DelObject;
+		template<typename T, class... _Args>
+		static T* NewObject(_Args&&... __args)
+		{
+			return nullptr;
+		}
+
+		template<typename T>
+		static void DelObject(T* ptr) noexcept
+		{}
 
 		static void Init(CObjType* ptr)
 		{}
@@ -53,7 +61,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	/**
 	 * @brief The trait template, for easier defining the trait for mbed TLS cpp object.
 	 *
-	 * @tparam _CObjType     The type of the mbed TLS C object.
 	 * @tparam _ObjAllocator The allocator for the mbed TLS C object.
 	 * @tparam _isBorrower   Is the type a borrower?
 	 * @tparam _isConst      Is the inner mbed TLS C object a constant?
