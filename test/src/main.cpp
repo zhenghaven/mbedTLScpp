@@ -15,6 +15,8 @@
 
 #include "TestEntropy.hpp"
 
+#include "TestRbg.hpp"
+
 int main(int argc, char** argv)
 {
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
@@ -27,7 +29,7 @@ int main(int argc, char** argv)
 #endif
 
 	std::cout << std::endl;
-	std::cout << "===== mbed TLS cpp test start  =====" << std::endl;
+	std::cout << "===== mbed TLS cpp test start   =====" << std::endl;
 
 	testing::InitGoogleTest(&argc, argv);
 	return RUN_ALL_TESTS();

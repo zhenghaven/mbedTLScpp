@@ -126,20 +126,24 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Construct a new mbed TLS Runtime Error object.
 		 *        Same usage as the one in RuntimeException.
 		 *
-		 * @param what_arg explanatory string
+		 * @param errorCode The error code returned by mbed TLS library
+		 * @param what_arg  explanatory string
 		 */
-		mbedTLSRuntimeError(const char* what_arg) :
-			RuntimeException(what_arg)
+		mbedTLSRuntimeError(int errorCode, const char* what_arg) :
+			RuntimeException(what_arg),
+			m_errorCode(errorCode)
 		{}
 
 		/**
 		 * @brief Construct a new mbed TLS Runtime Error object.
 		 *        Same usage as the one in RuntimeException.
 		 *
-		 * @param what_arg explanatory string
+		 * @param errorCode The error code returned by mbed TLS library
+		 * @param what_arg  explanatory string
 		 */
-		mbedTLSRuntimeError(const std::string& what_arg) :
-			RuntimeException(what_arg)
+		mbedTLSRuntimeError(int errorCode, const std::string& what_arg) :
+			RuntimeException(what_arg),
+			m_errorCode(errorCode)
 		{}
 
 		/**
@@ -149,7 +153,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param other another exception object to copy
 		 */
 		mbedTLSRuntimeError(const mbedTLSRuntimeError& other) noexcept :
-			RuntimeException(other)
+			RuntimeException(other),
+			m_errorCode(other.m_errorCode)
 		{}
 
 		/**
@@ -159,6 +164,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		virtual ~mbedTLSRuntimeError()
 		{}
 
+		/**
+		 * @brief Get the error code
+		 *
+		 * @return int The error code
+		 */
+		int GetErrorCode() const noexcept
+		{
+			return m_errorCode;
+		}
+
+	private:
+
+		int m_errorCode;
 	};
 
 	/**
@@ -279,9 +297,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
 		} catch(...) { \
 			char fallbackStr[] = "UNKNOWN ERROR CODE            "; \
-			throw mbedTLSRuntimeError(mbedTLSRuntimeError::ConstructFallbackMsg(ERROR_CODE, fallbackStr, sizeof(fallbackStr))); \
+			throw mbedTLSRuntimeError(ERROR_CODE, mbedTLSRuntimeError::ConstructFallbackMsg(ERROR_CODE, fallbackStr, sizeof(fallbackStr))); \
 		} \
-		throw mbedTLSRuntimeError(*errorStrPtr); \
+		throw mbedTLSRuntimeError(ERROR_CODE, *errorStrPtr); \
 	} \
 }
 

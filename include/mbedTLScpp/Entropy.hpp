@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ObjectBase.hpp"
+#include "EntropyInterfaces.hpp"
 
 #include <mbedtls/entropy.h>
 
@@ -14,24 +15,6 @@ namespace mbedTLScpp
 namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
-	/**
-	 * @brief The interface class that will be used by Deterministic Random Bit
-	 *        Generators (DRBGs).
-	 *
-	 */
-	class EntropyInterface
-	{
-	public:
-		EntropyInterface() = default;
-
-		virtual ~EntropyInterface()
-		{}
-
-		virtual mbedtls_entropy_context* Get() = 0;
-
-		virtual const mbedtls_entropy_context* Get() const = 0;
-	};
-
 	/**
 	 * @brief Normal Entropy allocator.
 	 *
@@ -141,12 +124,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			ObjectBase<EntropyTrait>::NullCheck(typeid(Entropy).name());
 		}
 
+		using ObjectBase<EntropyTrait>::Get;
+
 		/**
 		 * @brief Get the internal pointer to the C mbed TLS object.
 		 *
 		 * @return mbedtls_entropy_context* The pointer to the C mbed TLS Object.
 		 */
-		virtual mbedtls_entropy_context* Get() noexcept
+		virtual void* GetRawPtr() noexcept override
 		{
 			return ObjectBase<EntropyTrait>::Get();
 		}
@@ -156,11 +141,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @return const mbedtls_entropy_context* The const pointer to the C mbed TLS Object.
 		 */
-		virtual const mbedtls_entropy_context* Get() const noexcept
+		virtual const void* GetRawPtr() const noexcept override
 		{
 			return ObjectBase<EntropyTrait>::Get();
 		}
 
+		/**
+		 * @brief Fill entropy into a given memory region.
+		 *
+		 * @param buf  The pointer to the beginning of the memory region.
+		 * @param size The size of the memory region.
+		 */
+		virtual void FillEntropy(void* buf, const size_t size) override
+		{
+			NullCheck();
+
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(Entropy::FillEntropy, mbedtls_entropy_func, Get(), static_cast<unsigned char *>(buf), size);
+		}
 	};
 
 	/**
