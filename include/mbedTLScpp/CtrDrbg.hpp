@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ObjectBase.hpp"
+#include "RandInterfaces.hpp"
 
 #include "Common.hpp"
-#include "RandInterfaces.hpp"
 #include "Entropy.hpp"
 
 #include <mbedtls/ctr_drbg.h>
@@ -124,10 +124,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param buf  The pointer to the beginning of the memory region.
 		 * @param size The size of the memory region.
 		 */
-		virtual void Rand(void* buf, const size_t size) override
+		virtual void Rand(void* buf, const size_t size) const override
 		{
 			NullCheck();
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(CtrDrbg::Rand, mbedtls_ctr_drbg_random, Get(), static_cast<unsigned char *>(buf), size);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CtrDrbg::Rand, mbedtls_ctr_drbg_random, MutableGet(), static_cast<unsigned char *>(buf), size);
 		}
 
 		/**

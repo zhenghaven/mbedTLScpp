@@ -292,9 +292,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *          the inner const object, but still need to access the non-const pointer.
 		 *
 		 * @exception None No exception thrown
-		 * @return	The pointer to the MbedTLS object.
+		 * @return CObjType* The pointer to the MbedTLS object.
 		 */
 		CObjType* InternalGet() noexcept
+		{
+			return m_ptr;
+		}
+
+		/**
+		 * @brief In case the child class has const function that needs to access
+		 *        the C pointer in non-const way.
+		 *        NOTE: The child class is resposible for avoiding undefined behavior.
+		 *
+		 * @exception None No exception thrown
+		 * @return CObjType* The pointer to the MbedTLS object.
+		 */
+		CObjType* MutableGet() const noexcept
 		{
 			return m_ptr;
 		}
