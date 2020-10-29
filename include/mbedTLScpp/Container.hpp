@@ -66,6 +66,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	/**
+	 * @brief A global static constant variable that represents an empty container.
+	 *
+	 */
+	constexpr CDynArray<uint8_t> gsk_emptyCtn { nullptr, 0 };
+
+	/**
 	 * @brief Base class for static (and contiguous) container types.
 	 *
 	 * @tparam _ValType     The type of values stored in the container.
