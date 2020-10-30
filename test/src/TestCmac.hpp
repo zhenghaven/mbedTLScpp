@@ -81,7 +81,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		auto cmac = cmacBase.Finish();
-		auto cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		auto cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "d5102239eab3db7190b7c3e79ccba537");
 		cmacBase.Restart();
@@ -89,7 +89,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "b337e6976b75a2458d86dd7abb737f9f");
 
@@ -98,7 +98,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		cmac = cmacBase.Finish();
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "1ec7434c627af04468d7808c7e3240e3");
 		cmacBase.Restart();
@@ -106,7 +106,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "b76362c4d9f26fde563ce35dae1d2628");
 
@@ -115,7 +115,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		cmac = cmacBase.Finish();
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "90514dec0f6ddca0135f513dc4548c41");
 		cmacBase.Restart();
@@ -123,7 +123,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "dcc4da0241a62d8d173669a2754d7fea");
 
@@ -168,7 +168,7 @@ GTEST_TEST(TestHmac, CmacerClass)
 
 		// This should success.
 		auto cmac = cmac1283.Finish();
-		auto cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		auto cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 		EXPECT_EQ(cmacHex, "d5102239eab3db7190b7c3e79ccba537");
 
 		//cmacBase1.NullCheck();
@@ -203,7 +203,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 		auto cmac = cmac128.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 								CtnItemRangeR<0, 12>("TestMessage2"),
 								CtnItemRangeR<0, 12>("TestMessage3"));
-		auto cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		auto cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "91f63489d8fe8b6182f3f77579d4e4e8");
 
@@ -213,7 +213,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 		cmac = cmac192.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 							CtnItemRangeR<0, 12>("TestMessage2"),
 							CtnItemRangeR<0, 12>("TestMessage3"));
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "a824c002cc220dc2ee1e247048f0513d");
 
@@ -223,7 +223,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 		cmac = cmac256.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 							CtnItemRangeR<0, 12>("TestMessage2"),
 							CtnItemRangeR<0, 12>("TestMessage3"));
-		cmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(cmac));
+		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "98ec5ae33826ee3d13fb3608206e50cc");
 

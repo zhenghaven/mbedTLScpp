@@ -71,7 +71,7 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 		hmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		auto hmac = hmacBase.Finish();
-		auto hmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(hmac));
+		auto hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
 
 		EXPECT_EQ(hmacHex, "a68f6df80c440703b65d3d593ffe8a96e0a622c698a55414e8324a52d36cb00c");
 
@@ -80,7 +80,7 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 		hmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		hmac = hmacBase.Finish();
-		hmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(hmac));
+		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
 
 		EXPECT_EQ(hmacHex, "2bf089af4f15fa001124097430f4afd7b532a5120e17f0927bbec061161f7f07df65e34dbc9b2b1774172e78b2da05b0b388a1d317bdb47409838ad9a4c5bb22");
 
@@ -89,7 +89,7 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 		hmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		hmac = hmacBase.Finish();
-		hmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(hmac));
+		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
 
 		EXPECT_EQ(hmacHex, "9dcf85aea45e72d79d695992e17910e4508354dd5f35cf6f20fade6f0e2a8d99ac169b4a613ddb30681f3eb6eb884b4e");
 
@@ -98,7 +98,7 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 		hmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		hmac = hmacBase.Finish();
-		hmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(hmac));
+		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
 
 		EXPECT_EQ(hmacHex, "ba703e5ddf696985179e2386d786d6eae027b6eb0bc0de314bcad31d");
 	}
@@ -141,7 +141,7 @@ GTEST_TEST(TestHmac, HmacerClass)
 
 		// This should success.
 		auto hmac = hmac2563.Finish();
-		auto hmacHex = Internal::Bytes2HexSmlEnd(CtnFullR(hmac));
+		auto hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
 		EXPECT_EQ(hmacHex, "a68f6df80c440703b65d3d593ffe8a96e0a622c698a55414e8324a52d36cb00c");
 
 		//hmacBase1.NullCheck();
@@ -165,13 +165,13 @@ GTEST_TEST(TestHmac, HmacerCalc)
 		hmacer256.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		Hmac<HashType::SHA256> hash256 = hmacer256.Finish();
-		auto hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash256));
+		auto hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash256));
 
 		EXPECT_EQ(hashHex, "a68f6df80c440703b65d3d593ffe8a96e0a622c698a55414e8324a52d36cb00c");
 
 		hmacer256.Restart(SCtnFullR(testKey));
 		hash256 = hmacer256.Calc(CtnItemRangeR<0, 12>("TestMessage2"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash256));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash256));
 
 		EXPECT_EQ(hashHex, "185a94d7e04dcb54ac9d36758b8e1477ba8e8e144695808ca146c90748f75408");
 
@@ -180,13 +180,13 @@ GTEST_TEST(TestHmac, HmacerCalc)
 		hmacer512.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		Hmac<HashType::SHA512> hash512 = hmacer512.Finish();
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash512));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash512));
 
 		EXPECT_EQ(hashHex, "2bf089af4f15fa001124097430f4afd7b532a5120e17f0927bbec061161f7f07df65e34dbc9b2b1774172e78b2da05b0b388a1d317bdb47409838ad9a4c5bb22");
 
 		hmacer512.Restart(SCtnFullR(testKey));
 		hash512 = hmacer512.Calc(CtnItemRangeR<0, 12>("TestMessage2"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash512));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash512));
 
 		EXPECT_EQ(hashHex, "7a4aa0def7071b6610bd10abab78d6602f3d4710b5f32441d61ecea65dbf8ba0a3af9403a9e6da7f7680464a5b49af21be59b6082d3cf81425e444a72abf21a9");
 
@@ -196,7 +196,7 @@ GTEST_TEST(TestHmac, HmacerCalc)
 												CtnItemRangeR<0, 12>("TestMessage5"),
 												CtnItemRangeR<0, 12>("TestMessage6"),
 												CtnItemRangeR<0, 12>("TestMessage7"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash512));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash512));
 
 		EXPECT_EQ(hashHex, "7ebf504ab294b0bd67af6f950519609bea6299d32ecdae65718a9f8d030db140152b01ce297853c646f4ae857766aa835b4948db8888571213441dd1549ea865");
 
@@ -205,13 +205,13 @@ GTEST_TEST(TestHmac, HmacerCalc)
 		hmacer384.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		Hmac<HashType::SHA384> hash384 = hmacer384.Finish();
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash384));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash384));
 
 		EXPECT_EQ(hashHex, "9dcf85aea45e72d79d695992e17910e4508354dd5f35cf6f20fade6f0e2a8d99ac169b4a613ddb30681f3eb6eb884b4e");
 
 		hmacer384.Restart(SCtnFullR(testKey));
 		hash384 = hmacer384.Calc(CtnItemRangeR<0, 12>("TestMessage2"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash384));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash384));
 
 		EXPECT_EQ(hashHex, "670225995da117fd3f57faeb48ea81447ef93771c18589cc61914fec61e607a7cea56b337e4dbba33c57cf029eac093f");
 
@@ -221,7 +221,7 @@ GTEST_TEST(TestHmac, HmacerCalc)
 												CtnItemRangeR<0, 12>("TestMessage5"),
 												CtnItemRangeR<0, 12>("TestMessage6"),
 												CtnItemRangeR<0, 12>("TestMessage7"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash384));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash384));
 
 		EXPECT_EQ(hashHex, "cbd96c4212587e618e668a9d332470eb2ea5a7db4b40e309f53e972e2224cc2110cb4718e39b0c92b1e80f310d213686");
 
@@ -230,13 +230,13 @@ GTEST_TEST(TestHmac, HmacerCalc)
 		hmacer224.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		Hmac<HashType::SHA224> hash224 = hmacer224.Finish();
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash224));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash224));
 
 		EXPECT_EQ(hashHex, "ba703e5ddf696985179e2386d786d6eae027b6eb0bc0de314bcad31d");
 
 		hmacer224.Restart(SCtnFullR(testKey));
 		hash224 = hmacer224.Calc(CtnItemRangeR<0, 12>("TestMessage2"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash224));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash224));
 
 		EXPECT_EQ(hashHex, "af6358d8b4cd2626a4bfead05759e531ed88697263f2e827d661b92b");
 
@@ -246,7 +246,7 @@ GTEST_TEST(TestHmac, HmacerCalc)
 												CtnItemRangeR<0, 12>("TestMessage5"),
 												CtnItemRangeR<0, 12>("TestMessage6"),
 												CtnItemRangeR<0, 12>("TestMessage7"));
-		hashHex = Internal::Bytes2HexSmlEnd(CtnFullR(hash224));
+		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash224));
 
 		EXPECT_EQ(hashHex, "c32df832563368163f8b854e7bcb045212bc92bbfbd4a13756b6f95e");
 	}

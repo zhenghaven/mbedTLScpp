@@ -70,7 +70,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		/**
 		 * @brief Convert an array of bytes into a hex string in upper case and
-		 *        big endian.
+		 *        big-endian.
 		 *
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
@@ -107,7 +107,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		/**
 		 * @brief Convert an array of bytes into a hex string in upper case and
-		 *        small endian.
+		 *        little-endian.
 		 *
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
@@ -120,7 +120,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
-		inline std::string Bytes2HEXSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
+		inline std::string Bytes2HEXLitEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -132,7 +132,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				res.push_back(LoBit2HEX(*it));
 			}
 
-			// Small Endian, padding @ right hand side
+			// Little Endian, padding @ right hand side
 			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
 			{
 				res.push_back(HiBit2Hex(_PaddingVal));
@@ -181,7 +181,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		/**
 		 * @brief Convert an array of bytes into a hex string in lower case and
-		 *        small endian.
+		 *        little-endian.
 		 *
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 * @tparam _MinWidth     The minimum width in bytes. If the actual length
@@ -194,7 +194,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
-		inline std::string Bytes2HexSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
+		inline std::string Bytes2HexLitEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -206,7 +206,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				res.push_back(LoBit2Hex(*it));
 			}
 
-			// Small Endian, padding @ right hand side
+			// Little Endian, padding @ right hand side
 			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
 			{
 				res.push_back(HiBit2Hex(_PaddingVal));
@@ -217,7 +217,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief Convert an array of bytes into a small-endian binary string
+		 * @brief Convert an array of bytes into a little-endian binary string
 		 *        (with \c 0 's and \c 1 's)
 		 *
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
@@ -231,7 +231,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The binary string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType>
-		inline std::string Bytes2BinSmlEnd(ContCtnReadOnlyRef<ContainerType> cnt)
+		inline std::string Bytes2BinLitEnd(ContCtnReadOnlyRef<ContainerType> cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 8;
@@ -252,7 +252,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				res.push_back((*it & 0x01) ? '1' : '0');
 			}
 
-			// Small Endian, padding @ right hand side
+			// Little Endian, padding @ right hand side
 			for(size_t i = cnt.GetRegionSize(); i < _MinWidth; ++i)
 			{
 				// High bits

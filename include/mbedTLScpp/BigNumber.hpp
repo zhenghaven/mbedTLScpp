@@ -481,34 +481,34 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
-		 * @tparam _LowerCase Should output alphabet in lower case? (Default to \c true )
-		 * @tparam _MinWidth The minmum width of the output string, in bytes. (Default to \c 0 )
+		 * @tparam _LitEndian  Should output in little-endian format? (Default to \c true )
+		 * @tparam _LowerCase  Should output alphabet in lower case? (Default to \c true )
+		 * @tparam _MinWidth   The minmum width of the output string, in bytes. (Default to \c 0 )
 		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
 		 * @return std::string The output hex string.
 		 */
-		template<bool _SmlEndian = true, bool _LowerCase = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
+		template<bool _LitEndian = true, bool _LowerCase = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Hex() const
 		{
 			NullCheck();
 
-			if(_SmlEndian && _LowerCase)       // Small Endian & Lower Case
+			if(_LitEndian && _LowerCase)       // Little Endian & Lower Case
 			{
-				return Internal::Bytes2HexSmlEnd<_MinWidth, _PaddingVal>(
+				return Internal::Bytes2HexLitEnd<_MinWidth, _PaddingVal>(
 					CtnFullR(CDynArray<const uint8_t>{
 						reinterpret_cast<const uint8_t*>(Get()->p),
 						mbedtls_mpi_size(Get())
 					}));
 			}
-			else if(_SmlEndian && !_LowerCase) // Small Endian & Upper Case
+			else if(_LitEndian && !_LowerCase) // Little Endian & Upper Case
 			{
-				return Internal::Bytes2HEXSmlEnd<_MinWidth, _PaddingVal>(
+				return Internal::Bytes2HEXLitEnd<_MinWidth, _PaddingVal>(
 					CtnFullR(CDynArray<const uint8_t>{
 						reinterpret_cast<const uint8_t*>(Get()->p),
 						mbedtls_mpi_size(Get())
 					}));
 			}
-			else if(!_SmlEndian && _LowerCase) // Big Endian & Lower Case
+			else if(!_LitEndian && _LowerCase) // Big Endian & Lower Case
 			{
 				return Internal::Bytes2HexBigEnd<_MinWidth, _PaddingVal>(
 					CtnFullR(CDynArray<const uint8_t>{
@@ -534,19 +534,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
-		 * @tparam _MinWidth The minmum width of the output string, in bytes. (Default to \c 0 )
+		 * @tparam _LitEndian  Should output in little-endian format? (Default to \c true )
+		 * @tparam _MinWidth   The minmum width of the output string, in bytes. (Default to \c 0 )
 		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
 		 * @return std::string The output binary string.
 		 */
-		template<bool _SmlEndian = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
+		template<bool _LitEndian = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Bin() const
 		{
 			NullCheck();
 
-			if(_SmlEndian)       // Small Endian
+			if(_LitEndian)       // Little Endian
 			{
-				return Internal::Bytes2BinSmlEnd<_MinWidth, _PaddingVal>(
+				return Internal::Bytes2BinLitEnd<_MinWidth, _PaddingVal>(
 					CtnFullR(CDynArray<const uint8_t>{
 						reinterpret_cast<const uint8_t*>(Get()->p),
 						mbedtls_mpi_size(Get())
@@ -647,17 +647,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _SmlEndian Should output in small endian format? (Default to \c true )
+		 * @tparam _LitEndian Should output in little-endian format? (Default to \c true )
 		 * @return std::vector<uint8_t> The output array of bytes.
 		 */
-		template<bool _SmlEndian = true>
+		template<bool _LitEndian = true>
 		std::vector<uint8_t> Bytes() const
 		{
 			NullCheck();
 			const size_t size = GetSize();
 			std::vector<uint8_t> res(size);
 
-			if (_SmlEndian) // Small Endian
+			if (_LitEndian) // Little Endian
 			{
 				std::memcpy(res.data(), Get()->p, size);
 			}
@@ -698,7 +698,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 									true>;
 
 	/**
-	 * @brief A big number class used to share a small endian bytes array to use
+	 * @brief A big number class used to share a little-endian bytes array to use
 	 *        as a big number object.
 	 *        NOTE: This object doesn't own the array, instead, it only share the
 	 *        array. Thus, the array shared with must be alive before this object
@@ -841,13 +841,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param isPositive Should the constructed big number be positive?
 		 *                   (since we assume the byte array only stores
 		 *                   unsigned value)
-		 * @param isSmallEndian Is the input bytes in small endian format?
+		 * @param isLittleEndian Is the input bytes in little-endian format?
 		 */
 		template<typename ContainerType>
-		BigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true, bool isSmallEndian = true) :
+		BigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true, bool isLittleEndian = true) :
 			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
 		{
-			if (isSmallEndian)
+			if (isLittleEndian)
 			{
 				const size_t size = data.GetRegionSize();
 				const size_t extraLimb  = (size % sizeof(mbedtls_mpi_uint)) ? 1 : 0;
