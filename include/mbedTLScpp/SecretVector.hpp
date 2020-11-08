@@ -96,7 +96,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		SecretVector(_InputIterator first, _InputIterator last, const allocator_type& alloc = allocator_type()) :
 			SecretVector(alloc)
 		{
-			const size_type count = std::distance(first, last);
+			const auto signed_count = std::distance(first, last);
+			if (signed_count < 0)
+			{
+				throw std::invalid_argument("The iterator range given may be in flipped side.");
+			}
+
+			const size_type count = static_cast<size_type>(signed_count);
 			m_data = allocator_traits::allocate(m_alloc, count + sk_extra_cap);
 			m_capacity = count;
 
@@ -578,7 +584,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		iterator insert(iterator pos, _InputIt first, _InputIt last)
 		{
 			const size_type n = pos - begin();
-			const size_type count = std::distance(first, last);
+			const auto signed_count = std::distance(first, last);
+			if (signed_count < 0)
+			{
+				throw std::invalid_argument("The iterator range given may be in flipped side.");
+			}
+
+			const size_type count = static_cast<size_type>(signed_count);
 
 			if(first != last)
 			{
@@ -681,7 +693,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			typename std::enable_if<!std::is_same<typename std::iterator_traits<_InputIt>::value_type, void>::value, int>::type = 0>
 		void assign(_InputIt first, _InputIt last)
 		{
-			const difference_type count = std::distance(first, last);
+			const auto signed_count = std::distance(first, last);
+			if (signed_count < 0)
+			{
+				throw std::invalid_argument("The iterator range given may be in flipped side.");
+			}
+
+			const size_type count = static_cast<size_type>(signed_count);
 			if(count <= m_capacity)
 			{
 				// there is enough space
