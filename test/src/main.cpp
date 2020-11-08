@@ -19,6 +19,9 @@
 
 #include "TestHkdf.hpp"
 
+#include "TestSecretAllocator.hpp"
+#include "TestSecretVector.hpp"
+
 int main(int argc, char** argv)
 {
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;

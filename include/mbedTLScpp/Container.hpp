@@ -397,8 +397,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *        Details can be found at https://en.cppreference.com/w/cpp/container/vector_bool
 	 *
 	 */
-	template<>
-	struct CtnType<std::vector<bool> > : NonContiguousCtnType
+	template<class _Alloc>
+	struct CtnType<std::vector<bool, _Alloc> > : NonContiguousCtnType
 	{};
 
 	/**
@@ -407,8 +407,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *
 	 * @tparam _ValType Type of the value stored in the container.
 	 */
-	template<typename _ValType>
-	struct CtnType<std::vector<_ValType> > : DynCtnType<_ValType>
+	template<typename _ValType, class _Alloc>
+	struct CtnType<std::vector<_ValType, _Alloc> > : DynCtnType<_ValType>
 	{
 		/**
 		 * @brief Get the count of the provided container

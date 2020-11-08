@@ -62,7 +62,7 @@ GTEST_TEST(TestRbg, CtrDrbgClass)
 GTEST_TEST(TestRbg, CtrDrbgGetRand)
 {
 	CtrDrbg<> rbg;
-	for(size_t i = 0; i < 10000; ++i)
+	for(size_t i = 0; i < 1000; ++i)
 	{
 		EXPECT_NE(rbg.GetRand<uint64_t>(), rbg.GetRand<uint64_t>());
 	}
@@ -117,7 +117,7 @@ GTEST_TEST(TestRbg, HmacDrbgClass)
 GTEST_TEST(TestRbg, HmacDrbgGetRand)
 {
 	HmacDrbg<> rbg;
-	for(size_t i = 0; i < 10000; ++i)
+	for(size_t i = 0; i < 1000; ++i)
 	{
 		EXPECT_NE(rbg.GetRand<uint64_t>(), rbg.GetRand<uint64_t>());
 	}

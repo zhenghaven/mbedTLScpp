@@ -49,7 +49,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		inline void DelObject(T* ptr) noexcept
 		{
 #ifdef MBEDTLSCPP_MEMORY_TEST
-			gs_allocationLeft--;
+			if(ptr != nullptr)
+			{
+				gs_allocationLeft--;
+			}
 #endif
 
 			// noexcept based on https://en.cppreference.com/w/cpp/memory/new/operator_delete
