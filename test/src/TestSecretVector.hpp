@@ -436,9 +436,9 @@ GTEST_TEST(TestSecretVector, emplace)
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
 
-		// push back re-alloc
-		secVec1.emplace_back(10);
-		stdVec1.emplace_back(10);
+		// re-alloc, self reference
+		secVec1.emplace_back(secVec1[9]);
+		stdVec1.emplace_back(stdVec1[9]);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -453,9 +453,9 @@ GTEST_TEST(TestSecretVector, emplace)
 			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
 		}
 
-		// push back no alloc
-		secVec1.push_back(11);
-		stdVec1.push_back(11);
+		// no alloc
+		secVec1.emplace_back(11);
+		stdVec1.emplace_back(11);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 4);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -484,9 +484,9 @@ GTEST_TEST(TestSecretVector, emplace)
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
 
-		// push back re-alloc
-		secVec1.emplace(secVec1.begin() + 7, 7);
-		stdVec1.emplace(stdVec1.begin() + 7, 7);
+		// re-alloc, self reference
+		secVec1.emplace(secVec1.begin() + 7, secVec1[7]);
+		stdVec1.emplace(stdVec1.begin() + 7, stdVec1[7]);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -501,11 +501,28 @@ GTEST_TEST(TestSecretVector, emplace)
 			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
 		}
 
-		// push back no alloc
+		// no alloc
 		secVec1.emplace(secVec1.begin(), 0);
 		stdVec1.emplace(stdVec1.begin(), 0);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 4);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
+
+		EXPECT_EQ(secVec1.capacity(), 20);
+
+		EXPECT_EQ(secVec1.size(),  stdVec1.size());
+		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
+
+		for(size_t i = 0; i < secVec1.size(); ++i)
+		{
+			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
+		}
+
+		// no alloc, self reference
+		secVec1.emplace(secVec1.begin(), secVec1.front());
+		stdVec1.emplace(stdVec1.begin(), stdVec1.front());
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 4 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
 
 		EXPECT_EQ(secVec1.capacity(), 20);
@@ -543,8 +560,9 @@ GTEST_TEST(TestSecretVector, InsertSingle)
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
 
-		secVec1.insert(secVec1.end(), 10);
-		stdVec1.insert(stdVec1.end(), 10);
+		// re-alloc, self reference
+		secVec1.insert(secVec1.end(), secVec1[9]);
+		stdVec1.insert(stdVec1.end(), secVec1[9]);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -635,8 +653,9 @@ GTEST_TEST(TestSecretVector, InsertSingle)
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
 
-		secVec1.insert(secVec1.cbegin() + 5, 10);
-		stdVec1.insert(stdVec1.cbegin() + 5, 10);
+		// re-alloc, self reference
+		secVec1.insert(secVec1.cbegin() + 5, secVec1[5]);
+		stdVec1.insert(stdVec1.cbegin() + 5, stdVec1[5]);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -651,8 +670,9 @@ GTEST_TEST(TestSecretVector, InsertSingle)
 			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
 		}
 
-		secVec1.insert(secVec1.cbegin() + 5, 11);
-		stdVec1.insert(stdVec1.cbegin() + 5, 11);
+		// no-alloc, self reference
+		secVec1.insert(secVec1.cbegin() + 5, secVec1[5]);
+		stdVec1.insert(stdVec1.cbegin() + 5, stdVec1[5]);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 2 + 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
@@ -867,20 +887,19 @@ GTEST_TEST(TestSecretVector, InsertFill)
 
 	// at end, re-alloc, no alloc
 	{
-		// Empty container
-		SecretVector<MemTestObj<int> > secVec1;
-		std::vector <MemTestObj<int> > stdVec1;
+		SecretVector<MemTestObj<int> > secVec1  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		std::vector <MemTestObj<int> > stdVec1  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 10);
 
-		secVec1.insert(secVec1.cbegin(), 15, 125); // 15, re-alloc
-		stdVec1.insert(stdVec1.cbegin(), 15, 125);
+		secVec1.insert(secVec1.cbegin(), 5, secVec1[5]); // 15, re-alloc
+		stdVec1.insert(stdVec1.cbegin(), 5, stdVec1[5]);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 30);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 15);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 10);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20);
 
-		EXPECT_EQ(secVec1.capacity(), 15);
+		EXPECT_EQ(secVec1.capacity(), 20);
 
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
@@ -892,29 +911,13 @@ GTEST_TEST(TestSecretVector, InsertFill)
 
 		// assign with something already there.
 
-		secVec1.insert(secVec1.end(), 10, 15); // 25, no-alloc
-		stdVec1.insert(stdVec1.end(), 10, 15);
+		secVec1.insert(secVec1.end(), 10, secVec1[10]); // 25, re-alloc
+		stdVec1.insert(stdVec1.end(), 10, stdVec1[10]);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 30 + 20);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 30);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 10 + 20);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20 + 20);
 
-		EXPECT_EQ(secVec1.capacity(), 30);
-
-		EXPECT_EQ(secVec1.size(),  stdVec1.size());
-		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
-
-		for(size_t i = 0; i < secVec1.size(); ++i)
-		{
-			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
-		}
-
-		secVec1.insert(secVec1.cbegin() + 20, 20, 256); // 45, re-alloc
-		stdVec1.insert(stdVec1.cbegin() + 20, 20, 256);
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 30 + 20 + 40);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 60);
-
-		EXPECT_EQ(secVec1.capacity(), 60);
+		EXPECT_EQ(secVec1.capacity(), 40);
 
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
@@ -924,13 +927,13 @@ GTEST_TEST(TestSecretVector, InsertFill)
 			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
 		}
 
-		secVec1.insert(secVec1.cbegin() + 10, 10, 512); // 55, no-alloc
-		stdVec1.insert(stdVec1.cbegin() + 10, 10, 512);
+		secVec1.insert(secVec1.cbegin() + 20, 20, secVec1[20]); // 45, re-alloc
+		stdVec1.insert(stdVec1.cbegin() + 20, 20, stdVec1[20]);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 30 + 20 + 40 + 20);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 60);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 10 + 20 + 40);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20 + 20 + 40);
 
-		EXPECT_EQ(secVec1.capacity(), 60);
+		EXPECT_EQ(secVec1.capacity(), 80);
 
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
@@ -940,13 +943,29 @@ GTEST_TEST(TestSecretVector, InsertFill)
 			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
 		}
 
-		secVec1.insert(secVec1.end(), 20, 128); // 75, re-alloc
-		stdVec1.insert(stdVec1.end(), 20, 128);
+		secVec1.insert(secVec1.cbegin() + 10, 10, secVec1[40]); // 55, no-alloc
+		stdVec1.insert(stdVec1.cbegin() + 10, 10, stdVec1[40]);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 30 + 20 + 40 + 20 + 40);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 120);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 10 + 20 + 40 + 20);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20 + 20 + 40);
 
-		EXPECT_EQ(secVec1.capacity(), 120);
+		EXPECT_EQ(secVec1.capacity(), 80);
+
+		EXPECT_EQ(secVec1.size(),  stdVec1.size());
+		EXPECT_EQ(secVec1.empty(), stdVec1.empty());
+
+		for(size_t i = 0; i < secVec1.size(); ++i)
+		{
+			EXPECT_EQ(secVec1[i].Data(), stdVec1[i].Data());
+		}
+
+		secVec1.insert(secVec1.end(), 20, secVec1[50]); // 75, no-alloc
+		stdVec1.insert(stdVec1.end(), 20, stdVec1[50]);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 20 + 10 + 20 + 40 + 20 + 40);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 20 + 20 + 40);
+
+		EXPECT_EQ(secVec1.capacity(), 80);
 
 		EXPECT_EQ(secVec1.size(),  stdVec1.size());
 		EXPECT_EQ(secVec1.empty(), stdVec1.empty());

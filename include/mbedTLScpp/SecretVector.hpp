@@ -466,6 +466,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			if (pos == cend())
 			{
 				emplace_back(std::forward<_Args>(args)...);
+
+				null_terminate();
 				return end() - 1;
 			}
 			else
@@ -478,18 +480,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				if (m_size < m_capacity)
 				{
 					// There is enough space
-					return insert(pos, std::move(secure_tmp.front()));
+					auto it = insert(pos, std::move(secure_tmp.front()));
+
+					null_terminate();
+					return it;
 				}
 				else
 				{
 					const size_type offset = pos - cbegin();
 					// No enough space, we need to reallocate
 					realloc_move_insert(offset, secure_tmp.begin(), secure_tmp.size());
+
+					null_terminate();
 					return iterator(m_data + offset);
 				}
 			}
 
-			null_terminate();
 		}
 
 		iterator insert(const_iterator pos, const value_type& value)
@@ -504,7 +510,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				}
 				else
 				{
-					noalloc_copy_insert_one(begin() + offset, value);
+					// Construct the value in a *safe* place first.
+					SecretVector secure_tmp(1, value, m_alloc);
+					noalloc_move_insert_one(begin() + offset, std::move(secure_tmp.front()));
 				}
 			}
 			else
@@ -531,7 +539,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				}
 				else
 				{
-					noalloc_move_insert_one(begin() + offset, std::move(value));
+					// Construct the value in a *safe* place first.
+					SecretVector secure_tmp(m_alloc);
+					secure_tmp.reserve(1);
+					secure_tmp.emplace_back(std::move(value));
+					noalloc_move_insert_one(begin() + offset, std::move(secure_tmp.front()));
 				}
 			}
 			else
@@ -837,14 +849,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			++m_size;
 			std::move_backward(pos.base(), m_data + m_size - 2, m_data + m_size - 1);
 			*pos = std::forward<value_type>(arg);
-		}
-
-		void noalloc_copy_insert_one(iterator pos, const value_type& arg)
-		{
-			Internal::uninitialized_move(end() - 1, end(), m_data + m_size);
-			++m_size;
-			std::move_backward(pos.base(), m_data + m_size - 2, m_data + m_size - 1);
-			*pos = arg;
 		}
 
 		void noalloc_fill_insert(iterator pos, const value_type& value, size_type count)
