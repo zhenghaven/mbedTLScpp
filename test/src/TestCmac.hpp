@@ -18,17 +18,17 @@ GTEST_TEST(TestCipher, CmacerBaseClass)
 
 	{
 		// An invalid initialization should fail.
-		EXPECT_THROW({CmacerBase cmacBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE), SCtnFullR(testKey));}, mbedTLSRuntimeError);
+		EXPECT_THROW({CmacerBase cmacBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE), CtnFullR(testKey));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
 		MEMORY_LEAK_TEST_COUNT(0);
 
-		CmacerBase cmacBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), SCtnFullR(testKey));
+		CmacerBase cmacBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_COUNT(1);
 
-		CmacerBase cmacBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), SCtnFullR(testKey));
+		CmacerBase cmacBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_COUNT(2);
@@ -76,7 +76,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 	std::copy(std::begin(testKey256Str), std::end(testKey256Str), test256Key.Get().begin());
 
 	{
-		CmacerBase cmacBase(GetCipherInfo(CipherType::AES, 128, CipherMode::ECB), SCtnFullR(test128Key));
+		CmacerBase cmacBase(GetCipherInfo(CipherType::AES, 128, CipherMode::ECB), CtnFullR(test128Key));
 
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
@@ -93,7 +93,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 
 		EXPECT_EQ(cmacHex, "b337e6976b75a2458d86dd7abb737f9f");
 
-		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 192, CipherMode::ECB), SCtnFullR(test192Key));
+		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 192, CipherMode::ECB), CtnFullR(test192Key));
 
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
@@ -110,7 +110,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 
 		EXPECT_EQ(cmacHex, "b76362c4d9f26fde563ce35dae1d2628");
 
-		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), SCtnFullR(test256Key));
+		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(test256Key));
 
 		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
@@ -141,13 +141,13 @@ GTEST_TEST(TestHmac, CmacerClass)
 	std::copy(std::begin(testKey128Str), std::end(testKey128Str), test128Key.Get().begin());
 
 	{
-		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1281(SCtnFullR(test128Key));
+		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1281(CtnFullR(test128Key));
 		cmac1281.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_COUNT(1);
 
-		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1282(SCtnFullR(test128Key));
+		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1282(CtnFullR(test128Key));
 		cmac1282.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
@@ -198,7 +198,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 	std::copy(std::begin(testKey256Str), std::end(testKey256Str), test256Key.Get().begin());
 
 	{
-		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac128(SCtnFullR(test128Key));
+		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac128(CtnFullR(test128Key));
 
 		auto cmac = cmac128.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 								CtnItemRangeR<0, 12>("TestMessage2"),
@@ -208,7 +208,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 		EXPECT_EQ(cmacHex, "91f63489d8fe8b6182f3f77579d4e4e8");
 
 
-		Cmacer<CipherType::AES, 192, CipherMode::ECB> cmac192(SCtnFullR(test192Key));
+		Cmacer<CipherType::AES, 192, CipherMode::ECB> cmac192(CtnFullR(test192Key));
 
 		cmac = cmac192.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 							CtnItemRangeR<0, 12>("TestMessage2"),
@@ -218,7 +218,7 @@ GTEST_TEST(TestCmac, CmacerCalc)
 		EXPECT_EQ(cmacHex, "a824c002cc220dc2ee1e247048f0513d");
 
 
-		Cmacer<CipherType::AES, 256, CipherMode::ECB> cmac256(SCtnFullR(test256Key));
+		Cmacer<CipherType::AES, 256, CipherMode::ECB> cmac256(CtnFullR(test256Key));
 
 		cmac = cmac256.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
 							CtnItemRangeR<0, 12>("TestMessage2"),

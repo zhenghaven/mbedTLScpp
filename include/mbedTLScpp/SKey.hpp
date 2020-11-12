@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SecretContainer.hpp"
+#include "SecretArray.hpp"
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp

@@ -30,9 +30,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	template<HashType _HashType,
 			 size_t   _keyLenInBits,
 			 typename _SContainerType,
-			 typename _LabelContainerType,
-			 typename _SaltContainerType>
-	inline SKey<_keyLenInBits> Hkdf(ContSecretCtnReadOnlyRef<_SContainerType> skey, ContCtnReadOnlyRef<_LabelContainerType> label, ContCtnReadOnlyRef<_SaltContainerType> salt)
+			 typename _LabelContainerType, bool _LabelContainerSecrecy,
+			 typename _SaltContainerType, bool _SaltContainerSecrecy>
+	inline SKey<_keyLenInBits> Hkdf(ContCtnReadOnlyRef<_SContainerType, true> skey,
+		ContCtnReadOnlyRef<_LabelContainerType, _LabelContainerSecrecy> label,
+		ContCtnReadOnlyRef<_SaltContainerType, _SaltContainerSecrecy> salt)
 	{
 		SKey<_keyLenInBits> res;
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::Hkdf, mbedtls_hkdf,

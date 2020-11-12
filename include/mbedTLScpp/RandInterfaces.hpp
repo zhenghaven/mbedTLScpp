@@ -87,8 +87,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @tparam ContainerType The type of the container.
 		 * @param data The reference to data container.
 		 */
-		template<typename ContainerType>
-		void RandContainer(ContCtnReadOnlyRef<ContainerType> data)
+		template<typename ContainerType, bool ContainerSecrecy>
+		void RandContainer(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
 		{
 			Rand(data.BeginPtr(), data.GetRegionSize());
 		}

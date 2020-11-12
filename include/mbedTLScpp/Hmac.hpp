@@ -3,7 +3,6 @@
 #include "MsgDigestBase.hpp"
 
 #include "Container.hpp"
-#include "SecretContainer.hpp"
 #include "Exceptions.hpp"
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
@@ -41,7 +40,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key    The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		HmacerBase(const mbedtls_md_info_t& mdInfo, ContSecretCtnReadOnlyRef<ContainerType> key) :
+		HmacerBase(const mbedtls_md_info_t& mdInfo, ContCtnReadOnlyRef<ContainerType, true> key) :
 			MsgDigestBase(mdInfo, true)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::HmacerBase,
@@ -92,8 +91,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @tparam ContainerType The type of the container that stores the data.
 		 * @param data The data to be hmaced.
 		 */
-		template<typename ContainerType>
-		void Update(ContCtnReadOnlyRef<ContainerType> data)
+		template<typename ContainerType, bool ContainerSecrecy>
+		void Update(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
 		{
 			NullCheck();
 
@@ -144,7 +143,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key    The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		void Restart(ContSecretCtnReadOnlyRef<ContainerType> key)
+		void Restart(ContCtnReadOnlyRef<ContainerType, true> key)
 		{
 			NullCheck();
 
@@ -189,7 +188,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		Hmacer(ContSecretCtnReadOnlyRef<ContainerType> key) :
+		Hmacer(ContCtnReadOnlyRef<ContainerType, true> key) :
 			HmacerBase(GetMdInfo(_HashTypeValue), key)
 		{}
 
@@ -286,7 +285,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return Hmac<_HashTypeValue> The HMAC result.
 		 */
 		template<class... Args>
-		Hmac<_HashTypeValue> Calc(ContCtnReadOnlyRef<Args>... args)
+		Hmac<_HashTypeValue> Calc(NormalContCtnReadOnlyRef<Args>... args)
+		{
+			return CalcList(ConstructInDataList(args...));
+		}
+		template<class... Args>
+		Hmac<_HashTypeValue> Calc(SecretContCtnReadOnlyRef<Args>... args)
 		{
 			return CalcList(ConstructInDataList(args...));
 		}

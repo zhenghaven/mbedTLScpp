@@ -37,21 +37,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	public:
 		StaticLoadedFunctions() :
-			m_zeroize(mbedtls_platform_zeroize),
-			m_memEqual(Internal::ConstTimeMemEqual),
-			m_memNEqual(Internal::ConstTimeMemNotEqual)
+			m_zeroize(mbedtls_platform_zeroize),        // noexcept
+			m_memEqual(Internal::ConstTimeMemEqual),    // noexcept
+			m_memNEqual(Internal::ConstTimeMemNotEqual) // noexcept
 		{}
 
 		virtual ~StaticLoadedFunctions()
 		{}
 
-		void SecureZeroize(void* ptr, size_t size)
+		void SecureZeroize(void* ptr, size_t size) noexcept
 		{
 			SecureZeroizeFunc tmpZeroize = m_zeroize;
 			(*tmpZeroize)(ptr, size);
 		}
 
-		bool ConstTimeMemEqual(const void* a, const void* b, size_t size)
+		bool ConstTimeMemEqual(const void* a, const void* b, size_t size) noexcept
 		{
 			MemEqualFunc tmpMemEqual = m_memEqual;
 			int res = (*tmpMemEqual)(a, b, size);
@@ -59,7 +59,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return bool(res);
 		}
 
-		bool ConstTimeMemNotEqual(const void* a, const void* b, size_t size)
+		bool ConstTimeMemNotEqual(const void* a, const void* b, size_t size) noexcept
 		{
 			MemEqualFunc tmpMemNEqual = m_memNEqual;
 			int res = (*tmpMemNEqual)(a, b, size);

@@ -84,8 +84,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @tparam ContainerType The type of the container that stores the data.
 		 * @param data The data to be hashed.
 		 */
-		template<typename ContainerType>
-		void Update(ContCtnReadOnlyRef<ContainerType> data)
+		template<typename ContainerType, bool ContainerSecrecy>
+		void Update(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
 		{
 			NullCheck();
 
@@ -268,7 +268,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return Hash<_HashTypeValue> The hash result.
 		 */
 		template<class... Args>
-		Hash<_HashTypeValue> Calc(ContCtnReadOnlyRef<Args>... args)
+		Hash<_HashTypeValue> Calc(NormalContCtnReadOnlyRef<Args>... args)
+		{
+			return CalcList(ConstructInDataList(args...));
+		}
+		template<class... Args>
+		Hash<_HashTypeValue> Calc(SecretContCtnReadOnlyRef<Args>... args)
 		{
 			return CalcList(ConstructInDataList(args...));
 		}

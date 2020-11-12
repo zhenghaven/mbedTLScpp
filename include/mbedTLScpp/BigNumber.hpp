@@ -720,8 +720,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param isPositive Should it be a positive number (since we assume the
 		 *                   byte array only stores unsigned value)?
 		 */
-		template<typename ContainerType>
-		ConstBigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true) :
+		template<typename ContainerType, bool ContainerSecrecy>
+		ConstBigNumber(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data, bool isPositive = true) :
 			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
 		{
 			if (data.GetRegionSize() % sizeof(mbedtls_mpi_uint) != 0)
@@ -843,8 +843,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                   unsigned value)
 		 * @param isLittleEndian Is the input bytes in little-endian format?
 		 */
-		template<typename ContainerType>
-		BigNumber(ContCtnReadOnlyRef<ContainerType> data, bool isPositive = true, bool isLittleEndian = true) :
+		template<typename ContainerType, bool ContainerSecrecy>
+		BigNumber(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data, bool isPositive = true, bool isLittleEndian = true) :
 			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
 		{
 			if (isLittleEndian)
