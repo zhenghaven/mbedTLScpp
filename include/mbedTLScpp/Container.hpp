@@ -1359,11 +1359,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnFullR(const ContainerType& ctn) noexcept
 	{
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn);
 	}
 
 
@@ -1386,14 +1387,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset, size_t endOffset,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
 		static_assert(endOffset <= CtnType<ContainerType>::sk_ctnSize, "The end of the range is outside of the container.");
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1411,14 +1413,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= CtnType<ContainerType>::sk_ctnSize, "The begining of the range is outside of the container.");
 
 		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1437,8 +1440,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset, size_t endOffset,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn)
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -1447,7 +1451,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			throw std::out_of_range("The end of the range is outside of the container.");
 		}
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1465,8 +1469,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginOffset,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn)
 	{
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
@@ -1475,7 +1480,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			throw std::out_of_range("The begining of the range is outside of the container.");
 		}
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1494,11 +1499,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset, size_t endOffset)
 	{
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset);
 	}
 
 	/**
@@ -1516,8 +1522,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset)
 	{
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
@@ -1526,7 +1533,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			throw std::out_of_range("The begining of the range is outside of the container.");
 		}
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset);
 	}
 
 
@@ -1549,8 +1556,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount, size_t endCount,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -1560,7 +1568,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1578,15 +1586,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= CtnType<ContainerType>::sk_itemCount, "The begining of the range is outside of the container.");
 
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1605,8 +1614,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount, size_t endCount,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn)
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -1619,7 +1629,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1637,8 +1647,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	template<size_t beginCount,
 		typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn)
 	{
 		if(beginCount > CtnType<ContainerType>::GetItemCount(ctn))
@@ -1649,7 +1660,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		const     size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1668,14 +1679,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn, size_t beginCount, size_t endCount)
 	{
 		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		const size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset);
 	}
 
 	/**
@@ -1693,8 +1705,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<typename ContainerType,
+		bool ContainerSecrecy = IsSecretContainer<ContainerType>::value,
 		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
-	inline ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>
+	inline ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>
 		CtnItemRangeR(const ContainerType& ctn, size_t beginCount)
 	{
 		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
@@ -1704,7 +1717,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			throw std::out_of_range("The begining of the range is outside of the container.");
 		}
 
-		return ContCtnReadOnlyRef<ContainerType, IsSecretContainer<ContainerType>::value>(ctn, beginOffset, endOffset);
+		return ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>(ctn, beginOffset, endOffset);
 	}
 
 	/**
