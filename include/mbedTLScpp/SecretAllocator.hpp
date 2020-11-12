@@ -3,11 +3,11 @@
 #include <cstddef>
 
 #ifdef MBEDTLSCPP_MEMORY_TEST
-#include <atomic> //size_t
+#include <atomic> //atomic_int64_t
 #endif
 #include <memory>
 
-#include <mbedtls/platform_util.h>
+#include "LoadedFunctions.hpp"
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp
@@ -74,7 +74,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	{
 		if (p != nullptr)
 		{
-			mbedtls_platform_zeroize(p, n * sizeof(value_type));
+			StaticLoadedFunctions::GetInstance().SecureZeroize(p, n * sizeof(value_type));
 		}
 	}
 
@@ -83,7 +83,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		SecureZeroize(p, n);
 
 #ifdef MBEDTLSCPP_MEMORY_TEST
-		gs_secretAllocationLeft -= n;
+		if (p != nullptr)
+		{
+			gs_secretAllocationLeft -= n;
+		}
 #endif
 
 		std::allocator<T>::deallocate(p, n);

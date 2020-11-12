@@ -2,6 +2,7 @@
 
 #include <iterator>
 
+#include "Common.hpp"
 #include "SecretAllocator.hpp"
 
 #include "Internal/Construct.hpp"
@@ -35,6 +36,175 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		static constexpr size_type sk_extra_cap = _NullTerminated ? 1 : 0;
 
+
+	public: // Static members:
+
+		template<typename _value_type = value_type,
+			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+		static void BuildEqualLengthString(uint8_t* a_buf, uint8_t* b_buf,
+			const _value_type* a, size_type a_size,
+			const _value_type* b, size_type b_size)
+		{
+			const uint8_t*       a_size_first = reinterpret_cast<const uint8_t*>(&a_size);
+			const uint8_t* const a_size_last  = a_size_first + sizeof(size_type);
+
+			const uint8_t*       a_first = reinterpret_cast<const uint8_t*>(a);
+			const uint8_t* const a_last  = a_first + (a_size * sizeof(_value_type));
+			const uint8_t*       b_first = reinterpret_cast<const uint8_t*>(b);
+			const uint8_t* const b_last  = b_first + (b_size * sizeof(_value_type));
+
+			// 1. fill a_buf = size | a | b
+			for(; a_size_first != a_size_last; ++a_buf, ++a_size_first)
+			{
+				*a_buf = *a_size_first;
+			}
+			for(; a_first != a_last; ++a_buf, ++a_first)
+			{
+				*a_buf = *a_first;
+			}
+			for(; b_first != b_last; ++a_buf, ++b_first)
+			{
+				*a_buf = *b_first;
+			}
+
+			const uint8_t*       b_size_first = reinterpret_cast<const uint8_t*>(&b_size);
+			const uint8_t* const b_size_last  = b_size_first + sizeof(size_type);
+
+			b_first = reinterpret_cast<const uint8_t*>(b);
+			a_first = reinterpret_cast<const uint8_t*>(a);
+
+			// 2. fill b_buf = size | b | a
+			for(; b_size_first != b_size_last; ++b_buf, ++b_size_first)
+			{
+				*b_buf = *b_size_first;
+			}
+			for(; b_first != b_last; ++b_buf, ++b_first)
+			{
+				*b_buf = *b_first;
+			}
+			for(; a_first != a_last; ++b_buf, ++a_first)
+			{
+				*b_buf = *a_first;
+			}
+		}
+
+		template<typename _value_type = value_type,
+			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+		static bool SafeCompareEqual(const _value_type* a, size_type a_size, const _value_type* b, size_type b_size)
+		{
+			using buf_allocator = typename allocator_traits::template rebind_alloc<uint8_t>;
+			using buf_allocator_traits = typename allocator_traits::template rebind_traits<uint8_t>;
+
+			buf_allocator alloc;
+
+			const size_t buf_size = sizeof(size_type) + (a_size * sizeof(_value_type)) + (b_size * sizeof(_value_type));
+
+			// allocate all buffer space at once
+			uint8_t* const buf = buf_allocator_traits::allocate(alloc, buf_size + buf_size);
+
+			try
+			{
+				uint8_t* a_buf = buf;
+				uint8_t* b_buf = buf + buf_size;
+
+				BuildEqualLengthString(a_buf, b_buf, a, a_size, b, b_size);
+
+				bool res = StaticLoadedFunctions::GetInstance().ConstTimeMemEqual(a_buf, b_buf, buf_size);
+				buf_allocator_traits::deallocate(alloc, buf, buf_size + buf_size);
+				return res;
+			}
+			catch(...)
+			{
+				buf_allocator_traits::deallocate(alloc, buf, buf_size + buf_size);
+				throw;
+			}
+		}
+
+		template<typename _value_type = value_type,
+			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+		static bool SafeCompareNotEqual(const _value_type* a, size_type a_size, const _value_type* b, size_type b_size)
+		{
+			using buf_allocator = typename allocator_traits::template rebind_alloc<uint8_t>;
+			using buf_allocator_traits = typename allocator_traits::template rebind_traits<uint8_t>;
+
+			buf_allocator alloc;
+
+			const size_t buf_size = sizeof(size_type) + (a_size * sizeof(_value_type)) + (b_size * sizeof(_value_type));
+
+			// allocate all buffer space at once
+			uint8_t* const buf = buf_allocator_traits::allocate(alloc, buf_size + buf_size);
+
+			try
+			{
+				uint8_t* a_buf = buf;
+				uint8_t* b_buf = buf + buf_size;
+
+				BuildEqualLengthString(a_buf, b_buf, a, a_size, b, b_size);
+
+				bool res = StaticLoadedFunctions::GetInstance().ConstTimeMemNotEqual(a_buf, b_buf, buf_size);
+				buf_allocator_traits::deallocate(alloc, buf, buf_size + buf_size);
+				return res;
+			}
+			catch(...)
+			{
+				buf_allocator_traits::deallocate(alloc, buf, buf_size + buf_size);
+				throw;
+			}
+		}
+
+	private: // methods that are needed by constructors
+
+		pointer allocate(size_type cap)
+		{
+			return allocator_traits::allocate(m_alloc, cap + sk_extra_cap);
+		}
+
+		void deallocate(pointer data, size_type cap) noexcept
+		{
+			try
+			{
+				allocator_traits::deallocate(m_alloc, data, cap + sk_extra_cap);
+			}
+			catch(...)
+			{}
+		}
+
+		void null_terminate() noexcept
+		{
+			if (_NullTerminated)
+			{
+				try
+				{
+					if (m_data != nullptr)
+					{
+						std::memset(m_data + m_size, 0, sk_extra_cap * sizeof(value_type));
+					}
+				}
+				catch(...)
+				{}
+			}
+		}
+
+		void clear_only() noexcept
+		{
+			try
+			{
+				Internal::destroy(m_data, m_data + m_size);
+			}
+			catch(...)
+			{}
+
+			m_size = 0;
+		}
+
+		void clear_and_deallocate() noexcept
+		{
+			clear_only();
+			deallocate(m_data, m_capacity);
+			m_data = nullptr;
+			m_capacity = 0;
+		}
+
 	public:
 
 		SecretVector() :
@@ -54,7 +224,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		SecretVector(size_type count, const allocator_type& alloc = allocator_type()) :
 			m_alloc(alloc),
 			m_capacity(count),
-			m_data(allocator_traits::allocate(m_alloc, count + sk_extra_cap)),
+			m_data(allocate(count)),
 			m_size(0)
 		{
 			try
@@ -74,7 +244,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		SecretVector(size_type count, const value_type& value, const allocator_type& alloc = allocator_type()) :
 			m_alloc(alloc),
 			m_capacity(count),
-			m_data(allocator_traits::allocate(m_alloc, count + sk_extra_cap)),
+			m_data(allocate(count)),
 			m_size(0)
 		{
 			try
@@ -99,11 +269,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			const auto signed_count = std::distance(first, last);
 			if (signed_count < 0)
 			{
-				throw std::invalid_argument("The iterator range given may be in flipped side.");
+				throw std::invalid_argument("In SecretVector::SecretVector, the iterator range given may be in flipped side.");
 			}
 
 			const size_type count = static_cast<size_type>(signed_count);
-			m_data = allocator_traits::allocate(m_alloc, count + sk_extra_cap);
+			m_data = allocate(count);
 			m_capacity = count;
 
 			try
@@ -124,10 +294,30 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			SecretVector(init_list.begin(), init_list.end(), alloc)
 		{}
 
+		SecretVector(const SecretVector& other, const allocator_type& alloc) :
+			m_alloc(alloc),
+			m_capacity(other.m_capacity),
+			m_data(allocate(other.m_capacity)),
+			m_size(0)
+		{
+			try
+			{
+				std::uninitialized_copy(other.m_data, other.m_data + other.m_size, m_data);
+				m_size = other.m_size;
+			}
+			catch(...)
+			{
+				// uninitialized_copy will destroy any constructed object when throw.
+				clear_and_deallocate();
+				throw;
+			}
+			null_terminate();
+		}
+
 		SecretVector(const SecretVector& other) :
 			m_alloc(other.m_alloc),
 			m_capacity(other.m_capacity),
-			m_data(allocator_traits::allocate(m_alloc, other.m_capacity)),
+			m_data(allocate(other.m_capacity)),
 			m_size(0)
 		{
 			try
@@ -146,6 +336,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		SecretVector(SecretVector&& other) noexcept :
 			m_alloc(std::move(other.m_alloc)),
+			m_capacity(std::move(other.m_capacity)),
+			m_data(std::move(other.m_data)),
+			m_size(std::move(other.m_size))
+		{
+			other.m_data = nullptr;
+			other.m_size = 0;
+			other.m_capacity = 0;
+		}
+
+		SecretVector(SecretVector&& other, const allocator_type& alloc) :
+			m_alloc(alloc),
 			m_capacity(std::move(other.m_capacity)),
 			m_data(std::move(other.m_data)),
 			m_size(std::move(other.m_size))
@@ -200,8 +401,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		void clear() noexcept
 		{
-			Internal::destroy(m_data, m_data + m_size);
-			m_size = 0;
+			clear_only();
 
 			null_terminate();
 		}
@@ -406,7 +606,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				// No enough space, we need to reallocate
 				// Construct the value in a *safe* place first.
 				SecretVector secure_tmp(1, value, m_alloc);
-				realloc_move_insert(end() - begin(), secure_tmp.begin(), secure_tmp.size());
+				realloc_move_insert(end() - begin(), secure_tmp.data(), secure_tmp.size());
 			}
 
 			null_terminate();
@@ -451,7 +651,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				SecretVector secure_tmp(m_alloc);
 				secure_tmp.reserve(1);
 				secure_tmp.emplace_back(std::forward<_Args>(__args)...);
-				realloc_move_insert(end() - begin(), secure_tmp.begin(), secure_tmp.size());
+				realloc_move_insert(end() - begin(), secure_tmp.data(), secure_tmp.size());
 			}
 
 			null_terminate();
@@ -489,7 +689,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				{
 					const size_type offset = pos - cbegin();
 					// No enough space, we need to reallocate
-					realloc_move_insert(offset, secure_tmp.begin(), secure_tmp.size());
+					realloc_move_insert(offset, secure_tmp.data(), secure_tmp.size());
 
 					null_terminate();
 					return iterator(m_data + offset);
@@ -520,7 +720,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				// No enough space, we need to reallocate
 				// Construct the value in a *safe* place first.
 				SecretVector secure_tmp(1, value, m_alloc);
-				realloc_move_insert(pos - cbegin(), secure_tmp.begin(), secure_tmp.size());
+				realloc_move_insert(pos - cbegin(), secure_tmp.data(), secure_tmp.size());
 			}
 
 			null_terminate();
@@ -553,7 +753,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				SecretVector secure_tmp(m_alloc);
 				secure_tmp.reserve(1);
 				secure_tmp.emplace_back(std::move(value));
-				realloc_move_insert(offset, secure_tmp.begin(), secure_tmp.size());
+				realloc_move_insert(offset, secure_tmp.data(), secure_tmp.size());
 			}
 
 			null_terminate();
@@ -577,9 +777,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				{
 					realloc_fill_insert(pos - begin(), value_copy, count);
 				}
+
+				null_terminate();
 			}
 
-			null_terminate();
 			return begin() + offset;
 		}
 
@@ -599,7 +800,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			const auto signed_count = std::distance(first, last);
 			if (signed_count < 0)
 			{
-				throw std::invalid_argument("The iterator range given may be in flipped side.");
+				throw std::invalid_argument("In SecretVector::insert, the iterator range given may be in flipped side.");
 			}
 
 			const size_type count = static_cast<size_type>(signed_count);
@@ -615,17 +816,75 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				{
 					// there is no enough space - realloc + copy
 					SecretVector secure_tmp(first, last, m_alloc);
-					realloc_move_insert(pos - begin(), secure_tmp.begin(), secure_tmp.size());
+					realloc_move_insert(pos - begin(), secure_tmp.data(), secure_tmp.size());
 				}
+
+				null_terminate();
 			}
 
-			null_terminate();
 			return iterator(m_data + n);
 		}
 
 		template<class _InputIt,
 			typename std::enable_if<!std::is_same<typename std::iterator_traits<_InputIt>::value_type, void>::value, int>::type = 0>
 		iterator insert(const_iterator pos, _InputIt first, _InputIt last)
+		{
+			const size_type n = pos - cbegin();
+			iterator mut_pos = begin() + n;
+
+			return insert(mut_pos, first, last);
+		}
+
+		iterator insert(iterator pos, const value_type* first, const value_type* last)
+		{
+			const size_type n = pos - begin();
+
+			if (first > last)
+			{
+				throw std::invalid_argument("In SecretVector::insert, the pointer range given may be in flipped side.");
+			}
+
+			const size_type count = last - first;
+
+			if(count > 0)
+			{
+				if (size_type(m_capacity - m_size) >= count)
+				{
+					// there is enough space - copy only
+
+					if (m_data <= first && first < (m_data + m_size))
+					{
+						// Source overlap with this vector
+
+						SecretVector secure_tmp;
+						secure_tmp.assign(first, last);
+						noalloc_copy_insert(pos,
+							std::make_move_iterator(secure_tmp.begin()),
+							std::make_move_iterator(secure_tmp.end()),
+							count);
+					}
+					else
+					{
+						// no overlap
+
+						noalloc_copy_insert(pos, first, last, count);
+					}
+				}
+				else
+				{
+					// there is no enough space - realloc + copy
+
+					// Overlap is OK
+					realloc_copy_insert(pos - begin(), first, count);
+				}
+
+				null_terminate();
+			}
+
+			return iterator(m_data + n);
+		}
+
+		iterator insert(const_iterator pos, const value_type* first, const value_type* last)
 		{
 			const size_type n = pos - cbegin();
 			iterator mut_pos = begin() + n;
@@ -682,7 +941,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				// there is enough space
 				// 1. clear;
-				clear();
+				clear_only();
 			}
 			else
 			{
@@ -708,7 +967,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			const auto signed_count = std::distance(first, last);
 			if (signed_count < 0)
 			{
-				throw std::invalid_argument("The iterator range given may be in flipped side.");
+				throw std::invalid_argument("In SecretVector::insert, the iterator range given may be in flipped side.");
 			}
 
 			const size_type count = static_cast<size_type>(signed_count);
@@ -716,7 +975,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				// there is enough space
 				// 1. clear;
-				clear();
+				clear_only();
 			}
 			else
 			{
@@ -737,44 +996,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	protected:
 
-		pointer allocate(size_type cap)
-		{
-			return allocator_traits::allocate(m_alloc, cap + sk_extra_cap);
-		}
-
-		void deallocate(pointer data, size_type cap)
-		{
-			allocator_traits::deallocate(m_alloc, data, cap + sk_extra_cap);
-		}
-
-		void null_terminate() noexcept
-		{
-			if (_NullTerminated)
-			{
-				try
-				{
-					if (m_data != nullptr)
-					{
-						std::memset(m_data + m_size, 0, sk_extra_cap * sizeof(value_type));
-					}
-				}
-				catch(...)
-				{}
-			}
-		}
-
 		void range_check(size_type n) const
 		{
 			if (n >= size())
 				throw std::out_of_range("SecretVector::range_check out of range.");
-		}
-
-		void clear_and_deallocate() noexcept
-		{
-			clear();
-			deallocate(m_data, m_capacity);
-			m_data = nullptr;
-			m_capacity = 0;
 		}
 
 		// Do nothing if new_cap == m_capacity || new_cap < m_size
@@ -814,12 +1039,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		size_type get_recommend_cap(size_type add) const
 		{
 			const size_type cap        = capacity();
-			const size_type ms         = max_size();
+			const size_type ms         = max_size(); // NOTE: max_size counted sk_extra_cap
 			const size_type new_size   = m_size + add;
-			const size_type new_needed = new_size + sk_extra_cap;
-			const size_type cap_inuse  = cap + sk_extra_cap;
 
-			if (new_needed > ms)
+			if (new_size > ms)
 			{
 				throw std::length_error("SecretVector::get_recommend_cap new capacity exceed the max_size().");
 			}
@@ -827,11 +1050,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				return cap;
 			}
-			if (cap_inuse >= ms / 2)
+			if (cap >= ms / 2)
 			{
 				return ms;
 			}
-			return std::max<size_type>((2 * cap), new_needed);
+			return std::max<size_type>((2 * cap), new_size);
 		}
 
 	private:
@@ -909,7 +1132,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
-		void realloc_move_insert(size_type elems_before, iterator src_first, size_type elems_count)
+		void realloc_move_insert(size_type elems_before, pointer src_first, size_type elems_count)
 		{
 			const size_type new_cap = get_recommend_cap(elems_count);
 			pointer new_data = allocate(new_cap);
@@ -918,6 +1141,67 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			try
 			{
 				Internal::uninitialized_move(src_first, src_first + elems_count, new_data + elems_before);
+			}
+			catch(...)
+			{
+				// Deallocate
+				deallocate(new_data, new_cap);
+
+				// Rethrow
+				throw;
+			}
+
+			//Move front part
+			try
+			{
+				Internal::uninitialized_move(begin(), begin() + elems_before, new_data);
+			}
+			catch(...)
+			{
+				// Failed. Destroy already moved elems
+				Internal::destroy(new_data + elems_before, new_data + elems_before + elems_count); // destroy middle part
+
+				// Deallocate
+				deallocate(new_data, new_cap);
+
+				// Rethrow
+				throw;
+			}
+
+			//Move tail part
+			try
+			{
+				Internal::uninitialized_move(begin() + elems_before, end(), new_data + elems_before + elems_count);
+			}
+			catch(...)
+			{
+				// Failed. Destroy already moved elems
+				Internal::destroy(new_data, new_data + elems_before + elems_count); // destroy front + middle part
+
+				// Deallocate
+				deallocate(new_data, new_cap);
+
+				// Rethrow
+				throw;
+			}
+
+			Internal::destroy(begin(), end());
+			deallocate(m_data, m_capacity);
+			m_data = new_data;
+			m_size += elems_count;
+			m_capacity = new_cap;
+		}
+
+		// overlap is OK, since source will be copied to the new space first.
+		void realloc_copy_insert(size_type elems_before, const_pointer src_first, size_type elems_count)
+		{
+			const size_type new_cap = get_recommend_cap(elems_count);
+			pointer new_data = allocate(new_cap);
+
+			// Move new elems
+			try
+			{
+				std::uninitialized_copy(src_first, src_first + elems_count, new_data + elems_before);
 			}
 			catch(...)
 			{
@@ -1039,10 +1323,51 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 	};
 
-	// template< class T, class Alloc >
-	// bool operator==( const SecretVector<T,Alloc>& lhs,
-	// 				 const SecretVector<T,Alloc>& rhs )
-	// {
+	template<typename _ValType, typename _Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator==(const SecretVector<_ValType, _Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
 
-	// }
+	template<typename _ValType, typename _Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator!=(const SecretVector<_ValType, _Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareNotEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
+
+	template<typename _ValType, typename _Alloc, typename _std_Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator==(const SecretVector<_ValType, _Alloc>& lhs, const std::vector<_ValType, _std_Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
+
+	template<typename _ValType, typename _Alloc, typename _std_Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator!=(const SecretVector<_ValType, _Alloc>& lhs, const std::vector<_ValType, _std_Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareNotEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
+
+	template<typename _ValType, typename _Alloc, typename _std_Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator==(const std::vector<_ValType, _std_Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
+
+	template<typename _ValType, typename _Alloc, typename _std_Alloc,
+		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+	bool operator!=(const std::vector<_ValType, _std_Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
+	{
+		using vec_type = SecretVector<_ValType, _Alloc>;
+		return vec_type::SafeCompareNotEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
+	}
 }

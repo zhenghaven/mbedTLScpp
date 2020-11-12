@@ -21,6 +21,7 @@
 
 #include "TestSecretAllocator.hpp"
 #include "TestSecretVector.hpp"
+#include "TestSecretString.hpp"
 
 int main(int argc, char** argv)
 {

@@ -1629,3 +1629,73 @@ GTEST_TEST(TestSecretVector, AssignRange)
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
+
+GTEST_TEST(TestSecretVector, InEquality)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EXPECT_TRUE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_TRUE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_TRUE((std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } !=
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+GTEST_TEST(TestSecretVector, Equality)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EXPECT_TRUE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_TRUE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_TRUE((std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+		EXPECT_FALSE((std::vector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, } ==
+					SecretVector<uint8_t>{50, 50, 50, 50, 50, 50, 50, 50, 50, 50, }));
+
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
