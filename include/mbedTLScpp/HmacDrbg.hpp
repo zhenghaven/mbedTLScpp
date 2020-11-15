@@ -124,10 +124,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param buf  The pointer to the beginning of the memory region.
 		 * @param size The size of the memory region.
 		 */
-		virtual void Rand(void* buf, const size_t size) const override
+		virtual void Rand(void* buf, const size_t size) override
 		{
 			NullCheck();
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacDrbg::Rand, mbedtls_hmac_drbg_random, MutableGet(), static_cast<unsigned char *>(buf), size);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacDrbg::Rand, mbedtls_hmac_drbg_random, Get(), static_cast<unsigned char *>(buf), size);
 		}
 
 		/**

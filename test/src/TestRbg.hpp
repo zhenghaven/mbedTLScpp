@@ -148,10 +148,10 @@ GTEST_TEST(TestRbg, CppWrap)
 	}
 }
 
-inline int TestDrbgCallBack(const RbgInterface & rbg)
+inline int TestDrbgCallBack(std::unique_ptr<RbgInterface> rbg)
 {
 	int res;
-	EXPECT_EQ(RbgInterface::CallBack(&rbg, reinterpret_cast<unsigned char*>(&res), sizeof(res)), MBEDTLS_EXIT_SUCCESS);
+	EXPECT_EQ(RbgInterface::CallBack(rbg.get(), reinterpret_cast<unsigned char*>(&res), sizeof(res)), MBEDTLS_EXIT_SUCCESS);
 	return res;
 }
 
@@ -174,8 +174,8 @@ GTEST_TEST(TestRbg, DefaultRbg)
 		int randInt1 = 0;
 		int randInt2 = 0;
 
-		randInt1 = TestDrbgCallBack(DefaultRbg());
-		randInt2 = TestDrbgCallBack(DefaultRbg());
+		randInt1 = TestDrbgCallBack(Internal::make_unique<DefaultRbg>());
+		randInt2 = TestDrbgCallBack(Internal::make_unique<DefaultRbg>());
 
 		EXPECT_NE(randInt1, randInt2);
 	}

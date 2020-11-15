@@ -29,7 +29,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @return	mbedTLS errorcode.
 		 */
-		static int CallBack(const void * ctx, unsigned char * buf, size_t len) noexcept
+		static int CallBack(void * ctx, unsigned char * buf, size_t len) noexcept
 		{
 			if (ctx == nullptr)
 			{
@@ -39,7 +39,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			try
 			{
-				const RbgInterface* rbg = static_cast<const RbgInterface*>(ctx);
+				RbgInterface* rbg = static_cast<RbgInterface*>(ctx);
 				rbg->Rand(buf, len);
 				return MBEDTLS_EXIT_SUCCESS;
 			}
@@ -65,7 +65,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param [in,out]	buf 	The buffer to store the generated random bits.
 		 * @param 		  	size	The size.
 		 */
-		virtual void Rand(void* buf, const size_t size) const = 0;
+		virtual void Rand(void* buf, const size_t size) = 0;
 
 		/**
 		 * @brief Generate Random bits to fill a given C standard structs

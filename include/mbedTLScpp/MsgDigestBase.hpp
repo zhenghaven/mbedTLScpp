@@ -47,6 +47,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	static_assert(GetHashByteSize(HashType::SHA384) == (384 / gsk_bitsPerByte), "Programming error.");
 	static_assert(GetHashByteSize(HashType::SHA512) == (512 / gsk_bitsPerByte), "Programming error.");
 
+	/**
+	 * @brief Translating mbed TLS cpp's message digest type to mbed TLS's message
+	 *        digest type.
+	 *
+	 * @param type mbed TLS cpp's message digest type.
+	 * @return constexpr mbedtls_md_type_t mbed TLS's message digest type.
+	 */
+	inline constexpr mbedtls_md_type_t GetMbedTlsMdType(HashType type)
+	{
+		return (type == HashType::SHA224 ?
+		           mbedtls_md_type_t::MBEDTLS_MD_SHA224 :
+			   (type == HashType::SHA256 ?
+			       mbedtls_md_type_t::MBEDTLS_MD_SHA256 :
+			   (type == HashType::SHA384 ?
+			       mbedtls_md_type_t::MBEDTLS_MD_SHA384 :
+			   (type == HashType::SHA512 ?
+			       mbedtls_md_type_t::MBEDTLS_MD_SHA512 :
+                   throw InvalidArgumentException("Hash type given is not supported.")
+			   ))));
+	}
 
 	/**
 	 * @brief Get the md_info C object from mbed TLS, by using the HashType.
@@ -57,24 +77,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	inline const mbedtls_md_info_t& GetMdInfo(HashType type)
 	{
-		const mbedtls_md_info_t* res = nullptr;
-		switch (type)
-		{
-		case HashType::SHA224:
-			res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA224);
-			break;
-		case HashType::SHA256:
-			res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256);
-			break;
-		case HashType::SHA384:
-			res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA384);
-			break;
-		case HashType::SHA512:
-			res = mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA512);
-			break;
-		default:
-			break;
-		}
+		const mbedtls_md_info_t* res = mbedtls_md_info_from_type(GetMbedTlsMdType(type));
 
 		if (res != nullptr)
 		{
