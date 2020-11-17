@@ -9,6 +9,8 @@
 #include "Common.hpp"
 #include "Exceptions.hpp"
 #include "Container.hpp"
+#include "DefaultRbg.hpp"
+
 #include "Internal/Codec.hpp"
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
@@ -793,6 +795,24 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	class BigNumber : public BigNumberBase<DefaultBigNumObjTrait>
 	{
+	public: // Static members:
+
+		/**
+		 * @brief Construct a new Big Number object and fill with random value.
+		 *
+		 * @param size The number of random bytes to generate.
+		 * @param rand The random bit generator. It's default to use \c DefaultRbg .
+		 * @return BigNumber The new random big number.
+		 */
+		static BigNumber Rand(size_t size, std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			BigNumber rd;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::Rand,
+				mbedtls_mpi_fill_random, rd.Get(), size, &RbgInterface::CallBack, rand.get());
+
+			return rd;
+		}
+
 	public:
 
 		/**

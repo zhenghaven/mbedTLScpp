@@ -11,11 +11,11 @@
 #include "TestCipher.hpp"
 #include "TestCmac.hpp"
 
-#include "TestBigNumber.hpp"
-
 #include "TestEntropy.hpp"
 
 #include "TestRbg.hpp"
+
+#include "TestBigNumber.hpp"
 
 #include "TestHkdf.hpp"
 

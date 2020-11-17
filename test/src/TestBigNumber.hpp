@@ -16,26 +16,29 @@ using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 
 GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 {
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
 	{
 		BigNumberBase<DefaultBigNumObjTrait> bigNum1;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		BigNumberBase<DefaultBigNumObjTrait> bigNum2;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		BigNumberBase<DefaultBigNumObjTrait> bigNum3(std::move(bigNum1));
@@ -49,11 +52,14 @@ GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
 GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 {
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
 	static constexpr uint8_t bignumBytesE1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytesE2[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytes1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
@@ -66,22 +72,22 @@ GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 		ConstBigNumber bigNum1(CtnFullR(bignumBytes1));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		ConstBigNumber bigNum2(CtnFullR(bignumBytes2));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		ConstBigNumber bigNum3(std::move(bigNum1));
@@ -95,11 +101,14 @@ GTEST_TEST(TestBigNumber, ConstBigNumberClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
 GTEST_TEST(TestBigNumber, ConstBigNumber)
 {
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
 	static constexpr uint8_t bignumBytes1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytes2[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
 	static constexpr uint8_t bignumBytes3[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
@@ -161,11 +170,14 @@ GTEST_TEST(TestBigNumber, ConstBigNumber)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
 GTEST_TEST(TestBigNumber, BigNumberClass)
 {
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
 	static constexpr uint8_t bignumBytesE1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytesE2[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytes1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
@@ -178,22 +190,22 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		BigNumber bigNum1(CtnFullR(bignumBytes1));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		BigNumber bigNum2(CtnFullR(bignumBytes2));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
 		bigNum1 = std::move(bigNum2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
 		BigNumber bigNum3(std::move(bigNum1));
@@ -232,11 +244,14 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
 GTEST_TEST(TestBigNumber, BigNumberCalc)
 {
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
 	static constexpr size_t testLoopTime = 500;
 	{
 		// Prepare random num generator
@@ -392,5 +407,21 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+}
+
+GTEST_TEST(TestBigNumber, Rand)
+{
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
+	{
+		BigNumber num1 = BigNumber::Rand(100);
+		BigNumber num2 = BigNumber::Rand(100);
+
+		EXPECT_NE(num1, num2);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
