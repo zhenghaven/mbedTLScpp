@@ -32,9 +32,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 typename _SContainerType,
 			 typename _LabelContainerType, bool _LabelContainerSecrecy,
 			 typename _SaltContainerType, bool _SaltContainerSecrecy>
-	inline SKey<_keyLenInBits> Hkdf(ContCtnReadOnlyRef<_SContainerType, true> skey,
-		ContCtnReadOnlyRef<_LabelContainerType, _LabelContainerSecrecy> label,
-		ContCtnReadOnlyRef<_SaltContainerType, _SaltContainerSecrecy> salt)
+	inline SKey<_keyLenInBits> Hkdf(const ContCtnReadOnlyRef<_SContainerType, true>& skey,
+		const ContCtnReadOnlyRef<_LabelContainerType, _LabelContainerSecrecy>& label,
+		const ContCtnReadOnlyRef<_SaltContainerType, _SaltContainerSecrecy>& salt)
 	{
 		SKey<_keyLenInBits> res;
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::Hkdf, mbedtls_hkdf,

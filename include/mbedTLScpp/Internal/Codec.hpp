@@ -83,7 +83,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2HEXBigEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2HEXBigEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -120,7 +120,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2HEXLitEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2HEXLitEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -157,7 +157,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2HexBigEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2HexBigEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -194,7 +194,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The hex string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2HexLitEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2HexLitEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 2;
@@ -231,7 +231,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The binary string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2BinLitEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2BinLitEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 8;
@@ -286,7 +286,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return std::string The binary string.
 		 */
 		template<size_t _MinWidth = 0, uint8_t _PaddingVal = 0, typename ContainerType, bool ContainerSecrecy>
-		inline std::string Bytes2BinBigEnd(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> cnt)
+		inline std::string Bytes2BinBigEnd(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& cnt)
 		{
 			std::string res;
 			const size_t actualWidth = cnt.GetRegionSize() * 8;

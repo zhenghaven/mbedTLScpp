@@ -262,7 +262,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_PKTrait = PKObjTrait,
 			typename ContainerType,
 			enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		PKeyBase(ContCtnReadOnlyRef<ContainerType, true> der) :
+		PKeyBase(const ContCtnReadOnlyRef<ContainerType, true>& der) :
 			PKeyBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_key, Get(),
@@ -279,7 +279,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_PKTrait = PKObjTrait,
 			typename ContainerType,
 			enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		PKeyBase(ContCtnReadOnlyRef<ContainerType, false> der) :
+		PKeyBase(const ContCtnReadOnlyRef<ContainerType, false>& der) :
 			PKeyBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_public_key, Get(),
@@ -533,9 +533,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				sign.BeginBytePtr(), sign.GetRegionSize());
 		}
 
-		template<typename _HashCtnType, bool _HashCtnSecrecy>
+		template<typename _HashCtnType>
 		std::vector<uint8_t> DerSign(HashType hashType,
-			const ContCtnReadOnlyRef<_HashCtnType, _HashCtnSecrecy>& hash,
+			const ContCtnReadOnlyRef<_HashCtnType>& hash,
 			std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
 		{
 			NullCheck();

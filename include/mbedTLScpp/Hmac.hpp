@@ -40,7 +40,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key    The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		HmacerBase(const mbedtls_md_info_t& mdInfo, ContCtnReadOnlyRef<ContainerType, true> key) :
+		HmacerBase(const mbedtls_md_info_t& mdInfo, const ContCtnReadOnlyRef<ContainerType, true>& key) :
 			MsgDigestBase(mdInfo, true)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::HmacerBase,
@@ -92,7 +92,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param data The data to be hmaced.
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		void Update(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
+		void Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
 		{
 			NullCheck();
 
@@ -143,7 +143,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key    The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		void Restart(ContCtnReadOnlyRef<ContainerType, true> key)
+		void Restart(const ContCtnReadOnlyRef<ContainerType, true>& key)
 		{
 			NullCheck();
 
@@ -188,7 +188,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key The secret key for HMAC.
 		 */
 		template<typename ContainerType>
-		Hmacer(ContCtnReadOnlyRef<ContainerType, true> key) :
+		Hmacer(const ContCtnReadOnlyRef<ContainerType, true>& key) :
 			HmacerBase(GetMdInfo(_HashTypeValue), key)
 		{}
 
@@ -285,12 +285,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return Hmac<_HashTypeValue> The HMAC result.
 		 */
 		template<class... Args>
-		Hmac<_HashTypeValue> Calc(NormalContCtnReadOnlyRef<Args>... args)
-		{
-			return CalcList(ConstructInDataList(args...));
-		}
-		template<class... Args>
-		Hmac<_HashTypeValue> Calc(SecretContCtnReadOnlyRef<Args>... args)
+		Hmac<_HashTypeValue> Calc(Args... args)
 		{
 			return CalcList(ConstructInDataList(args...));
 		}

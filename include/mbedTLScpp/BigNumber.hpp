@@ -721,7 +721,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                   byte array only stores unsigned value)?
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		ConstBigNumber(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data, bool isPositive = true) :
+		ConstBigNumber(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data, bool isPositive = true) :
 			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
 		{
 			if (data.GetRegionSize() % sizeof(mbedtls_mpi_uint) != 0)
@@ -844,7 +844,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param isLittleEndian Is the input bytes in little-endian format?
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		BigNumber(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data, bool isPositive = true, bool isLittleEndian = true) :
+		BigNumber(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data, bool isPositive = true, bool isLittleEndian = true) :
 			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
 		{
 			if (isLittleEndian)

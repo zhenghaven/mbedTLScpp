@@ -82,18 +82,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief	Generate Random bits to fill a given data container.
-		 *
-		 * @tparam ContainerType The type of the container.
-		 * @param data The reference to data container.
-		 */
-		template<typename ContainerType, bool ContainerSecrecy>
-		void RandContainer(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
-		{
-			Rand(data.BeginPtr(), data.GetRegionSize());
-		}
-
-		/**
 		 * @brief Get a random number
 		 *
 		 * @tparam ResultType The type of the number.

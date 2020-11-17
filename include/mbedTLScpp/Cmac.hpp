@@ -45,7 +45,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key        The secret key for CMAC.
 		 */
 		template<typename ContainerType>
-		CmacerBase(const mbedtls_cipher_info_t& cipherInfo, ContCtnReadOnlyRef<ContainerType, true> key) :
+		CmacerBase(const mbedtls_cipher_info_t& cipherInfo, const ContCtnReadOnlyRef<ContainerType, true>& key) :
 			CipherBase(cipherInfo)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::CmacerBase,
@@ -97,7 +97,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param data The data to be hmaced.
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		void Update(ContCtnReadOnlyRef<ContainerType, ContainerSecrecy> data)
+		void Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
 		{
 			NullCheck();
 
@@ -187,7 +187,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param key The secret key for CMAC.
 		 */
 		template<typename ContainerType>
-		Cmacer(ContCtnReadOnlyRef<ContainerType, true> key) :
+		Cmacer(const ContCtnReadOnlyRef<ContainerType, true>& key) :
 			CmacerBase(GetCipherInfo(_cipherType, _bitSize, _cipherMode), key)
 		{}
 
@@ -284,12 +284,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return Cmac<_HashTypeValue> The CMAC result.
 		 */
 		template<class... Args>
-		Cmac<_cipherType, _bitSize, _cipherMode> Calc(NormalContCtnReadOnlyRef<Args>... args)
-		{
-			return CalcList(ConstructInDataList(args...));
-		}
-		template<class... Args>
-		Cmac<_cipherType, _bitSize, _cipherMode> Calc(SecretContCtnReadOnlyRef<Args>... args)
+		Cmac<_cipherType, _bitSize, _cipherMode> Calc(Args... args)
 		{
 			return CalcList(ConstructInDataList(args...));
 		}
