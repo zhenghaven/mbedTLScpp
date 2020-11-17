@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/CtrDrbg.hpp>

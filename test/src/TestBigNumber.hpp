@@ -1,10 +1,10 @@
 #pragma once
 
+#include <random>
+
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/BigNumber.hpp>
-
-#include <random>
 
 #include "MemoryTest.hpp"
 

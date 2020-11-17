@@ -1493,7 +1493,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param ctn The const-reference to the container.
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<typename ContainerType,
+	template<// automated parts:
+			 typename ContainerType,
 			 enable_if_t<
 			 	CtnType<ContainerType>::sk_isCtnCont &&
 				!CtnType<ContainerType>::sk_isCtnStatic,
@@ -1504,7 +1505,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn);
 	}
 
-	template<typename ContainerType,
+	template<// automated parts:
+			 typename ContainerType,
 			 enable_if_t<
 			 	CtnType<ContainerType>::sk_isCtnCont &&
 				CtnType<ContainerType>::sk_isCtnStatic,
@@ -1534,15 +1536,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginOffset, size_t endOffset,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyStRef<ContainerType, endOffset - beginOffset>
+			 typename ContainerType,
+			 // automated parts:
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0,
+			 size_t regStSize = endOffset - beginOffset>
+	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
 		CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
 		static_assert(endOffset <= CtnType<ContainerType>::sk_ctnSize, "The end of the range is outside of the container.");
 
-		return ContCtnReadOnlyStRef<ContainerType, endOffset - beginOffset>(ctn, beginOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1559,15 +1566,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginOffset,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyStRef<ContainerType, CtnType<ContainerType>::sk_ctnSize - beginOffset>
+			 typename ContainerType,
+			 // automated parts:
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0,
+			 size_t regStSize = CtnType<ContainerType>::sk_ctnSize - beginOffset>
+	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
 		CtnByteRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= CtnType<ContainerType>::sk_ctnSize, "The begining of the range is outside of the container.");
 
-		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
-		return ContCtnReadOnlyStRef<ContainerType, endOffset - beginOffset>(ctn, beginOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1585,8 +1596,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginOffset, size_t endOffset,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+			 // automated parts:
+			 typename ContainerType,
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				!CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnByteRangeR(const ContainerType& ctn)
 	{
@@ -1613,8 +1628,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginOffset,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+			 // automated parts:
+			 typename ContainerType,
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				!CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnByteRangeR(const ContainerType& ctn)
 	{
@@ -1642,8 +1661,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param endOffset   The right end of the range (exclusive, in bytes).
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	template<// automated parts:
+			 typename ContainerType,
+			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset, size_t endOffset)
 	{
@@ -1664,8 +1684,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param beginOffset The left end of the range (inclusive, in bytes).
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	template<// automated parts:
+			 typename ContainerType,
+			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset)
 	{
@@ -1696,10 +1717,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param ctn The const-reference to the container.
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<size_t beginCount, size_t endCount,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyStRef<ContainerType, (endCount - beginCount) * CtnType<ContainerType>::sk_valSize>
+	template<size_t   beginCount, size_t endCount,
+			 typename ContainerType,
+			 // automated parts:
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0,
+			 size_t   regStSize = (endCount - beginCount) * CtnType<ContainerType>::sk_valSize>
+	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
 		CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
@@ -1708,8 +1734,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		//Should we checks for overflow? - No, if it overflows here, then there is no way that the pointer can hold the address.
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+		static_assert(endOffset - beginOffset == regStSize, "Programming Error");
 
-		return ContCtnReadOnlyStRef<ContainerType, endOffset - beginOffset>(ctn, beginOffset, gsk_noSafeCheck);
+		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1725,17 +1752,24 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param ctn The const-reference to the container.
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<size_t beginCount,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
-	inline ContCtnReadOnlyStRef<ContainerType, CtnType<ContainerType>::sk_ctnSize - (beginCount * CtnType<ContainerType>::sk_valSize)>
+	template<size_t   beginCount,
+			 typename ContainerType,
+			 // automated parts:
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0,
+			 size_t   regStSize = CtnType<ContainerType>::sk_ctnSize - (beginCount* CtnType<ContainerType>::sk_valSize)>
+	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
 		CtnItemRangeR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= CtnType<ContainerType>::sk_itemCount, "The begining of the range is outside of the container.");
 
 		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		constexpr size_t endOffset = CtnType<ContainerType>::sk_ctnSize;
-		return ContCtnReadOnlyStRef<ContainerType, endOffset - beginOffset>(ctn, beginOffset, gsk_noSafeCheck);
+		static_assert(endOffset - beginOffset == regStSize, "Programming Error");
+
+		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
 	/**
@@ -1753,8 +1787,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginCount, size_t endCount,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+			 // automated parts:
+			 typename ContainerType,
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				!CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnItemRangeR(const ContainerType& ctn)
 	{
@@ -1785,8 +1823,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
 	template<size_t beginCount,
-		typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont && !CtnType<ContainerType>::sk_isCtnStatic, int> = 0>
+			 // automated parts:
+			 typename ContainerType,
+			 enable_if_t<
+			 	CtnType<ContainerType>::sk_isCtnCont &&
+				!CtnType<ContainerType>::sk_isCtnStatic,
+			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnItemRangeR(const ContainerType& ctn)
 	{
@@ -1816,8 +1858,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param endCount    The right end of the range (exclusive, in item counts).
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	template<// automated parts:
+			 typename ContainerType,
+			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnItemRangeR(const ContainerType& ctn, size_t beginCount, size_t endCount)
 	{
@@ -1841,8 +1884,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param beginCount  The left end of the range (inclusive, in item counts).
 	 * @return ContCtnReadOnlyRef<ContainerType, Secrecy> The constructed ContCtnReadOnlyRef struct
 	 */
-	template<typename ContainerType,
-		enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
+	template<// automated parts:
+			 typename ContainerType,
+			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
 		CtnItemRangeR(const ContainerType& ctn, size_t beginCount)
 	{
