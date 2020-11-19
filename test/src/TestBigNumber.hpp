@@ -436,6 +436,36 @@ GTEST_TEST(TestBigNumber, BorrowerConstructor)
 		BigNumber<BorrowerBigNumTrait> num2(num1.Get());
 
 		EXPECT_EQ(num1, num2);
+		EXPECT_EQ(num1.Get(), num2.Get());
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+}
+
+GTEST_TEST(TestBigNumber, Copy)
+{
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
+	{
+		BigNum num1 = 1;
+		BigNum num2 = num1;
+
+		EXPECT_EQ(num1, num2);
+		EXPECT_NE(num1.Get(), num2.Get());
+
+		BigNumber<BorrowerBigNumTrait> num3(num1.Get());
+		BigNum num4 = num3;
+
+		EXPECT_EQ(num3, num4);
+		EXPECT_NE(num3.Get(), num4.Get());
+
+		num2 = num3;
+		num4 = num1;
+
+		EXPECT_EQ(num2, num4);
+		EXPECT_NE(num2.Get(), num4.Get());
 	}
 
 	// Finally, all allocation should be cleaned after exit.

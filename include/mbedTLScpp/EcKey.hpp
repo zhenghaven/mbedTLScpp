@@ -452,7 +452,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcPublicKeyBase(PKeyBase<_PKObjTrait>&& rhs) :
+		explicit EcPublicKeyBase(PKeyBase<_PKObjTrait>&& rhs) :
 			_Base::PKeyBase(std::forward<_Base>(rhs)) //noexcept
 		{
 			try
@@ -674,6 +674,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				&(ecCtx.Q), r.Get(), s.Get());
 		}
 
+		template<typename _HashCtnType, bool _HashSecrecy,
+				 typename _SRCtnType,   bool _SRSecrecy>
+		void VerifySign(const ContCtnReadOnlyRef<_HashCtnType, _HashSecrecy>& hash,
+						const ContCtnReadOnlyRef<_SRCtnType,   _SRSecrecy>& r,
+						const ContCtnReadOnlyRef<_SRCtnType,   _SRSecrecy>& s) const
+		{
+			return VerifySign(hash, ConstBigNumber(r), ConstBigNumber(s));
+		}
+
+		using _Base::GetPublicDer;
+		using _Base::GetPublicPem;
+
 	protected:
 
 		EcPublicKeyBase() :
@@ -701,7 +713,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_PKTrait = _PKObjTrait,
 			enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcPublicKeyBase(const SecretString& pem, const SecretString&) :
+		EcPublicKeyBase(const SecretString& pem, const void*) :
 			_Base::PKeyBase(pem)
 		{
 			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
@@ -720,7 +732,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_PKTrait = _PKObjTrait,
 			typename ContainerType,
 			enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, true>& der, const ContCtnReadOnlyRef<ContainerType, true>&) :
+		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, true>& der, const void*) :
 			_Base::PKeyBase(der)
 		{
 			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
@@ -729,6 +741,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
+		using _Base::GetPrivateDer;
+		using _Base::GetPrivatePem;
 	};
 
 
@@ -776,8 +790,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @param	rhs	The right hand side.
 		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
 		EcKeyPairBase(EcKeyPairBase&& rhs) noexcept :
 			_Base::EcPublicKeyBase(std::forward<_Base>(rhs)) //noexcept
 		{}
@@ -790,18 +802,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _rhs_Trait,
 				 typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(const EcKeyPairBase<_rhs_Trait>& rhs) :
+		EcKeyPairBase(const EcKeyPairBase<_rhs_Trait>& rhs, const void* = nullptr) :
 			_Base::EcPublicKeyBase(rhs)
 		{
 			if(_Base::Get() != nullptr && _Base::Get()->pk_ctx != nullptr)
 			{
-				const auto& rhsEcCtx = rhs.GetEcContextNoNullCheck();
-				const auto& ecCtx = _Base::GetEcContextNoNullCheck();
+				const auto& rhsEcCtx = rhs.GetEcContext();
+				auto& ecCtx = _Base::GetEcContextNoNullCheck();
 
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(EcKeyPairBase::EcKeyPairBase,
 					mbedtls_mpi_copy, &ecCtx.d, &rhsEcCtx.d);
 			}
 		}
+
+		EcKeyPairBase(const EcKeyPairBase& rhs) :
+			EcKeyPairBase(rhs, nullptr)
+		{}
 
 		/**
 		 * @brief	Move constructor that moves a general PKeyBase object to EC
@@ -814,7 +830,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(PKeyBase<_PKObjTrait>&& rhs) :
+		explicit EcKeyPairBase(PKeyBase<_PKObjTrait>&& rhs) :
 			_Base::EcPublicKeyBase(std::forward<PKeyBase<_PKObjTrait> >(rhs))
 		{
 			try
@@ -860,7 +876,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
 		EcKeyPairBase(const SecretString& pem) :
-			_Base::EcPublicKeyBase(pem, pem)
+			_Base::EcPublicKeyBase(pem, nullptr)
 		{}
 
 		/**
@@ -874,7 +890,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				 typename ContainerType,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
 		EcKeyPairBase(const ContCtnReadOnlyRef<ContainerType, true>& der) :
-			_Base::EcPublicKeyBase(der, der)
+			_Base::EcPublicKeyBase(der, nullptr)
 		{}
 
 		/**
@@ -885,23 +901,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param	type	The type of Elliptic Curve.
 		 * @param	r	  	Elliptic Curve private key's R value.
 		 */
-		template<typename _r_Trait,
-				 typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(EcType type, const BigNumberBase<_r_Trait>& r,
-				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) :
-			_Base::EcPublicKeyBase(type)
-		{
-			auto& ecCtx = _Base::GetEcContextNoNullCheck();
-			BigNumber<BorrowerBigNumTrait> ctxR(&ecCtx.d);
-			ctxR = r;
-
-			CompletePublicKey(ecCtx, std::move(rand));
-		}
-
 		template<typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(EcType type, BigNum&& r,
+		EcKeyPairBase(EcType type, BigNum r,
 				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) :
 			_Base::EcPublicKeyBase(type)
 		{
@@ -920,40 +922,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
 		 *
-		 * @tparam _r_Trait Trait used by big number r.
-		 * @tparam _x_Trait Trait used by big number x.
-		 * @tparam _y_Trait Trait used by big number y.
-		 * @tparam _z_Trait Trait used by big number z.
-		 * @param	type	The type of Elliptic Curve.
-		 * @param	r	  	Elliptic Curve private key's R value.
-		 * @param	x	  	Elliptic Curve public key's X value.
-		 * @param	y	  	Elliptic Curve public key's Y value.
-		 * @param	z	  	Elliptic Curve public key's Z value.
-		 */
-		template<typename _r_Trait, typename _x_Trait, typename _y_Trait, typename _z_Trait,
-				 typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(EcType type,
-				const BigNumberBase<_r_Trait>& r,
-				const BigNumberBase<_x_Trait>& x,
-				const BigNumberBase<_y_Trait>& y,
-				const BigNumberBase<_z_Trait>& z = BigNum(1)) :
-			_Base::EcPublicKeyBase(type, x, y, z)
-		{
-			auto& ecCtx = _Base::GetEcContextNoNullCheck();
-			BigNumber<BorrowerBigNumTrait> ctxR(&ecCtx.d);
-			ctxR = r;
-
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcKeyPairBase::EcKeyPairBase,
-				mbedtls_ecp_check_privkey, &(ecCtx.grp), &(ecCtx.d));
-		}
-
-		/**
-		 * @brief	Constructor from private key's R value and public key's X and Y values (Z is 1).
-		 * 			NOTE: this constructor does not check if the private and public key are matched!
-		 *
-		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
-		 *
 		 * @param	type	The type of Elliptic Curve.
 		 * @param	r	  	Elliptic Curve private key's R value.
 		 * @param	x	  	Elliptic Curve public key's X value.
@@ -963,15 +931,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
 		EcKeyPairBase(EcType type,
-				BigNum&& r,
-				BigNum&& x,
-				BigNum&& y,
-				BigNum&& z) :
-			_Base::EcPublicKeyBase(type,
-				std::forward<BigNum>(x),
-				std::forward<BigNum>(y),
-				std::forward<BigNum>(z))
+				BigNum r,
+				BigNum x, BigNum y, BigNum z = BigNum(1)) :
+			_Base::EcPublicKeyBase(type, std::move(x), std::move(y), std::move(z))
 		{
+			//NOTE: x, y, and z are invalid at this point.
 			auto& ecCtx = _Base::GetEcContextNoNullCheck();
 			BigNum tmpR(std::move(r));
 			tmpR.SwapContent(ecCtx.d);
@@ -983,18 +947,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		virtual ~EcKeyPairBase()
 		{}
 
+		/**
+		 * @brief	Copy assignment operator
+		 *
+		 * @tparam	_rhs_Trait	The object trait used by the right hand side.
+		 * @param	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
 		template<typename _rhs_Trait,
 				 typename _dummy_PKTrait = _PKObjTrait,
 				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
 		EcKeyPairBase& operator=(const EcKeyPairBase<_rhs_Trait>& rhs)
 		{
 			_Base::operator=(rhs);
-			if (this != &rhs)
+			if (static_cast<const void*>(this) != static_cast<const void*>(&rhs))
 			{
 				if(_Base::Get() != nullptr && _Base::Get()->pk_ctx != nullptr)
 				{
 					const auto& rhsEcCtx = rhs.GetEcContext();
-					const auto& ecCtx = _Base::GetEcContextNoNullCheck();
+					auto& ecCtx = _Base::GetEcContextNoNullCheck();
 
 					MBEDTLSCPP_MAKE_C_FUNC_CALL(EcKeyPairBase::EcKeyPairBase,
 						mbedtls_mpi_copy, &ecCtx.d, &rhsEcCtx.d);
@@ -1003,12 +975,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
+		EcKeyPairBase& operator=(const EcKeyPairBase& rhs)
+		{
+			return operator=<_PKObjTrait>(rhs);
+		}
+
 		/**
 		 * @brief	Move assignment operator
 		 *
 		 * @param	rhs	The right hand side.
 		 *
-		 * @return	A shallow copy of this object.
+		 * @return	A reference to this object.
 		 */
 		EcKeyPairBase& operator=(EcKeyPairBase&& rhs) noexcept
 		{
@@ -1114,7 +1091,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return	A tuple of std::vector's. It's in the order of R and S value.
 		 */
 		template<typename _HashCtnType, bool _HashSecrecy>
-		std::tuple<std::vector<uint8_t> /* r */, std::vector<uint8_t> /* s */> SignIn(HashType hashType,
+		std::tuple<std::vector<uint8_t> /* r */, std::vector<uint8_t> /* s */> Sign(HashType hashType,
 				const ContCtnReadOnlyRef<_HashCtnType, _HashSecrecy>& hash,
 				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
 		{
@@ -1127,5 +1104,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			return std::make_tuple(rBN.Bytes(), sBN.Bytes());
 		}
+
+		using _Base::GetPublicDer;
+		using _Base::GetPublicPem;
+		using _Base::GetPrivateDer;
+		using _Base::GetPrivatePem;
 	};
 }
