@@ -24,6 +24,7 @@
 #include "TestSecretString.hpp"
 
 #include "TestPKey.hpp"
+#include "TestEcKey.hpp"
 
 int main(int argc, char** argv)
 {

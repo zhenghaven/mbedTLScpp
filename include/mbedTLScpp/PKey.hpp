@@ -66,14 +66,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	/**
-	 * @brief Public Key object Trait.
+	 * @brief Public Key object trait.
 	 *
 	 */
 	using DefaultPKeyObjTrait = ObjTraitBase<PKeyObjAllocator,
 											 false,
 											 false>;
 
-	template<typename _PKeyObjTrait = DefaultPKeyObjTrait>
+	/**
+	 * @brief Borrower Public Key object trait.
+	 *
+	 */
+	using BorrowedPKeyTrait = ObjTraitBase<BorrowAllocBase<mbedtls_pk_context>,
+									true,
+									false>;
+
+	template<typename _PKeyObjTrait = DefaultPKeyObjTrait,
+			 enable_if_t<std::is_same<typename _PKeyObjTrait::CObjType, mbedtls_pk_context>::value, int> = 0>
 	class PKeyBase : public ObjectBase<_PKeyObjTrait>
 	{
 	public: // static member:
@@ -215,7 +224,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param ptr pointer to the borrowed C object.
 		 */
 		template<typename _dummy_ObjTrait = PKObjTrait,
-			enable_if_t<!_dummy_ObjTrait::sk_isBorrower, int> = 0>
+			enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0>
 		PKeyBase(mbedtls_pk_context* ptr) noexcept :
 			_Base::ObjectBase(ptr)
 		{}
@@ -290,7 +299,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception None No exception thrown
-		 * @param rhs The other Hasher instance.
+		 * @param rhs The other PKeyBase instance.
 		 */
 		PKeyBase(PKeyBase&& rhs) noexcept :
 			_Base::ObjectBase(std::forward<_Base>(rhs)) //noexcept
@@ -331,6 +340,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::NullCheck(typeid(PKeyBase).name());
 		}
 
+		using _Base::NullCheck;
 		using _Base::Get;
 		using _Base::Swap;
 

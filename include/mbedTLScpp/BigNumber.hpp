@@ -51,6 +51,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 									false>;
 
 	/**
+	 * @brief Borrower Big Number trait.
+	 *
+	 */
+	using BorrowerBigNumTrait = ObjTraitBase<BorrowAllocBase<mbedtls_mpi>,
+									true,
+									false>;
+
+	/**
 	 * @brief The base class for big number objects. It defines all the basic and
 	 *        constant (immutable) operations.
 	 *
@@ -60,24 +68,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		enable_if_t<std::is_same<typename _BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	class BigNumberBase : public ObjectBase<_BigNumTrait>
 	{
-	public: //static members:
+	public: // Types:
 
-		using BigNumTrait = _BigNumTrait;
-		static constexpr bool sk_isConst = BigNumTrait::sk_isConst;
-		static constexpr bool sk_isBorrower = BigNumTrait::sk_isBorrower;
+		using _Base = ObjectBase<_BigNumTrait>;
 
 	public:
 
-		using ObjectBase<BigNumTrait>::ObjectBase;
+		using _Base::ObjectBase;
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception None No exception thrown
-		 * @param rhs The other Hasher instance.
+		 * @param rhs The other BigNumberBase instance.
 		 */
 		BigNumberBase(BigNumberBase&& rhs) noexcept :
-			ObjectBase<BigNumTrait>::ObjectBase(std::forward<ObjectBase<BigNumTrait> >(rhs)) //noexcept
+			_Base::ObjectBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
 		BigNumberBase(const BigNumberBase& rhs) = delete;
@@ -98,7 +104,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		BigNumberBase& operator=(BigNumberBase&& rhs) noexcept
 		{
-			ObjectBase<BigNumTrait>::operator=(std::forward<ObjectBase<BigNumTrait> >(rhs)); //noexcept
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -116,10 +122,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<BigNumTrait>::NullCheck(typeid(BigNumberBase).name());
+			_Base::NullCheck(typeid(BigNumberBase).name());
 		}
 
-		using ObjectBase<BigNumTrait>::Get;
+		using _Base::Get;
 
 		/**
 		 * @brief Swap the internal pointer of a Big Number base object with the
@@ -670,6 +676,36 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			return res;
 		}
+
+		/**
+		 * @brief Convert this big number to an secret array of bytes.
+		 *
+		 * @exception InvalidObjectException Thrown when one or more given objects are
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @tparam _LitEndian Should output in little-endian format? (Default to \c true )
+		 * @return SecretVector<uint8_t> The output array of bytes.
+		 */
+		template<bool _LitEndian = true>
+		SecretVector<uint8_t> SecretBytes() const
+		{
+			NullCheck();
+			const size_t size = GetSize();
+			SecretVector<uint8_t> res(size);
+
+			if (_LitEndian) // Little Endian
+			{
+				std::memcpy(res.data(), Get()->p, size);
+			}
+			else            // Big Endian
+			{
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumberBase::Bytes, mbedtls_mpi_write_binary, Get(), res.data(), size);
+			}
+
+			return res;
+		}
 	};
 
 
@@ -731,16 +767,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				throw InvalidArgumentException("The size of data region must be a factor of the size of mbedtls_mpi_uint type.");
 			}
 
-			InternalGet()->s = isPositive ? 1 : -1;
-			InternalGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
-			InternalGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
+			MutableGet()->s = isPositive ? 1 : -1;
+			MutableGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
+			MutableGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
 		}
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception None No exception thrown
-		 * @param rhs The other Hasher instance.
+		 * @param rhs The other ConstBigNumber instance.
 		 */
 		ConstBigNumber(ConstBigNumber&& rhs) noexcept :
 			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase(std::forward<BigNumberBase<ConstBigNumObjTrait> >(rhs)) //noexcept
@@ -784,7 +820,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			InternalGet()->s *= -1;
+			MutableGet()->s *= -1;
 			return *this;
 		}
 	};
@@ -793,9 +829,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @brief The class for a normal Big Number object.
 	 *
 	 */
-	class BigNumber : public BigNumberBase<DefaultBigNumObjTrait>
+	template<typename _ObjTrait = DefaultBigNumObjTrait,
+			 enable_if_t<!_ObjTrait::sk_isConst, int> = 0>
+	class BigNumber : public BigNumberBase<_ObjTrait>
 	{
 	public: // Static members:
+
+		using _Base = BigNumberBase<_ObjTrait>;
 
 		/**
 		 * @brief Construct a new Big Number object and fill with random value.
@@ -804,9 +844,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rand The random bit generator. It's default to use \c DefaultRbg .
 		 * @return BigNumber The new random big number.
 		 */
-		static BigNumber Rand(size_t size, std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		static BigNumber<DefaultBigNumObjTrait>
+			Rand(size_t size, std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
 		{
-			BigNumber rd;
+			BigNumber<DefaultBigNumObjTrait> rd;
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::Rand,
 				mbedtls_mpi_fill_random, rd.Get(), size, &RbgInterface::CallBack, rand.get());
 
@@ -822,8 +863,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
 		 *
 		 */
+		template<typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
 		BigNumber() :
-			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
+			_Base::BigNumberBase()
+		{}
+
+		/**
+		 * @brief Construct a new Big Number object, which is initialized, but
+		 *        with zero value.
+		 *
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 *
+		 */
+		template<typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(mbedtls_mpi* other) :
+			_Base::BigNumberBase(other)
 		{}
 
 		/**
@@ -837,18 +893,41 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param other The other big number to copy from.
 		 */
 		template<typename _other_BigNumTrait,
-			enable_if_t<std::is_same<typename _other_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-		BigNumber(const BigNumberBase<_other_BigNumTrait>& other) :
-			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
+				 typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<std::is_same<typename _other_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(const BigNumberBase<_other_BigNumTrait>& other, const void* = nullptr) :
+			_Base::BigNumberBase()
 		{
 			if(other.IsNull())
 			{
-				FreeBaseObject();
+				_Base::FreeBaseObject();
 			}
 			else
 			{
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, Get(), other.Get());
 			}
+		}
+
+		BigNumber(const BigNumber& other) :
+			BigNumber(static_cast<const BigNumberBase<_ObjTrait>&>(other), (const void*)nullptr)
+		{}
+
+		/**
+		 * @brief Construct a new Big Number object by copying other big number
+		 *        C object.
+		 *
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @param other The other big number to copy from.
+		 */
+		template<typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(const mbedtls_mpi& other) :
+			_Base::BigNumberBase()
+		{
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, Get(), &other);
 		}
 
 		/**
@@ -863,9 +942,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                   unsigned value)
 		 * @param isLittleEndian Is the input bytes in little-endian format?
 		 */
-		template<typename ContainerType, bool ContainerSecrecy>
+		template<typename ContainerType, bool ContainerSecrecy,
+				 typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
 		BigNumber(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data, bool isPositive = true, bool isLittleEndian = true) :
-			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase()
+			_Base::BigNumberBase()
 		{
 			if (isLittleEndian)
 			{
@@ -897,6 +978,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param isPositive Should the constructed big number be positive?
 		 *                   (since here we accpet an unsigned value)
 		 */
+		template<typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
 		BigNumber(mbedtls_mpi_uint val, bool isPositive = true) :
 			BigNumber(CtnFullR(CDynArray<mbedtls_mpi_uint>{
 						&val,
@@ -904,7 +987,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					}),
 			isPositive, true)
 		{}
-
 
 		/**
 		 * @brief Construct a new Big Number object by copying value from a native integral value.
@@ -917,9 +999,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param val The value to copy from.
 		 */
 		template<typename _ValType,
-			enable_if_t<std::is_integral<_ValType>::value && std::is_unsigned<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_uint), int> = 0>
-		BigNumber(_ValType val)
-			: BigNumber(static_cast<mbedtls_mpi_uint>(val), true)
+				 typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<
+				 	std::is_integral<_ValType>::value &&
+					std::is_unsigned<_ValType>::value &&
+					sizeof(_ValType) <= sizeof(mbedtls_mpi_uint),
+				 int> = 0,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(_ValType val) :
+			BigNumber(static_cast<mbedtls_mpi_uint>(val), true)
 		{}
 
 		/**
@@ -931,19 +1019,25 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param val The value to copy from.
 		 */
 		template<typename _ValType,
-			enable_if_t<std::is_integral<_ValType>::value && std::is_signed<_ValType>::value && sizeof(_ValType) <= sizeof(mbedtls_mpi_uint), int> = 0>
-		BigNumber(_ValType val)
-			: BigNumber(static_cast<mbedtls_mpi_uint>(val >= 0 ? val : -val), val >= 0)
+				 typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<
+				 	std::is_integral<_ValType>::value &&
+					std::is_signed<_ValType>::value &&
+					sizeof(_ValType) <= sizeof(mbedtls_mpi_uint),
+				 int> = 0,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(_ValType val) :
+			BigNumber(static_cast<mbedtls_mpi_uint>(val >= 0 ? val : -val), val >= 0)
 		{}
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception None No exception thrown
-		 * @param rhs The other Hasher instance.
+		 * @param rhs The other BigNumber instance.
 		 */
 		BigNumber(BigNumber&& rhs) noexcept :
-			BigNumberBase<DefaultBigNumObjTrait>::BigNumberBase(std::forward<BigNumberBase<DefaultBigNumObjTrait> >(rhs)) //noexcept
+			_Base::BigNumberBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
 		/**
@@ -962,7 +1056,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		BigNumber& operator=(BigNumber&& rhs) noexcept
 		{
-			BigNumberBase<DefaultBigNumObjTrait>::operator=(std::forward<BigNumberBase<DefaultBigNumObjTrait> >(rhs)); //noexcept
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -980,11 +1074,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 		BigNumber& operator=(const BigNumberBase<_rhs_BigNumTrait>& rhs)
 		{
-			if (this != &rhs)
+			if (static_cast<const void*>(this) != static_cast<const void*>(&rhs))
 			{
 				if(rhs.IsNull())
 				{
-					FreeBaseObject();
+					_Base::FreeBaseObject();
 				}
 				else
 				{
@@ -994,16 +1088,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
-		/**
-		 * @brief Swap the internal pointer of a Big Number base object with the
-		 *        same trait.
-		 *
-		 * @exception None No exception thrown
-		 * @param other The other big number object to swap with
-		 */
-		virtual void Swap(BigNumber& other) noexcept
+		BigNumber& operator=(const BigNumber& rhs)
 		{
-			BigNumberBase<DefaultBigNumObjTrait>::Swap(other);
+			return operator=<_ObjTrait>(rhs);
+		}
+
+		using _Base::Swap;
+		using _Base::Get;
+
+		/**
+		 * @brief Check if the current instance is holding a null pointer for
+		 *        the mbedTLS object. If so, exception will be thrown. Helper
+		 *        function to be called before accessing the mbedTLS object.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 */
+		virtual void NullCheck() const
+		{
+			ObjectBase<_ObjTrait>::NullCheck(typeid(BigNumber).name());
 		}
 
 		/**
@@ -1018,8 +1122,42 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			InternalGet()->s *= -1;
+			Get()->s *= -1;
 			return *this;
+		}
+
+		/**
+		 * @brief Swap the content of big number, by calling the mbedtls_mpi_swap
+		 *        function. Different from the normal \c Swap method, this method
+		 *        requires \c this and \c other instances are not null.
+		 *
+		 * @tparam _other_Traits The trait used by other instance.
+		 * @param other The other instance to swap with.
+		 */
+		template<typename _other_Traits>
+		void SwapContent(BigNumber<_other_Traits>& other)
+		{
+			NullCheck();
+			other.NullCheck();
+
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::SwapContent,
+				mbedtls_mpi_swap, Get(), other.Get());
+		}
+
+		/**
+		 * @brief Swap the content of big number with the MPI C object, by
+		 *        calling the mbedtls_mpi_swap function.
+		 *        Different from the normal \c Swap method, this method requires
+		 *        \c this instance is not null.
+		 *
+		 * @tparam _other_Traits The trait used by other instance.
+		 * @param other The other instance to swap with.
+		 */
+		void SwapContent(mbedtls_mpi& other)
+		{
+			NullCheck();
+
+			mbedtls_mpi_swap(Get(), &other);
 		}
 
 		/**
@@ -1416,9 +1554,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			return *this;
 		}
-
-
 	};
+
+	using BigNum = BigNumber<>;
 
 	/**
 	 * @brief Overloading \p operator== .
@@ -1575,17 +1713,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator+(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator+(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator+_lhsBigNum-_rhsBigNum, mbedtls_mpi_add_mpi, res.Get(), lhs.Get(), rhs.Get());
 
@@ -1605,17 +1743,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator-(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator-(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator-_lhsBigNum-_rhsBigNum, mbedtls_mpi_sub_mpi, res.Get(), lhs.Get(), rhs.Get());
 
@@ -1632,13 +1770,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @tparam _rhs_BigNumTrait The trait used by the other big number on
 	 *                          right hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator-(const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator-(const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
-		BigNumber cpy(rhs);
+		BigNum cpy(rhs);
 		cpy.FlipSign();
 		return cpy;
 	}
@@ -1656,17 +1794,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator*(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator*(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator*_lhsBigNum-_rhsBigNum, mbedtls_mpi_mul_mpi, res.Get(), lhs.Get(), rhs.Get());
 
@@ -1686,17 +1824,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator/(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator/(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator/_lhsBigNum-_rhsBigNum, mbedtls_mpi_div_mpi, res.Get(), nullptr, lhs.Get(), rhs.Get());
 
@@ -1716,17 +1854,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator%(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator%(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator%_lhsBigNum-_rhsBigNum, mbedtls_mpi_div_mpi, nullptr, res.Get(), lhs.Get(), rhs.Get());
 
@@ -1746,17 +1884,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber Mod(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum Mod(const BigNumberBase<_lhs_BigNumTrait>& lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		lhs.NullCheck();
 		rhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::Mod_lhsBigNum-_rhsBigNum, mbedtls_mpi_mod_mpi, res.Get(), lhs.Get(), rhs.Get());
 
@@ -1776,18 +1914,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator+(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
+	inline BigNum operator+(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
 	{
 		const mbedtls_mpi_sint rhsVal = static_cast<mbedtls_mpi_sint>(rhs);
 		lhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator+_lhsBigNum-_rhsInt, mbedtls_mpi_add_int, res.Get(), lhs.Get(), rhsVal);
 
@@ -1807,18 +1945,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator-(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
+	inline BigNum operator-(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
 	{
 		const mbedtls_mpi_sint rhsVal = static_cast<mbedtls_mpi_sint>(rhs);
 		lhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator-_lhsBigNum-_rhsInt, mbedtls_mpi_sub_int, res.Get(), lhs.Get(), rhsVal);
 
@@ -1838,19 +1976,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_uint)) ||
 		(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_uint)), int> = 0>
-	inline BigNumber operator*(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
+	inline BigNum operator*(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
 	{
 		const bool isPos = rhs >= 0;
 		const mbedtls_mpi_uint rhsVal = static_cast<mbedtls_mpi_uint>(isPos ? rhs : -rhs );
 		lhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator*_lhsBigNum-_rhsInt, mbedtls_mpi_mul_int, res.Get(), lhs.Get(), rhsVal);
 
@@ -1875,18 +2013,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator/(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
+	inline BigNum operator/(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
 	{
 		const mbedtls_mpi_sint rhsVal = static_cast<mbedtls_mpi_sint>(rhs);
 		lhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator/_lhsBigNum-_rhsInt, mbedtls_mpi_div_int, res.Get(), nullptr, lhs.Get(), rhsVal);
 
@@ -1906,18 +2044,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait, typename _rhs_ValType,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_rhs_ValType>::value && std::is_signed<_rhs_ValType>::value && sizeof(_rhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_rhs_ValType>::value && std::is_unsigned<_rhs_ValType>::value && sizeof(_rhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator%(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
+	inline BigNum operator%(const BigNumberBase<_lhs_BigNumTrait>& lhs, _rhs_ValType rhs)
 	{
 		const mbedtls_mpi_sint rhsVal = static_cast<mbedtls_mpi_sint>(rhs);
 		lhs.NullCheck();
 
-		BigNumber res;
+		BigNum res;
 
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(::operator%_lhsBigNum-_rhsInt, mbedtls_mpi_div_int, nullptr, res.Get(), lhs.Get(), rhsVal);
 
@@ -1937,13 +2075,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_lhs_ValType>::value && std::is_unsigned<_lhs_ValType>::value && sizeof(_lhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator+(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator+(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		return rhs + lhs;
 	}
@@ -1961,13 +2099,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_lhs_ValType>::value && std::is_unsigned<_lhs_ValType>::value && sizeof(_lhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator-(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator-(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		return lhs + (-rhs);
 	}
@@ -1985,13 +2123,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          right hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _rhs_BigNumTrait, typename _lhs_ValType,
 		enable_if_t<std::is_same<typename _rhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0,
 		enable_if_t<(std::is_integral<_lhs_ValType>::value && std::is_signed<_lhs_ValType>::value && sizeof(_lhs_ValType) <= sizeof(mbedtls_mpi_sint)) ||
 		(std::is_integral<_lhs_ValType>::value && std::is_unsigned<_lhs_ValType>::value && sizeof(_lhs_ValType) < sizeof(mbedtls_mpi_sint)), int> = 0>
-	inline BigNumber operator*(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
+	inline BigNum operator*(_lhs_ValType lhs, const BigNumberBase<_rhs_BigNumTrait>& rhs)
 	{
 		return rhs * lhs;
 	}
@@ -2007,13 +2145,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          left hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator<<(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
+	inline BigNum operator<<(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
 	{
-		BigNumber res(lhs);
+		BigNum res(lhs);
 		res <<= rhs;
 		return res;
 	}
@@ -2029,13 +2167,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *                          left hand side.
 	 * @param lhs The value on left hand side.
 	 * @param rhs The value on right hand side.
-	 * @return BigNumber The result of calculation, a new Big Number object.
+	 * @return BigNum The result of calculation, a new Big Number object.
 	 */
 	template<typename _lhs_BigNumTrait,
 		enable_if_t<std::is_same<typename _lhs_BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
-	inline BigNumber operator>>(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
+	inline BigNum operator>>(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
 	{
-		BigNumber res(lhs);
+		BigNum res(lhs);
 		res >>= rhs;
 		return res;
 	}

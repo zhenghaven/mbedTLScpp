@@ -187,12 +187,12 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 	static constexpr uint8_t bignumBytesB2[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xB1, 0xA0, 0x3F, }; // 11640895
 
 	{
-		BigNumber bigNum1(CtnFullR(bignumBytes1));
+		BigNum bigNum1(CtnFullR(bignumBytes1));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
-		BigNumber bigNum2(CtnFullR(bignumBytes2));
+		BigNum bigNum2(CtnFullR(bignumBytes2));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -208,7 +208,7 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		// Moved to initialize new one, allocation should remain the same.
-		BigNumber bigNum3(std::move(bigNum1));
+		BigNum bigNum3(std::move(bigNum1));
 
 		// This should success.
 		bigNum3.NullCheck();
@@ -219,28 +219,28 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 	}
 
 	{
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), BigNumber(CtnFullR(bignumBytesE2)));
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE2)), BigNumber(CtnFullR(bignumBytesB1), true, false));
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesB1), true, false), BigNumber(CtnFullR(bignumBytesB2), true, false));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(CtnFullR(bignumBytesE2)));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE2)), BigNum(CtnFullR(bignumBytesB1), true, false));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesB1), true, false), BigNum(CtnFullR(bignumBytesB2), true, false));
 
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), BigNumber(11640895));
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), BigNumber(11640895ULL));
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1), false), BigNumber(-11640895));
-		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), BigNumber(512905));
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), ConstBigNumber(CtnFullR(bignumBytes1)));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(11640895));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(11640895ULL));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1), false), BigNum(-11640895));
+		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), BigNum(512905));
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), ConstBigNumber(CtnFullR(bignumBytes1)));
 
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), 11640895);
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1)), 11640895U);
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), 11640895);
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), 11640895U);
 		EXPECT_TRUE(sizeof(uint64_t) >= sizeof(mbedtls_mpi_sint));
-		//BigNumber(CtnFullR(bignumBytesE1)) == 11640895ULL;
-		EXPECT_EQ(BigNumber(CtnFullR(bignumBytesE1), false), -11640895);
+		//BigNum(CtnFullR(bignumBytesE1)) == 11640895ULL;
+		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1), false), -11640895);
 		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), 512905);
 
-		EXPECT_EQ(11640895, BigNumber(CtnFullR(bignumBytesE1)));
-		EXPECT_TRUE(116408 <  BigNumber(CtnFullR(bignumBytesE1)));
-		EXPECT_TRUE(116408 <= BigNumber(CtnFullR(bignumBytesE1)));
-		EXPECT_TRUE(116408950 >  BigNumber(CtnFullR(bignumBytesE1)));
-		EXPECT_TRUE(116408950 >= BigNumber(CtnFullR(bignumBytesE1)));
+		EXPECT_EQ(11640895, BigNum(CtnFullR(bignumBytesE1)));
+		EXPECT_TRUE(116408 <  BigNum(CtnFullR(bignumBytesE1)));
+		EXPECT_TRUE(116408 <= BigNum(CtnFullR(bignumBytesE1)));
+		EXPECT_TRUE(116408950 >  BigNum(CtnFullR(bignumBytesE1)));
+		EXPECT_TRUE(116408950 >= BigNum(CtnFullR(bignumBytesE1)));
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -270,7 +270,7 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 			3037000499LL);
 
 		int64_t a = 0, b = 0;
-		BigNumber bigA = 0;
+		BigNum bigA = 0;
 
 		for(size_t i = 0; i < testLoopTime; ++i)
 		{
@@ -279,62 +279,62 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 			a = distTri(gen);
 			b = distTri(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) + BigNumber(b), a + b);
-			EXPECT_EQ(BigNumber(a) + b, a + b);
-			EXPECT_EQ(a + BigNumber(b), a + b);
+			EXPECT_EQ(BigNum(a) + BigNum(b), a + b);
+			EXPECT_EQ(BigNum(a) + b, a + b);
+			EXPECT_EQ(a + BigNum(b), a + b);
 			EXPECT_EQ(bigA += b, a += b);
 
 			// a - b signed -> signed, ((1 / 3) * MAX)
 			a = distTri(gen);
 			b = distTri(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) - BigNumber(b), a - b);
-			EXPECT_EQ(BigNumber(a) - b, a - b);
-			EXPECT_EQ(a - BigNumber(b), a - b);
+			EXPECT_EQ(BigNum(a) - BigNum(b), a - b);
+			EXPECT_EQ(BigNum(a) - b, a - b);
+			EXPECT_EQ(a - BigNum(b), a - b);
 			EXPECT_EQ(bigA -= b, a -= b);
 
 			// a * b signed -> unsigned, (sqr(MAX))
 			a = distSqr(gen);
 			b = distSqr(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) * BigNumber(b), a * b);
-			EXPECT_EQ(BigNumber(a) * b, a * b);
-			EXPECT_EQ(a * BigNumber(b), a * b);
+			EXPECT_EQ(BigNum(a) * BigNum(b), a * b);
+			EXPECT_EQ(BigNum(a) * b, a * b);
+			EXPECT_EQ(a * BigNum(b), a * b);
 			EXPECT_EQ(bigA *= b, a *= b);
 
 			// a / b signed -> signed, ((1 / 3) * MAX), sqr(MAX)
 			a = distTri(gen);
 			b = distSqr(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) / BigNumber(b), a / b);
-			EXPECT_EQ(BigNumber(a) / b, a / b);
+			EXPECT_EQ(BigNum(a) / BigNum(b), a / b);
+			EXPECT_EQ(BigNum(a) / b, a / b);
 			EXPECT_EQ(bigA /= b, a /= b);
 
 			// a % b signed -> signed, ((1 / 3) * MAX), sqr(MAX)
 			a = distTri(gen);
 			b = distSqr(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) % BigNumber(b), a % b);
-			EXPECT_EQ(BigNumber(a) % b, a % b);
+			EXPECT_EQ(BigNum(a) % BigNum(b), a % b);
+			EXPECT_EQ(BigNum(a) % b, a % b);
 			EXPECT_EQ(bigA %= b, a %= b);
 
 			// a mod b signed -> signed, ((1 / 3) * MAX), pos sqr(MAX)
 			a = distTri(gen);
 			b = distSqrPos(gen);
-			EXPECT_EQ(Mod(BigNumber(a), BigNumber(b)), ((a % b + b) % b));
-			EXPECT_EQ(BigNumber(a).Mod(static_cast<uint32_t>(b)), ((a % b + b) % b));
+			EXPECT_EQ(Mod(BigNum(a), BigNum(b)), ((a % b + b) % b));
+			EXPECT_EQ(BigNum(a).Mod(static_cast<uint32_t>(b)), ((a % b + b) % b));
 
 			// a >> 2 size_t, sqr(MAX)
 			a = distSqr(gen);
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) << 2, a << 2);
+			EXPECT_EQ(BigNum(a) << 2, a << 2);
 			EXPECT_EQ(bigA <<= 2, a <<= 2);
 
 			// a << 2 size_t, sqr(MAX)
 			a = distSqr(gen);
 			b = a >> 2;
 			bigA = a;
-			EXPECT_EQ(BigNumber(a) >> 2, a >= 0 ? (a >> 2) : (-(-a >> 2)));
+			EXPECT_EQ(BigNum(a) >> 2, a >= 0 ? (a >> 2) : (-(-a >> 2)));
 			EXPECT_EQ(bigA >>= 2, a >= 0 ? (a >>= 2) : a = (-(-a >> 2)));
 
 			// ++
@@ -356,35 +356,35 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 			// Compares
 			a = distTri(gen);
 			b = distTri(gen);
-			EXPECT_EQ((BigNumber(a) == BigNumber(b)), (a == b));
-			EXPECT_EQ((BigNumber(a) != BigNumber(b)), (a != b));
-			EXPECT_EQ((BigNumber(a) >= BigNumber(b)), (a >= b));
-			EXPECT_EQ((BigNumber(a) >  BigNumber(b)), (a >  b));
-			EXPECT_EQ((BigNumber(a) <= BigNumber(b)), (a <= b));
-			EXPECT_EQ((BigNumber(a) <  BigNumber(b)), (a <  b));
+			EXPECT_EQ((BigNum(a) == BigNum(b)), (a == b));
+			EXPECT_EQ((BigNum(a) != BigNum(b)), (a != b));
+			EXPECT_EQ((BigNum(a) >= BigNum(b)), (a >= b));
+			EXPECT_EQ((BigNum(a) >  BigNum(b)), (a >  b));
+			EXPECT_EQ((BigNum(a) <= BigNum(b)), (a <= b));
+			EXPECT_EQ((BigNum(a) <  BigNum(b)), (a <  b));
 
-			EXPECT_EQ((a == BigNumber(b)), (a == b));
-			EXPECT_EQ((a != BigNumber(b)), (a != b));
-			EXPECT_EQ((a >= BigNumber(b)), (a >= b));
-			EXPECT_EQ((a >  BigNumber(b)), (a >  b));
-			EXPECT_EQ((a <= BigNumber(b)), (a <= b));
-			EXPECT_EQ((a <  BigNumber(b)), (a <  b));
+			EXPECT_EQ((a == BigNum(b)), (a == b));
+			EXPECT_EQ((a != BigNum(b)), (a != b));
+			EXPECT_EQ((a >= BigNum(b)), (a >= b));
+			EXPECT_EQ((a >  BigNum(b)), (a >  b));
+			EXPECT_EQ((a <= BigNum(b)), (a <= b));
+			EXPECT_EQ((a <  BigNum(b)), (a <  b));
 
-			EXPECT_EQ((BigNumber(a) == b), (a == b));
-			EXPECT_EQ((BigNumber(a) != b), (a != b));
-			EXPECT_EQ((BigNumber(a) >= b), (a >= b));
-			EXPECT_EQ((BigNumber(a) >  b), (a >  b));
-			EXPECT_EQ((BigNumber(a) <= b), (a <= b));
-			EXPECT_EQ((BigNumber(a) <  b), (a <  b));
+			EXPECT_EQ((BigNum(a) == b), (a == b));
+			EXPECT_EQ((BigNum(a) != b), (a != b));
+			EXPECT_EQ((BigNum(a) >= b), (a >= b));
+			EXPECT_EQ((BigNum(a) >  b), (a >  b));
+			EXPECT_EQ((BigNum(a) <= b), (a <= b));
+			EXPECT_EQ((BigNum(a) <  b), (a <  b));
 		}
 
 		// a = std::numeric_limits<mbedtls_mpi_sint>::max();
 		// b = 7516188671; // 6442446847 //std::numeric_limits<uint32_t>::max() + 1000000000LL;
 		// std::cerr << "a: " << a << " b: " << b << std::endl;
-		// std::cerr << "a * a: " << (BigNumber(a) * BigNumber(a)).Dec() << std::endl;
-		// std::cerr << "a * a % b: " << (BigNumber(a) * BigNumber(a)).Mod(b) << std::endl;
+		// std::cerr << "a * a: " << (BigNum(a) * BigNum(a)).Dec() << std::endl;
+		// std::cerr << "a * a % b: " << (BigNum(a) * BigNum(a)).Mod(b) << std::endl;
 
-		BigNumber realBig(123456789);
+		BigNum realBig(123456789);
 
 		realBig = realBig * realBig * realBig * realBig * realBig;
 		EXPECT_EQ(realBig.Dec(), "28679718602997181072337614380936720482949");
@@ -400,10 +400,10 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 		EXPECT_EQ(realBig.Dec(), "676549446986526549840241681265923365873890886323014445550551924313801552444665336674779420755402893771538833531264881148328025788809564706546644134563444979033201");
 		EXPECT_EQ((-realBig).Dec(), "-676549446986526549840241681265923365873890886323014445550551924313801552444665336674779420755402893771538833531264881148328025788809564706546644134563444979033201");
 
-		EXPECT_EQ(BigNumber(CtnFullR(realBig.Bytes())), realBig);
-		EXPECT_EQ(BigNumber(CtnFullR((-realBig).Bytes()), false), -realBig);
-		EXPECT_EQ(BigNumber(CtnFullR((realBig).Bytes<false>()), true, false), realBig);
-		EXPECT_EQ(BigNumber(CtnFullR((-realBig).Bytes<false>()), false, false), -realBig);
+		EXPECT_EQ(BigNum(CtnFullR(realBig.Bytes())), realBig);
+		EXPECT_EQ(BigNum(CtnFullR((-realBig).Bytes()), false), -realBig);
+		EXPECT_EQ(BigNum(CtnFullR((realBig).Bytes<false>()), true, false), realBig);
+		EXPECT_EQ(BigNum(CtnFullR((-realBig).Bytes<false>()), false, false), -realBig);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -416,10 +416,26 @@ GTEST_TEST(TestBigNumber, Rand)
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 
 	{
-		BigNumber num1 = BigNumber::Rand(100);
-		BigNumber num2 = BigNumber::Rand(100);
+		BigNum num1 = BigNum::Rand(100);
+		BigNum num2 = BigNum::Rand(100);
 
 		EXPECT_NE(num1, num2);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+}
+
+GTEST_TEST(TestBigNumber, BorrowerConstructor)
+{
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
+	{
+		BigNum num1 = 1;
+		BigNumber<BorrowerBigNumTrait> num2(num1.Get());
+
+		EXPECT_EQ(num1, num2);
 	}
 
 	// Finally, all allocation should be cleaned after exit.

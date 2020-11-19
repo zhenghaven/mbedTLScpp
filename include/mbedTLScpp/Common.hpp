@@ -48,7 +48,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	constexpr NoSafeCheck gsk_noSafeCheck;
 
 	/**
-	 * @brief a constexpr that represents bits per byte.
+	 * @brief Number of bits per byte.
 	 *
 	 */
 	constexpr uint8_t gsk_bitsPerByte = 8;

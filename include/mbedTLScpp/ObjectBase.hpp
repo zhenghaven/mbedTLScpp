@@ -88,6 +88,71 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using CObjType = typename ObjTrait::CObjType;
 		using Allocator = typename ObjTrait::ObjAllocator;
 
+	protected: // method will be used in constructors and destructors:
+
+		/** @brief	Free the current object. */
+		void FreeBaseObject() noexcept
+		{
+			constexpr bool isBorrower = ObjTrait::sk_isBorrower;
+			if(!isBorrower)
+			{
+				if(m_ptr != nullptr)
+				{
+					Allocator::Free(m_ptr); //assume noexcept
+
+					Allocator::DelObject(m_ptr); //noexcept
+
+					m_ptr = nullptr;
+				}
+			}
+			else
+			{
+				m_ptr = nullptr;
+			}
+		}
+
+		/** @brief Initialize the current object. */
+		void InitBaseObject()
+		{
+			if (m_ptr != nullptr)
+			{
+				FreeBaseObject();
+			}
+			m_ptr = Allocator::template NewObject<CObjType>();
+			Allocator::Init(m_ptr);
+		}
+
+		/** @brief Swaps with the given right hand side. */
+		void SwapBaseObject(ObjectBase& rhs) noexcept
+		{
+			std::swap(m_ptr, rhs.m_ptr);
+		}
+
+	public: // method will be used in constructors and destructors:
+
+		/**
+		 * @brief	Gets the pointer to the MbedTLS object.
+		 *
+		 * @exception None No exception thrown
+		 * @return	The pointer to the MbedTLS object.
+		 */
+		const CObjType* Get() const noexcept
+		{
+			return m_ptr;
+		}
+
+		/**
+		 * @brief	Gets the pointer to the MbedTLS object.
+		 *
+		 * @exception None No exception thrown
+		 * @return	The pointer to the MbedTLS object.
+		 */
+		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isConst, int> = 0>
+		CObjType* Get() noexcept
+		{
+			return m_ptr;
+		}
+
 	public:
 
 		/**
@@ -98,9 +163,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isBorrower, int> = 0>
 		ObjectBase() :
-			m_ptr(Allocator::template NewObject<CObjType>())
+			m_ptr(nullptr)
 		{
-			Allocator::Init(m_ptr);
+			InitBaseObject();
 		}
 
 		/**
@@ -159,29 +224,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief	Gets the pointer to the MbedTLS object.
-		 *
-		 * @exception None No exception thrown
-		 * @return	The pointer to the MbedTLS object.
-		 */
-		const CObjType* Get() const noexcept
-		{
-			return m_ptr;
-		}
-
-		/**
-		 * @brief	Gets the pointer to the MbedTLS object.
-		 *
-		 * @exception None No exception thrown
-		 * @return	The pointer to the MbedTLS object.
-		 */
-		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isConst, int> = 0>
-		CObjType* Get() noexcept
-		{
-			return m_ptr;
-		}
-
-		/**
 		 * @brief	Releases the ownership of the MbedTLS Object, and
 		 * 			return the pointer to the MbedTLS object.
 		 *
@@ -220,38 +262,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return m_ptr == nullptr;
 		}
 
-		/** @brief	Free the current object. */
-		void FreeBaseObject() noexcept
-		{
-			constexpr bool isBorrower = ObjTrait::sk_isBorrower;
-			if(!isBorrower)
-			{
-				if(m_ptr != nullptr)
-				{
-					Allocator::Free(m_ptr); //assume noexcept
-
-					Allocator::DelObject(m_ptr); //noexcept
-
-					m_ptr = nullptr;
-				}
-			}
-			else
-			{
-				m_ptr = nullptr;
-			}
-		}
-
 	protected:
 
 		/**
-		 * @brief	Swaps the given right hand side.
+		 * @brief	Swaps with the given right hand side.
 		 *
 		 * @exception None No exception thrown
-		 * @param [in,out]	rhs	The right hand side.
+		 * @param	rhs	The right hand side.
 		 */
 		virtual void Swap(ObjectBase& rhs) noexcept
 		{
-			std::swap(m_ptr, rhs.m_ptr);
+			SwapBaseObject(rhs);
 		}
 
 		/**
@@ -284,19 +305,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				throw InvalidObjectException(objTypeName);
 			}
-		}
-
-		/**
-		 * @brief	Gets the pointer to the MbedTLS object. It's used by child
-		 *          class who is "const" specified by trait and knows how to protect
-		 *          the inner const object, but still need to access the non-const pointer.
-		 *
-		 * @exception None No exception thrown
-		 * @return CObjType* The pointer to the MbedTLS object.
-		 */
-		CObjType* InternalGet() noexcept
-		{
-			return m_ptr;
 		}
 
 		/**
