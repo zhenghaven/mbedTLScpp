@@ -14,10 +14,44 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	/**
 	 * @brief The container type used to store the hash result (for a known hash type).
 	 *
-	 * @tparam _HashTypeValue The type of the hash.
+	 * @tparam _HashT The type of the hash.
 	 */
-	template<HashType _HashTypeValue>
-	using Hash = std::array<uint8_t, GetHashByteSize(_HashTypeValue)>;
+	template<HashType _HashT>
+	struct Hash
+	{
+		static constexpr HashType sk_type = _HashT;
+		static constexpr size_t   sk_size = GetHashByteSize(sk_type);
+
+		using ContainerType = std::array<uint8_t, sk_size>;
+
+		ContainerType m_data;
+
+		Hash() = default;
+
+		uint8_t* data() { return m_data.data(); }
+		const uint8_t* data() const { return m_data.data(); }
+
+		typename ContainerType::size_type size() const { return m_data.size(); }
+
+	};
+	static_assert(std::is_trivial<Hash<HashType::SHA256> >::value
+				== std::is_trivial<typename Hash<HashType::SHA256>::ContainerType>::value,
+				"Programming Error");
+
+	/**
+	 * @brief A helper function to get the container reference. Other partial
+	 *        reference functions are not provided, since they are meaningless to hashes.
+	 *
+	 * @tparam _HashT The type of the hash.
+	 * @param hash The hash
+	 * @return The container reference
+	 */
+	template<HashType _HashT>
+	inline ContCtnReadOnlyStRef<typename Hash<_HashT>::ContainerType, Hash<_HashT>::sk_size>
+		CtnFullR(const Hash<_HashT>& hash) noexcept
+	{
+		return CtnFullR(hash.m_data);
+	}
 
 	/**
 	 * @brief The base class for Hash calculator. It can accept some raw pointer
@@ -281,7 +315,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(Hasher::FinishNoCheck, mbedtls_md_finish,
 				Get(),
-				static_cast<unsigned char*>(hash.data()));
+				static_cast<unsigned char*>(hash.m_data.data()));
 
 			return hash;
 		}

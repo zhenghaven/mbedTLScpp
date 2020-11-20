@@ -100,7 +100,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param type The curve type.
 	 * @return constexpr mbedtls_ecp_group_id The mbed TLS EC group ID.
 	 */
-	inline constexpr mbedtls_ecp_group_id GetMbedTlsEcType(EcType type)
+	inline constexpr mbedtls_ecp_group_id ToEcGroupId(EcType type)
 	{
 		return
 			(type == EcType::SECP192R1 ? mbedtls_ecp_group_id::MBEDTLS_ECP_DP_SECP192R1 :
@@ -132,7 +132,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param type The mbed TLS EC group ID.
 	 * @return constexpr mbedtls_ecp_group_id The curve type.
 	 */
-	inline constexpr EcType GetEcType(mbedtls_ecp_group_id type)
+	inline constexpr EcType ToEcType(mbedtls_ecp_group_id type)
 	{
 		return
 			(type == mbedtls_ecp_group_id::MBEDTLS_ECP_DP_SECP192R1 ? EcType::SECP192R1 :
@@ -213,7 +213,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ObjectBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcGroup::EcGroup,
-				mbedtls_ecp_group_load, Get(), GetMbedTlsEcType(type));
+				mbedtls_ecp_group_load, Get(), ToEcGroupId(type));
 		}
 
 		template<// automated parts:
@@ -315,7 +315,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcGroup::Load,
-				mbedtls_ecp_group_load, Get(), GetMbedTlsEcType(type));
+				mbedtls_ecp_group_load, Get(), ToEcGroupId(type));
 		}
 	};
 
@@ -327,9 +327,45 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base = PKeyBase<_PKObjTrait>;
 
-	public: // methods will be used in constructors:
+	public: // Static members, and methods will be used in constructors:
 
 		using _Base::Get;
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		static EcPublicKeyBase Convert(PKeyBase<_PKObjTrait>&& other)
+		{
+			return EcPublicKeyBase(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcPublicKeyBase object (public part) from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static EcPublicKeyBase FromPEM(const std::string& pem)
+		{
+			return EcPublicKeyBase(pem, (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcPublicKeyBase object (public part) from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static EcPublicKeyBase FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
+		{
+			return EcPublicKeyBase(der, (const void*)nullptr);
+		}
 
 	protected: // methods will be used in constructors:
 
@@ -364,43 +400,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			if(!_Base::HasPubKey(GetEcContextNoNullCheck()))
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context contains no public key.");
-			}
-		}
-
-		/**
-		 * @brief Construct a EcPublicKeyBase object (public part) from a given PEM string.
-		 *
-		 * @tparam _dummy_Trait A dummy template parameter used to make sure
-		 *                      the constructor is not available for borrowers.
-		 * @param pem PEM string in std::string
-		 */
-		template<typename _dummy_Trait = _PKObjTrait,
-				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
-		EcPublicKeyBase(const std::string& pem) :
-			_Base::PKeyBase(pem)
-		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
-			{
-				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
-			}
-		}
-
-		/**
-		 * @brief Construct a EcPublicKeyBase object (public part) from a given DER bytes.
-		 *
-		 * @tparam _dummy_Trait A dummy template parameter used to make sure
-		 *                      the constructor is not available for borrowers.
-		 * @param der DER bytes referenced by ContCtnReadOnlyRef
-		 */
-		template<typename _dummy_Trait = _PKObjTrait,
-				 typename ContainerType,
-				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
-		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, false>& der) :
-			_Base::PKeyBase(der)
-		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
-			{
-				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
 		}
 
@@ -442,41 +441,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{}
 
 		/**
-		 * @brief	Move constructor that moves a general PKeyBase object to EC
-		 *          Key pair. If it failed, the \c rhs will remain the same.
-		 *
-		 * @exception InvalidArgumentException Thrown when the given object is
-		 *                                     not a EC private key.
-		 *
-		 * @param	rhs	The right hand side.
-		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		explicit EcPublicKeyBase(PKeyBase<_PKObjTrait>&& rhs) :
-			_Base::PKeyBase(std::forward<_Base>(rhs)) //noexcept
-		{
-			try
-			{
-				// Is EC Key?
-				if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
-				{
-					throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
-				}
-
-				// Has public key?
-				if(!_Base::HasPubKey(GetEcContextNoNullCheck()))
-				{
-					throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context contains no public key.");
-				}
-			}
-			catch(...)
-			{
-				_Base::SwapBaseObject(rhs);
-				throw;
-			}
-		}
-
-		/**
 		 * @brief Copy Constructor.
 		 *
 		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
@@ -513,7 +477,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		EcPublicKeyBase(const EcPublicKeyBase& rhs) :
-			EcPublicKeyBase(rhs, (void*)nullptr)
+			EcPublicKeyBase(rhs, (const void*)nullptr)
 		{}
 
 		virtual ~EcPublicKeyBase()
@@ -575,6 +539,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return operator=<_PKObjTrait>(rhs);
 		}
 
+		using _Base::NullCheck;
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
 		 *        the mbedTLS object. If so, exception will be thrown. Helper
@@ -648,7 +613,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual EcType GetEcType() const
 		{
-			return ::GetEcType(GetEcContext().grp.id);
+			return ToEcType(GetEcContext().grp.id);
 		}
 
 		/**
@@ -680,7 +645,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 						const ContCtnReadOnlyRef<_SRCtnType,   _SRSecrecy>& r,
 						const ContCtnReadOnlyRef<_SRCtnType,   _SRSecrecy>& s) const
 		{
-			return VerifySign(hash, ConstBigNumber(r), ConstBigNumber(s));
+			if (ConstBigNumber::CanMemRegFit(r.GetRegionSize()) && ConstBigNumber::CanMemRegFit(s.GetRegionSize()))
+			{
+				return VerifySign(hash, ConstBigNumber(r), ConstBigNumber(s));
+			}
+			else if (ConstBigNumber::CanMemRegFit(r.GetRegionSize()))
+			{
+				return VerifySign(hash, ConstBigNumber(r), BigNum(s, true, true));
+			}
+			else if (ConstBigNumber::CanMemRegFit(s.GetRegionSize()))
+			{
+				return VerifySign(hash, BigNum(r, true, true), ConstBigNumber(s));
+			}
+			else
+			{
+				return VerifySign(hash, BigNum(r, true, true), BigNum(s, true, true));
+			}
 		}
 
 		using _Base::GetPublicDer;
@@ -705,7 +685,44 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief Construct a PKeyBase object (private part) from a given PEM string.
+		 * @brief Construct a EcPublicKeyBase object (public part) from a given PEM string.
+		 *
+		 * @tparam _dummy_Trait A dummy template parameter used to make sure
+		 *                      the constructor is not available for borrowers.
+		 * @param pem PEM string in std::string
+		 */
+		template<typename _dummy_Trait = _PKObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKeyBase(const std::string& pem, const void*) :
+			_Base::PKeyBase(pem)
+		{
+			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			{
+				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
+			}
+		}
+
+		/**
+		 * @brief Construct a EcPublicKeyBase object (public part) from a given DER bytes.
+		 *
+		 * @tparam _dummy_Trait A dummy template parameter used to make sure
+		 *                      the constructor is not available for borrowers.
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _dummy_Trait = _PKObjTrait,
+				 typename ContainerType,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, false>& der, const void*) :
+			_Base::PKeyBase(der)
+		{
+			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			{
+				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
+			}
+		}
+
+		/**
+		 * @brief Construct a EcPublicKeyBase object (private part) from a given PEM string.
 		 *
 		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
 		 *                        the constructor is not available for borrowers.
@@ -723,7 +740,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
-		 * @brief Construct a PKeyBase object (private part) from a given DER bytes.
+		 * @brief Construct a EcPublicKeyBase object (private part) from a given DER bytes.
 		 *
 		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
 		 *                        the constructor is not available for borrowers.
@@ -738,6 +755,42 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
+			}
+		}
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcPublicKeyBase(PKeyBase<_PKObjTrait>&& other, const void*) :
+			_Base::PKeyBase(std::forward<_Base>(other)) //noexcept
+		{
+			try
+			{
+				// Is EC Key?
+				if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+				{
+					throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
+				}
+
+				// Has public key?
+				if(!_Base::HasPubKey(GetEcContextNoNullCheck()))
+				{
+					throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context contains no public key.");
+				}
+			}
+			catch(...)
+			{
+				_Base::SwapBaseObject(other);
+				throw;
 			}
 		}
 
@@ -763,6 +816,53 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				mbedtls_ecp_mul,
 				&ctx.grp, &ctx.Q, &ctx.d, &ctx.grp.G,
 				&RbgInterface::CallBack, rand.get());
+		}
+
+		/**
+		 * @brief	Constructs a new EC key pair, based on the given random source
+		 *
+		 * @param	type	Type of the ec.
+		 * @param	rand   	The Random Bit Generator.
+		 */
+		static EcKeyPairBase Generate(EcType type, std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			return EcKeyPairBase(type, std::move(rand), (const void*)nullptr);
+		}
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		static EcKeyPairBase Convert(PKeyBase<_PKObjTrait>&& other)
+		{
+			return EcKeyPairBase(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcKeyPairBase object (private part) from a given PEM string.
+		 *
+		 * @param pem PEM string in SecretString.
+		 */
+		static EcKeyPairBase FromPEM(const SecretString& pem)
+		{
+			return EcKeyPairBase(pem, (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcKeyPairBase object (private part) from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static EcKeyPairBase FromDER(const ContCtnReadOnlyRef<_SecCtnType, true>& der)
+		{
+			return EcKeyPairBase(der, (const void*)nullptr);
 		}
 
 	public:
@@ -817,80 +917,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		EcKeyPairBase(const EcKeyPairBase& rhs) :
 			EcKeyPairBase(rhs, nullptr)
-		{}
-
-		/**
-		 * @brief	Move constructor that moves a general PKeyBase object to EC
-		 *          Key pair.
-		 *
-		 * @exception InvalidArgumentException Thrown when the given object is
-		 *                                     not a EC private key.
-		 *
-		 * @param	rhs	The right hand side.
-		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		explicit EcKeyPairBase(PKeyBase<_PKObjTrait>&& rhs) :
-			_Base::EcPublicKeyBase(std::forward<PKeyBase<_PKObjTrait> >(rhs))
-		{
-			try
-			{
-				// Has private key?
-				if(!_Base::HasPrvKey(_Base::GetEcContextNoNullCheck()))
-				{
-					throw InvalidArgumentException("EcKeyPairBase::EcKeyPairBase - The given PK context contains no private key.");
-				}
-			}
-			catch(...)
-			{
-				_Base::SwapBaseObject(rhs);
-				throw;
-			}
-		}
-
-		/**
-		 * @brief	Constructs a new EC key pair, based on the given random source
-		 *
-		 * @param	type	Type of the ec.
-		 * @param	rand   	The Random Bit Generator.
-		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(EcType type,
-				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) :
-			_Base::EcPublicKeyBase()
-		{
-			mbedtls_ecp_keypair& ctx = _Base::GetEcContextNoNullCheck();
-
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcKeyPairBase::EcKeyPairBase,
-				mbedtls_ecp_gen_key, GetMbedTlsEcType(type), &ctx, &RbgInterface::CallBack, rand.get());
-		}
-
-		/**
-		 * @brief Construct a PKeyBase object (private part) from a given PEM string.
-		 *
-		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
-		 *                        the constructor is not available for borrowers.
-		 * @param pem PEM string in SecretString.
-		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(const SecretString& pem) :
-			_Base::EcPublicKeyBase(pem, nullptr)
-		{}
-
-		/**
-		 * @brief Construct a PKeyBase object (private part) from a given DER bytes.
-		 *
-		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
-		 *                        the constructor is not available for borrowers.
-		 * @param der DER bytes referenced by ContCtnReadOnlyRef
-		 */
-		template<typename _dummy_PKTrait = _PKObjTrait,
-				 typename ContainerType,
-				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
-		EcKeyPairBase(const ContCtnReadOnlyRef<ContainerType, true>& der) :
-			_Base::EcPublicKeyBase(der, nullptr)
 		{}
 
 		/**
@@ -1109,5 +1135,718 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using _Base::GetPublicPem;
 		using _Base::GetPrivateDer;
 		using _Base::GetPrivatePem;
+
+	protected:
+
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPairBase(EcType type, std::unique_ptr<RbgInterface> rand, const void*) :
+			_Base::EcPublicKeyBase()
+		{
+			mbedtls_ecp_keypair& ctx = _Base::GetEcContextNoNullCheck();
+
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcKeyPairBase::EcKeyPairBase,
+				mbedtls_ecp_gen_key, ToEcGroupId(type), &ctx, &RbgInterface::CallBack, rand.get());
+		}
+
+		/**
+		 * @brief Construct a EcKeyPairBase object (private part) from a given PEM string.
+		 *
+		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
+		 *                        the constructor is not available for borrowers.
+		 * @param pem PEM string in SecretString.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPairBase(const SecretString& pem, const void*) :
+			_Base::EcPublicKeyBase(pem, nullptr)
+		{}
+
+		/**
+		 * @brief Construct a EcKeyPairBase object (private part) from a given DER bytes.
+		 *
+		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
+		 *                        the constructor is not available for borrowers.
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 typename ContainerType,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPairBase(const ContCtnReadOnlyRef<ContainerType, true>& der, const void*) :
+			_Base::EcPublicKeyBase(der, nullptr)
+		{}
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcKeyPairBase(PKeyBase<_PKObjTrait>&& other, const void*) :
+			_Base::EcPublicKeyBase(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr)
+		{
+			try
+			{
+				// Has private key?
+				if(!_Base::HasPrvKey(_Base::GetEcContextNoNullCheck()))
+				{
+					throw InvalidArgumentException("EcKeyPairBase::EcKeyPairBase - The given PK context contains no private key.");
+				}
+			}
+			catch(...)
+			{
+				_Base::SwapBaseObject(other);
+				throw;
+			}
+		}
+	};
+
+	template<EcType _ecType, typename _PKObjTrait = DefaultPKeyObjTrait,
+			 enable_if_t<std::is_same<typename _PKObjTrait::CObjType, mbedtls_pk_context>::value, int> = 0>
+	class EcPublicKey : public EcPublicKeyBase<_PKObjTrait>
+	{
+	public: // Types and static members:
+
+		using _Base = EcPublicKeyBase<_PKObjTrait>;
+
+		/**
+		 * @brief The EC type used by this class.
+		 *
+		 */
+		static constexpr EcType sk_ecType = _ecType;
+
+		/**
+		 * @brief The size of the key in Bytes.
+		 *
+		 */
+		static constexpr size_t sk_keySizeBytes = GetCurveByteSize(sk_ecType);
+
+		/**
+		 * @brief The size of the key in Bytes that fits the MPI array.
+		 *
+		 */
+		static constexpr size_t sk_keySizeBytesFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		static EcPublicKey Convert(PKeyBase<_PKObjTrait>&& other)
+		{
+			return EcPublicKey(std::forward<PKeyBase<_PKObjTrait> >(other), nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcPublicKey object (public part) from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static EcPublicKey FromPEM(const std::string& pem)
+		{
+			return EcPublicKey(pem, (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcPublicKey object (public part) from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static EcPublicKey FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
+		{
+			return EcPublicKey(der, (const void*)nullptr);
+		}
+
+		/**
+		 * @brief	Constructor from public key's X, Y and Z values. Z is default to 1.
+		 *
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	x	Elliptic Curve public key's X value.
+		 * @param	y	Elliptic Curve public key's Y value.
+		 * @param	z	Elliptic Curve public key's Z value.
+		 */
+		static EcPublicKey FromBigNums(BigNum x, BigNum y, BigNum z = BigNum(1))
+		{
+			return EcPublicKey(std::move(x), std::move(y), std::move(z), (const void*)nullptr);
+		}
+
+		template<typename _CtnType>
+		static EcPublicKey FromBytes(const ContCtnReadOnlyRef<_CtnType, false>& x,
+					const ContCtnReadOnlyRef<_CtnType, false>& y,
+					const ContCtnReadOnlyRef<_CtnType, false>& z)
+		{
+			return FromBigNums(BigNum(x, true, true), BigNum(y, true, true), BigNum(z, true, true));
+		}
+
+		template<typename _CtnType>
+		static EcPublicKey FromBytes(const ContCtnReadOnlyRef<_CtnType, false>& x,
+					const ContCtnReadOnlyRef<_CtnType, false>& y)
+		{
+			return FromBigNums(BigNum(x, true, true), BigNum(y, true, true));
+		}
+
+		static EcPublicKey FromBytes(const std::array<uint8_t, sk_keySizeBytes>& x,
+					const std::array<uint8_t, sk_keySizeBytes>& y,
+					const std::array<uint8_t, sk_keySizeBytes>& z)
+		{
+			return FromBytes(CtnFullR(x), CtnFullR(y), CtnFullR(z));
+		}
+
+		static EcPublicKey FromBytes(const std::array<uint8_t, sk_keySizeBytes>& x,
+					const std::array<uint8_t, sk_keySizeBytes>& y)
+		{
+			return FromBytes(CtnFullR(x), CtnFullR(y));
+		}
+
+		static EcPublicKey FromBytes(const uint8_t(&x)[sk_keySizeBytes],
+					const uint8_t(&y)[sk_keySizeBytes],
+					const uint8_t(&z)[sk_keySizeBytes])
+		{
+			return FromBytes(CtnFullR(x), CtnFullR(y), CtnFullR(z));
+		}
+
+		static EcPublicKey FromBytes(const uint8_t(&x)[sk_keySizeBytes],
+					const uint8_t(&y)[sk_keySizeBytes])
+		{
+			return FromBytes(CtnFullR(x), CtnFullR(y));
+		}
+
+	public:
+
+		/**
+		 * @brief Construct a new EcPublicKey object that borrows the C object.
+		 *
+		 * @tparam _dummy_Trait A dummy template parameter used to make sure
+		 *                      the constructor is only available for borrowers.
+		 * @param ptr pointer to the borrowed C object.
+		 */
+		template<typename _dummy_Trait = _PKObjTrait,
+				 enable_if_t<_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKey(mbedtls_pk_context* ptr) :
+			_Base::EcPublicKeyBase(ptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcPublicKey::EcPublicKey - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		/**
+		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
+		 *
+		 * @exception None No exception thrown
+		 * @param rhs The other EC public key instance.
+		 */
+		EcPublicKey(EcPublicKey&& rhs) noexcept :
+			_Base::EcPublicKeyBase(std::forward<_Base>(rhs)) //noexcept
+		{}
+
+		/**
+		 * @brief Copy Constructor.
+		 *
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @tparam _dummy_Trait A dummy template parameter used to make sure
+		 *                      the constructor is not available for borrowers.
+		 * @param rhs The other EC public key instance.
+		 */
+		template<typename _other_Trait,
+				 typename _dummy_Trait = _PKObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKey(const EcPublicKey<sk_ecType, _other_Trait>& rhs, const void* = nullptr) :
+			_Base::EcPublicKeyBase(rhs, (const void*)nullptr)
+		{}
+
+		EcPublicKey(const EcPublicKey& rhs) :
+			EcPublicKey(rhs, (const void*)nullptr)
+		{}
+
+		virtual ~EcPublicKey()
+		{}
+
+		/**
+		 * @brief	Copy assignment operator
+		 *
+		 * @tparam	_rhs_Trait	The object trait used by the right hand side.
+		 * @param	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
+		template<typename _rhs_Trait,
+				 typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcPublicKey& operator=(const EcPublicKey<sk_ecType, _rhs_Trait>& rhs)
+		{
+			_Base::template operator=<_rhs_Trait>(rhs);
+			return *this;
+		}
+
+		EcPublicKey& operator=(const EcPublicKey& rhs)
+		{
+			return operator=<_PKObjTrait>(rhs);
+		}
+
+		/**
+		 * @brief	Move assignment operator
+		 *
+		 * @param	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
+		EcPublicKey& operator=(EcPublicKey&& rhs) noexcept
+		{
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
+
+			return *this;
+		}
+
+		/**
+		 * @brief Check if the current instance is holding a null pointer for
+		 *        the mbedTLS object. If so, exception will be thrown. Helper
+		 *        function to be called before accessing the mbedTLS object.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 */
+		virtual void NullCheck() const
+		{
+			_Base::NullCheck(typeid(EcPublicKey).name());
+		}
+
+		/**
+		 * @brief	Gets Elliptic Curve type
+		 *
+		 * @return	The Elliptic Curve type.
+		 */
+		virtual EcType GetEcType() const
+		{
+			return sk_ecType;
+		}
+
+		using _Base::VerifySign;
+
+		template<HashType _HashT,
+				 typename _SRCtnType,   bool _SRSecrecy>
+		void VerifySign(const Hash<_HashT>& hash,
+						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& r,
+						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& s) const
+		{
+			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(r), ConstBigNumber(s));
+		}
+
+	protected:
+
+		template<typename _dummy_Trait = _PKObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKey(const std::string& pem, const void*) :
+			_Base::EcPublicKeyBase(pem, (const void*)nullptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcPublicKey::EcPublicKey - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		template<typename _dummy_Trait = _PKObjTrait,
+				 typename ContainerType,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		EcPublicKey(const ContCtnReadOnlyRef<ContainerType, false>& der, const void*) :
+			_Base::EcPublicKeyBase(der, (const void*)nullptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcPublicKey::EcPublicKey - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcPublicKey(PKeyBase<_PKObjTrait>&& other, const void*) :
+			_Base::EcPublicKeyBase(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr) //noexcept
+		{
+			try
+			{
+				if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+				{
+					throw InvalidArgumentException("EcPublicKey::EcPublicKey - The given EC Key context is not in the specified EC type.");
+				}
+			}
+			catch(...)
+			{
+				_Base::SwapBaseObject(other);
+				throw;
+			}
+		}
+
+		EcPublicKey(BigNum x, BigNum y, BigNum z, const void*) :
+			_Base::EcPublicKeyBase(sk_ecType, std::move(x), std::move(y), std::move(z))
+		{}
+
+	};
+
+	template<EcType _ecType, typename _PKObjTrait = DefaultPKeyObjTrait,
+			 enable_if_t<std::is_same<typename _PKObjTrait::CObjType, mbedtls_pk_context>::value, int> = 0>
+	class EcKeyPair : public EcKeyPairBase<_PKObjTrait>
+	{
+	public: // Types and static members:
+
+		using _Base = EcKeyPairBase<_PKObjTrait>;
+
+		/**
+		 * @brief The EC type used by this class.
+		 *
+		 */
+		static constexpr EcType sk_ecType = _ecType;
+
+		/**
+		 * @brief The size of the key in Bytes.
+		 *
+		 */
+		static constexpr size_t sk_keySizeBytes = GetCurveByteSize(sk_ecType);
+
+		/**
+		 * @brief The size of the key in Bytes that fits the MPI array.
+		 *
+		 */
+		static constexpr size_t sk_keySizeBytesFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+
+		static EcKeyPair Generate(std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			return EcKeyPair(std::move(rand));
+		}
+
+		/**
+		 * @brief Construct a EcKeyPair object (private part) from a given PEM string.
+		 *
+		 * @param pem PEM string in SecretString.
+		 */
+		static EcKeyPair FromPEM(const SecretString& pem)
+		{
+			return EcKeyPair(pem, (const void*)nullptr);
+		}
+
+		/**
+		 * @brief Construct a EcKeyPair object (private part) from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static EcKeyPair FromDER(const ContCtnReadOnlyRef<_SecCtnType, true>& der)
+		{
+			return EcKeyPair(der, (const void*)nullptr);
+		}
+
+		static EcKeyPair Convert(PKeyBase<_PKObjTrait>&& other)
+		{
+			return EcKeyPair(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr);
+		}
+
+		/**
+		 * @brief	Constructor from private key's R value.
+		 *
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	r		Elliptic Curve private key's R value.
+		 * @param	rand	The random bit generator.
+		 */
+		static EcKeyPair FromBigNums(BigNum r,
+				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			return EcKeyPair(std::move(r), std::move(rand), (const void*)nullptr);
+		}
+
+		/**
+		 * @brief	Constructor from private key's R value and public key's X, Y
+		 *          and Z values (Z is default to 1).
+		 * 			NOTE: this constructor does not check if the private and
+		 *          public parts are matched!
+		 *
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	r	  	Elliptic Curve private key's R value.
+		 * @param	x	  	Elliptic Curve public key's X value.
+		 * @param	y	  	Elliptic Curve public key's Y value.
+		 * @param	z	  	Elliptic Curve public key's Z value.
+		 */
+		static EcKeyPair FromBigNums(BigNum r,
+				BigNum x, BigNum y, BigNum z = BigNum(1))
+		{
+			return EcKeyPair(std::move(r), std::move(x), std::move(y), std::move(z), (const void*)nullptr);
+		}
+
+		template<typename _CtnType>
+		static EcKeyPair FromBytes(const ContCtnReadOnlyRef<_CtnType, true>& r,
+					std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			return FromBigNums(BigNum(r, true, true), std::move(rand));
+		}
+
+		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
+					std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		{
+			return FromBytes(CtnFullR(r), std::move(rand));
+		}
+
+		template<typename _CtnType,
+				 typename _SecCtnType>
+		static EcKeyPair FromBytes(const ContCtnReadOnlyRef<_SecCtnType, true>& r,
+					const ContCtnReadOnlyRef<_CtnType, false>& x,
+					const ContCtnReadOnlyRef<_CtnType, false>& y,
+					const ContCtnReadOnlyRef<_CtnType, false>& z)
+		{
+			return FromBigNums(BigNum(r, true, true),
+				BigNum(x, true, true), BigNum(y, true, true), BigNum(z, true, true));
+		}
+
+		template<typename _CtnType,
+				 typename _SecCtnType>
+		static EcKeyPair FromBytes(const ContCtnReadOnlyRef<_SecCtnType, true>& r,
+					const ContCtnReadOnlyRef<_CtnType, false>& x,
+					const ContCtnReadOnlyRef<_CtnType, false>& y)
+		{
+			return FromBigNums(BigNum(r, true, true),
+				BigNum(x, true, true), BigNum(y, true, true));
+		}
+
+		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
+					const std::array<uint8_t, sk_keySizeBytes>& x,
+					const std::array<uint8_t, sk_keySizeBytes>& y,
+					const std::array<uint8_t, sk_keySizeBytes>& z)
+		{
+			return FromBytes(CtnFullR(r), CtnFullR(x), CtnFullR(y), CtnFullR(z));
+		}
+
+		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
+					const std::array<uint8_t, sk_keySizeBytes>& x,
+					const std::array<uint8_t, sk_keySizeBytes>& y)
+		{
+			return FromBytes(CtnFullR(r), CtnFullR(x), CtnFullR(y));
+		}
+
+	public:
+
+		/**
+		 * @brief Construct a new EcKeyPair object that borrows the C object.
+		 *
+		 * @tparam _dummy_Trait A dummy template parameter used to make sure
+		 *                      the constructor is only available for borrowers.
+		 * @param ptr pointer to the borrowed C object.
+		 */
+		template<typename _dummy_Trait = _PKObjTrait,
+				 enable_if_t<_dummy_Trait::sk_isBorrower, int> = 0>
+		EcKeyPair(mbedtls_pk_context* ptr) :
+			_Base::EcKeyPairBase(ptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcKeyPair::EcKeyPair - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		/**
+		 * @brief	Move constructor
+		 *
+		 * @param	rhs	The right hand side.
+		 */
+		EcKeyPair(EcKeyPair&& rhs) noexcept :
+			_Base::EcKeyPairBase(std::forward<_Base>(rhs)) //noexcept
+		{}
+
+		/**
+		 * @brief	Copy constructor
+		 *
+		 * @param	rhs	The right hand side.
+		 */
+		template<typename _rhs_Trait,
+				 typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPair(const EcKeyPair<sk_ecType, _rhs_Trait>& rhs, const void* = nullptr) :
+			_Base::EcKeyPairBase(rhs, (const void*)nullptr)
+		{}
+
+		EcKeyPair(const EcKeyPair& rhs) :
+			EcKeyPair(rhs, nullptr)
+		{}
+
+		virtual ~EcKeyPair()
+		{}
+
+		/**
+		 * @brief	Copy assignment operator
+		 *
+		 * @tparam	_rhs_Trait	The object trait used by the right hand side.
+		 * @param	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
+		template<typename _rhs_Trait,
+				 typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPair& operator=(const EcKeyPair<sk_ecType, _rhs_Trait>& rhs)
+		{
+			_Base::template operator=<_rhs_Trait>(rhs);
+			return *this;
+		}
+
+		EcKeyPair& operator=(const EcKeyPair& rhs)
+		{
+			return operator=<_PKObjTrait>(rhs);
+		}
+
+		/**
+		 * @brief	Move assignment operator
+		 *
+		 * @param	rhs	The right hand side.
+		 *
+		 * @return	A reference to this object.
+		 */
+		EcKeyPair& operator=(EcKeyPair&& rhs) noexcept
+		{
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
+
+			return *this;
+		}
+
+		/**
+		 * @brief Check if the current instance is holding a null pointer for
+		 *        the mbedTLS object. If so, exception will be thrown. Helper
+		 *        function to be called before accessing the mbedTLS object.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 */
+		virtual void NullCheck() const
+		{
+			_Base::NullCheck(typeid(EcKeyPair).name());
+		}
+
+		/**
+		 * @brief	Gets Elliptic Curve type
+		 *
+		 * @return	The Elliptic Curve type.
+		 */
+		virtual EcType GetEcType() const
+		{
+			return sk_ecType;
+		}
+
+		using _Base::VerifySign;
+		using _Base::GetPublicDer;
+		using _Base::GetPublicPem;
+		using _Base::GetPrivateDer;
+		using _Base::GetPrivatePem;
+
+		template<HashType _HashT,
+				 typename _SRCtnType,   bool _SRSecrecy>
+		void VerifySign(const Hash<_HashT>& hash,
+						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& r,
+						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& s) const
+		{
+			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(r), ConstBigNumber(s));
+		}
+
+	protected:
+
+		/**
+		 * @brief	Constructs a new EC key pair, based on the given random source
+		 *
+		 * @param	type	Type of the ec.
+		 * @param	rand   	The Random Bit Generator.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPair(std::unique_ptr<RbgInterface> rand) :
+			_Base::EcKeyPairBase(sk_ecType, std::move(rand), (const void*)nullptr)
+		{}
+
+		/**
+		 * @brief	Move constructor that moves a general PKeyBase object to EC
+		 *          Key pair. If it failed, the \c other will remain the same.
+		 *
+		 * @exception InvalidArgumentException Thrown when the given object is
+		 *                                     not a EC private key.
+		 * @exception mbedTLSRuntimeError Thrown when mbed TLS C function call failed.
+		 *
+		 * @param	other	The PKeyBase instance to convert.
+		 */
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcKeyPair(PKeyBase<_PKObjTrait>&& other, const void*) :
+			_Base::EcKeyPairBase(std::forward<PKeyBase<_PKObjTrait> >(other), (const void*)nullptr) //noexcept
+		{
+			try
+			{
+				if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+				{
+					throw InvalidArgumentException("EcKeyPair::EcKeyPair - The given EC Key context is not in the specified EC type.");
+				}
+			}
+			catch(...)
+			{
+				_Base::SwapBaseObject(other);
+				throw;
+			}
+		}
+
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPair(const SecretString& pem, const void*) :
+			_Base::EcKeyPairBase(pem, (const void*)nullptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcKeyPair::EcKeyPair - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 typename ContainerType,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		EcKeyPair(const ContCtnReadOnlyRef<ContainerType, true>& der, const void*) :
+			_Base::EcKeyPairBase(der, (const void*)nullptr)
+		{
+			if (ToEcType(_Base::GetEcContextNoNullCheck().grp.id) != sk_ecType)
+			{
+				throw InvalidArgumentException("EcKeyPair::EcKeyPair - The given EC Key context is not in the specified EC type.");
+			}
+		}
+
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcKeyPair(BigNum r, std::unique_ptr<RbgInterface> rand, const void*) :
+			_Base::EcKeyPairBase(sk_ecType, std::move(r), std::move(rand))
+		{}
+
+		template<typename _dummy_PKTrait = _PKObjTrait,
+				 enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+		explicit EcKeyPair(BigNum r, BigNum x, BigNum y, BigNum z, const void*) :
+			_Base::EcKeyPairBase(sk_ecType, std::move(r), std::move(x), std::move(y), std::move(z))
+		{}
+
 	};
 }

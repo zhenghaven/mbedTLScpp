@@ -745,6 +745,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 */
 	class ConstBigNumber : public BigNumberBase<ConstBigNumObjTrait>
 	{
+	public: // Static members:
+
+		static constexpr bool CanMemRegFit(size_t regSize)
+		{
+			return regSize % sizeof(mbedtls_mpi_uint) == 0;
+		}
+
 	public:
 
 		/**
@@ -753,20 +760,44 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *
 		 * @exception InvalidArgumentException Thrown when data size can't fit in whole mbedtls_mpi_uint.
 		 * @exception std::bad_alloc           Thrown when memory allocation failed.
-		 * @tparam ContainerType The type of the container.
+		 * @tparam _CtnType    The type of the container.
+		 * @tparam _CtnSecrecy The secrecy of the container.
 		 * @param data The container stores the data.
 		 * @param isPositive Should it be a positive number (since we assume the
 		 *                   byte array only stores unsigned value)?
 		 */
-		template<typename ContainerType, bool ContainerSecrecy>
-		ConstBigNumber(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data, bool isPositive = true) :
+		template<typename _CtnType, bool _CtnSecrecy>
+		ConstBigNumber(const ContCtnReadOnlyRef<_CtnType, _CtnSecrecy>& data, bool isPositive = true) :
 			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
 		{
-			if (data.GetRegionSize() % sizeof(mbedtls_mpi_uint) != 0)
+			if (!CanMemRegFit(data.GetRegionSize()))
 			{
 				throw InvalidArgumentException("The size of data region must be a factor of the size of mbedtls_mpi_uint type.");
 			}
 
+			MutableGet()->s = isPositive ? 1 : -1;
+			MutableGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
+			MutableGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
+		}
+
+
+		/**
+		 * @brief Construct a new Const Big Number object with a reference to an
+		 *        existing container.
+		 *
+		 * @exception std::bad_alloc           Thrown when memory allocation failed.
+		 * @tparam _CtnType    The type of the container.
+		 * @tparam _RegSize    The size of the referenced region.
+		 * @tparam _CtnSecrecy The secrecy of the container.
+		 * @param data The container stores the data.
+		 * @param isPositive Should it be a positive number (since we assume the
+		 *                   byte array only stores unsigned value)?
+		 */
+		template<typename _CtnType, size_t _RegSize, bool _CtnSecrecy,
+				 enable_if_t<CanMemRegFit(_RegSize), int> = 0>
+		ConstBigNumber(const ContCtnReadOnlyStRef<_CtnType, _RegSize, _CtnSecrecy>& data, bool isPositive = true) :
+			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
+		{
 			MutableGet()->s = isPositive ? 1 : -1;
 			MutableGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
 			MutableGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
