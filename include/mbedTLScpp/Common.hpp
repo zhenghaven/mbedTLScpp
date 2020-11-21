@@ -71,5 +71,34 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	template<size_t Len>
 	using InDataList = std::array<InDataListItem, Len>;
 
+	/**
+	 * @brief Convert and copy the content of a C array to the std::array
+	 *
+	 * @tparam _ValType The type of value in the array.
+	 * @tparam _Size    The length of the array.
+	 * @param in The input C array
+	 * @return std::array<_ValType, _Size> The std::array that has been generated.
+	 */
+	template<typename _ValType, size_t _Size>
+	std::array<_ValType, _Size> ToArray(const _ValType (&in)[_Size])
+	{
+		std::array<_ValType, _Size> out;
+		std::copy(std::begin(in), std::end(in), out.begin());
+		return out;
+	}
+
+	/**
+	 * @brief Convert and copy the content of a std::array to the C array
+	 *
+	 * @tparam _ValType The type of value in the array.
+	 * @tparam _Size    The length of the array.
+	 * @param out The output C array
+	 * @param in  The input std::array
+	 */
+	template<typename _ValType, size_t _Size>
+	void ToCArray(_ValType (&out)[_Size], const std::array<_ValType, _Size>& in)
+	{
+		std::copy(in.begin(), in.end(), std::begin(out));
+	}
 }
 
