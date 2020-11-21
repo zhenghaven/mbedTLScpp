@@ -1089,11 +1089,6 @@ GTEST_TEST(TestEcKey, EcPrivateAPI)
 		EcPublicKey<EcType::CURVE25519> ecPub2 = EcPublicKey<EcType::CURVE25519>::FromBytes(ToArray(x), ToArray(y), ToArray(z));
 		EcKeyPair<EcType::CURVE25519>   ecPrv4 = EcKeyPair<EcType::CURVE25519>::FromBytes(d, ToArray(x), ToArray(y), ToArray(z));
 
-		EcKeyPair<EcType::CURVE25519>::KArray rArr;
-		EcKeyPair<EcType::CURVE25519>::KArray sArr;
-		uint8_t r[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-		uint8_t s[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-
 		// Share Secect
 		EcKeyPair<EcType::CURVE25519>::KSecArray sk1 = ecPrv1.DeriveSharedKey(ecPub2);
 		EcKeyPair<EcType::CURVE25519>::KSecArray sk2 = ecPrv2.DeriveSharedKey(ecPub1);
