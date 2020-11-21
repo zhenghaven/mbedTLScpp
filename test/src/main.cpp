@@ -2,6 +2,7 @@
 
 #include "TestTester.hpp"
 #include "TestContainer.hpp"
+#include "TestSecretArray.hpp"
 #include "TestSecretContainer.hpp"
 #include "TestException.hpp"
 

@@ -1122,7 +1122,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
 		{
 			auto& ecCtx = _Base::GetEcContext();
-			EcGroup<> ecGrp = ecCtx.grp;
 			BigNum rBN;
 			BigNum sBN;
 
@@ -1225,13 +1224,27 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief The size of the key in Bytes.
 		 *
 		 */
-		static constexpr size_t sk_keySizeBytes = GetCurveByteSize(sk_ecType);
+		static constexpr size_t sk_kSize = GetCurveByteSize(sk_ecType);
 
 		/**
 		 * @brief The size of the key in Bytes that fits the MPI array.
 		 *
 		 */
-		static constexpr size_t sk_keySizeBytesFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+		static constexpr size_t sk_kSizeFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+
+		/**
+		 * @brief The type of array used to store the EC Key components (key,
+		 *        signature, and shared secret).
+		 *
+		 */
+		using KArray = std::array<uint8_t, sk_kSize>;
+
+		/**
+		 * @brief The type of array used to store the EC Key components (key,
+		 *        signature, and shared secret).
+		 *
+		 */
+		using KArrayFitsMPI = std::array<uint8_t, sk_kSizeFitsMpi>;
 
 		/**
 		 * @brief	Move constructor that moves a general PKeyBase object to EC
@@ -1298,28 +1311,25 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return FromBigNums(BigNum(x, true, true), BigNum(y, true, true));
 		}
 
-		static EcPublicKey FromBytes(const std::array<uint8_t, sk_keySizeBytes>& x,
-					const std::array<uint8_t, sk_keySizeBytes>& y,
-					const std::array<uint8_t, sk_keySizeBytes>& z)
+		static EcPublicKey FromBytes(const KArray& x, const KArray& y, const KArray& z)
 		{
 			return FromBytes(CtnFullR(x), CtnFullR(y), CtnFullR(z));
 		}
 
-		static EcPublicKey FromBytes(const std::array<uint8_t, sk_keySizeBytes>& x,
-					const std::array<uint8_t, sk_keySizeBytes>& y)
+		static EcPublicKey FromBytes(const KArray& x, const KArray& y)
 		{
 			return FromBytes(CtnFullR(x), CtnFullR(y));
 		}
 
-		static EcPublicKey FromBytes(const uint8_t(&x)[sk_keySizeBytes],
-					const uint8_t(&y)[sk_keySizeBytes],
-					const uint8_t(&z)[sk_keySizeBytes])
+		static EcPublicKey FromBytes(const uint8_t(&x)[sk_kSize],
+					const uint8_t(&y)[sk_kSize],
+					const uint8_t(&z)[sk_kSize])
 		{
 			return FromBytes(CtnFullR(x), CtnFullR(y), CtnFullR(z));
 		}
 
-		static EcPublicKey FromBytes(const uint8_t(&x)[sk_keySizeBytes],
-					const uint8_t(&y)[sk_keySizeBytes])
+		static EcPublicKey FromBytes(const uint8_t(&x)[sk_kSize],
+					const uint8_t(&y)[sk_kSize])
 		{
 			return FromBytes(CtnFullR(x), CtnFullR(y));
 		}
@@ -1439,13 +1449,42 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::VerifySign;
 
-		template<HashType _HashT,
-				 typename _SRCtnType,   bool _SRSecrecy>
+		template<HashType _HashT>
 		void VerifySign(const Hash<_HashT>& hash,
-						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& r,
-						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& s) const
+						const KArrayFitsMPI& r, const KArrayFitsMPI& s) const
 		{
-			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(r), ConstBigNumber(s));
+			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(CtnFullR(r)), ConstBigNumber(CtnFullR(s)));
+		}
+
+		template<// automated parts:
+				 HashType _HashT,
+				 typename _dummy_KArray = KArray,
+				 enable_if_t<!std::is_same<KArrayFitsMPI, _dummy_KArray>::value, int> = 0>
+		void VerifySign(const Hash<_HashT>& hash,
+						const KArray& r, const KArray& s) const
+		{
+			return _Base::VerifySign(CtnFullR(hash), BigNum(CtnFullR(r)), BigNum(CtnFullR(s)));
+		}
+
+		std::tuple<KArray /*x*/, KArray /*y*/, KArray /*z*/>
+			GetPublicBytes() const
+		{
+			NullCheck();
+			_Base::PKeyContextNullCheck(*_Base::Get());
+
+			const BigNumber<BorrowerBigNumTrait> xBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.X);
+			const BigNumber<BorrowerBigNumTrait> yBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.Y);
+			const BigNumber<BorrowerBigNumTrait> zBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.Z);
+
+			KArray x{};
+			KArray y{};
+			KArray z{};
+
+			std::memcpy(x.data(), xBN.Get()->p, xBN.GetSize());
+			std::memcpy(y.data(), yBN.Get()->p, yBN.GetSize());
+			std::memcpy(z.data(), zBN.Get()->p, zBN.GetSize());
+
+			return std::make_tuple(x, y, z);
 		}
 
 	protected:
@@ -1526,13 +1565,34 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief The size of the key in Bytes.
 		 *
 		 */
-		static constexpr size_t sk_keySizeBytes = GetCurveByteSize(sk_ecType);
+		static constexpr size_t sk_kSize = GetCurveByteSize(sk_ecType);
 
 		/**
 		 * @brief The size of the key in Bytes that fits the MPI array.
 		 *
 		 */
-		static constexpr size_t sk_keySizeBytesFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+		static constexpr size_t sk_kSizeFitsMpi = GetCurveByteSizeFitsMpi(sk_ecType);
+
+		/**
+		 * @brief The type of array used to store the EC Key components (key,
+		 *        signature, and shared secret).
+		 *
+		 */
+		using KArray = std::array<uint8_t, sk_kSize>;
+
+		/**
+		 * @brief The type of array used to store the EC Key components (key,
+		 *        signature, and shared secret).
+		 *
+		 */
+		using KArrayFitsMPI = std::array<uint8_t, sk_kSizeFitsMpi>;
+
+		/**
+		 * @brief The type of array used to store the EC Key secret components (key,
+		 *        signature, and shared secret).
+		 *
+		 */
+		using KSecArray = SecretArray<uint8_t, sk_kSize>;
 
 		static EcKeyPair Generate(std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
 		{
@@ -1605,7 +1665,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return FromBigNums(BigNum(r, true, true), std::move(rand));
 		}
 
-		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
+		static EcKeyPair FromBytes(const KSecArray& r,
 					std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
 		{
 			return FromBytes(CtnFullR(r), std::move(rand));
@@ -1632,17 +1692,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				BigNum(x, true, true), BigNum(y, true, true));
 		}
 
-		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
-					const std::array<uint8_t, sk_keySizeBytes>& x,
-					const std::array<uint8_t, sk_keySizeBytes>& y,
-					const std::array<uint8_t, sk_keySizeBytes>& z)
+		static EcKeyPair FromBytes(const KSecArray& r,
+					const KArray& x, const KArray& y, const KArray& z)
 		{
 			return FromBytes(CtnFullR(r), CtnFullR(x), CtnFullR(y), CtnFullR(z));
 		}
 
-		static EcKeyPair FromBytes(const SecretArray<uint8_t, sk_keySizeBytes>& r,
-					const std::array<uint8_t, sk_keySizeBytes>& x,
-					const std::array<uint8_t, sk_keySizeBytes>& y)
+		static EcKeyPair FromBytes(const KSecArray& r,
+					const KArray& x, const KArray& y)
 		{
 			return FromBytes(CtnFullR(r), CtnFullR(x), CtnFullR(y));
 		}
@@ -1761,13 +1818,127 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using _Base::GetPrivateDer;
 		using _Base::GetPrivatePem;
 
-		template<HashType _HashT,
-				 typename _SRCtnType,   bool _SRSecrecy>
+		template<HashType _HashT>
 		void VerifySign(const Hash<_HashT>& hash,
-						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& r,
-						const ContCtnReadOnlyStRef<_SRCtnType, sk_keySizeBytesFitsMpi, _SRSecrecy>& s) const
+						const KArrayFitsMPI& r, const KArrayFitsMPI& s) const
 		{
-			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(r), ConstBigNumber(s));
+			return _Base::VerifySign(CtnFullR(hash), ConstBigNumber(CtnFullR(r)), ConstBigNumber(CtnFullR(s)));
+		}
+
+		template<// automated parts:
+				 HashType _HashT,
+				 typename _dummy_KArray = KArray,
+				 enable_if_t<!std::is_same<KArrayFitsMPI, _dummy_KArray>::value, int> = 0>
+		void VerifySign(const Hash<_HashT>& hash,
+						const KArray& r, const KArray& s) const
+		{
+			return _Base::VerifySign(CtnFullR(hash), BigNum(CtnFullR(r)), BigNum(CtnFullR(s)));
+		}
+
+		/**
+		 * @brief	Derive shared key
+		 *
+		 * @param	pubKey	The public key.
+		 * @param	rand	The random bit generator.
+		 *
+		 * @return The share key in bytes
+		 */
+		template<typename _pub_Trait>
+		KSecArray DeriveSharedKey(const EcPublicKeyBase<_pub_Trait>& pubKey,
+				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
+		{
+			BigNum skBigNum = _Base::DeriveSharedKeyInBigNum(pubKey, std::move(rand));
+
+			KSecArray key;
+			std::memcpy(key.data(), skBigNum.Get()->p, skBigNum.GetSize());
+			return key;
+		}
+
+		/**
+		 * @brief	Make a signature.
+		 *
+		 * @tparam	_HashT	The type of hash.
+		 * @param	hash	The hash.
+		 * @param	rand	The random bit generator.
+		 * @return	A tuple of std::array's. It's in the order of R and S value.
+		 */
+		template<HashType _HashT>
+		std::tuple<KArray /* r */, KArray /* s */> Sign(const Hash<_HashT>& hash,
+				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
+		{
+			auto& ecCtx = _Base::GetEcContext();
+			BigNum rBN;
+			BigNum sBN;
+
+			std::tie(rBN, sBN) = _Base::SignInBigNum(_HashT, CtnFullR(hash), std::move(rand));
+
+			KArray r{}; // initialize to zeros
+			KArray s{};
+			std::memcpy(r.data(), rBN.Get()->p, rBN.GetSize());
+			std::memcpy(s.data(), sBN.Get()->p, sBN.GetSize());
+
+			return std::make_tuple(r, s);
+		}
+
+		/**
+		 * @brief	Make a signature.
+		 *
+		 * @tparam	_HashT	The type of hash.
+		 * @param	hash	The hash.
+		 * @param	rand	The random bit generator.
+		 * @return	A tuple of std::array's. It's in the order of R and S value.
+		 */
+		template<HashType _HashT>
+		std::tuple<KArrayFitsMPI /* r */, KArrayFitsMPI /* s */> SignFitsMPI(const Hash<_HashT>& hash,
+				std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) const
+		{
+			auto& ecCtx = _Base::GetEcContext();
+			BigNum rBN;
+			BigNum sBN;
+
+			std::tie(rBN, sBN) = _Base::SignInBigNum(_HashT, CtnFullR(hash), std::move(rand));
+
+			KArrayFitsMPI r{}; // initialize to zeros
+			KArrayFitsMPI s{};
+			std::memcpy(r.data(), rBN.Get()->p, rBN.GetSize());
+			std::memcpy(s.data(), sBN.Get()->p, sBN.GetSize());
+
+			return std::make_tuple(r, s);
+		}
+
+		std::tuple<KArray /*x*/, KArray /*y*/, KArray /*z*/>
+			GetPublicBytes() const
+		{
+			NullCheck();
+			_Base::PKeyContextNullCheck(*_Base::Get());
+
+			const BigNumber<BorrowerBigNumTrait> xBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.X);
+			const BigNumber<BorrowerBigNumTrait> yBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.Y);
+			const BigNumber<BorrowerBigNumTrait> zBN(&mbedtls_pk_ec(*_Base::MutableGet())->Q.Z);
+
+			KArray x{};
+			KArray y{};
+			KArray z{};
+
+			std::memcpy(x.data(), xBN.Get()->p, xBN.GetSize());
+			std::memcpy(y.data(), yBN.Get()->p, yBN.GetSize());
+			std::memcpy(z.data(), zBN.Get()->p, zBN.GetSize());
+
+			return std::make_tuple(x, y, z);
+		}
+
+		KSecArray GetPrivateBytes() const
+		{
+			NullCheck();
+			_Base::PKeyContextNullCheck(*_Base::Get());
+
+			const BigNumber<BorrowerBigNumTrait> rBN(&mbedtls_pk_ec(*_Base::MutableGet())->d);
+
+			KSecArray r;
+
+			std::memcpy(r.data(), rBN.Get()->p, rBN.GetSize());
+
+			return r;
 		}
 
 	protected:

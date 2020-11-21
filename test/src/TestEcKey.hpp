@@ -812,7 +812,7 @@ GTEST_TEST(TestEcKey, EcPublicAPI)
 
 		EXPECT_NO_THROW(ec1.GetPublicPem());
 		EXPECT_NO_THROW(ec1.GetPublicDer());
-		EXPECT_NO_THROW(ec1.VerifySign(testHash, CtnFullR(r), CtnFullR(s)));
+		EXPECT_NO_THROW(ec1.VerifySign(testHash, r, s));
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -994,6 +994,114 @@ GTEST_TEST(TestEcKey, EcPrivateConstructor)
 		ec12 = ec10;
 
 		//ec10 = ec10;
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+}
+
+GTEST_TEST(TestEcKey, EcPrivateAPI)
+{
+	int64_t initCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+
+	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+
+	// SECP256R1
+	{
+		EcKeyPair<EcType::SECP256R1>   ecPrv1 = EcKeyPair<EcType::SECP256R1>::Generate();
+		EcPublicKey<EcType::SECP256R1> ecPub1 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(ecPrv1.GetPublicDer()));
+
+		EcKeyPair<EcType::SECP256R1>   ecPrv2 = EcKeyPair<EcType::SECP256R1>::Generate();
+		EcPublicKey<EcType::SECP256R1> ecPub2 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(ecPrv2.GetPublicDer()));
+
+		EcKeyPair<EcType::SECP256R1>::KArray rArr;
+		EcKeyPair<EcType::SECP256R1>::KArray sArr;
+		uint8_t r[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+		uint8_t s[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+
+		// Sign
+		std::tie(rArr, sArr) = ecPrv1.Sign(testHash);
+		ToCArray(r, rArr);
+		ToCArray(s, sArr);
+
+		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, rArr, sArr));
+		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, ToArray(r), ToArray(s)));
+
+		// Share Secect
+		EcKeyPair<EcType::SECP256R1>::KSecArray sk1 = ecPrv1.DeriveSharedKey(ecPub2);
+		EcKeyPair<EcType::SECP256R1>::KSecArray sk2 = ecPrv2.DeriveSharedKey(ecPub1);
+		EXPECT_EQ(sk1, sk2);
+
+		// Export & Import
+		EcKeyPair<EcType::SECP256R1>::KSecArray dArr;
+		EcKeyPair<EcType::SECP256R1>::KArray xArr;
+		EcKeyPair<EcType::SECP256R1>::KArray yArr;
+
+		uint8_t d[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+		uint8_t x[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+		uint8_t y[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+
+		std::tie(xArr, yArr, std::ignore) = ecPub1.GetPublicBytes();
+		std::tie(xArr, yArr, std::ignore) = ecPrv1.GetPublicBytes();
+		dArr = ecPrv1.GetPrivateBytes();
+
+		Declassify(d, dArr);
+		ToCArray(x, xArr);
+		ToCArray(y, yArr);
+
+		EcKeyPair<EcType::SECP256R1> ecPrv3 = EcKeyPair<EcType::SECP256R1>::FromBytes(d, ToArray(x), ToArray(y));
+
+		EXPECT_NO_THROW(ecPrv3.VerifySign(testHash, rArr, sArr));
+		std::tie(rArr, sArr) = ecPrv3.Sign(testHash);
+		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, rArr, sArr));
+	}
+
+	// CURVE25519
+	{
+		EcKeyPair<EcType::CURVE25519>::KSecArray dArr;
+		EcKeyPair<EcType::CURVE25519>::KArray xArr;
+		EcKeyPair<EcType::CURVE25519>::KArray yArr;
+		EcKeyPair<EcType::CURVE25519>::KArray zArr;
+
+		uint8_t d[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+		uint8_t x[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+		uint8_t y[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+		uint8_t z[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+
+		EcKeyPair<EcType::CURVE25519>   ecPrv1 = EcKeyPair<EcType::CURVE25519>::Generate();
+		dArr = ecPrv1.GetPrivateBytes();
+		std::tie(xArr, yArr, zArr) = ecPrv1.GetPublicBytes();
+		Declassify(d, dArr);
+		ToCArray(x, xArr);
+		ToCArray(y, yArr);
+		ToCArray(z, zArr);
+		EcPublicKey<EcType::CURVE25519> ecPub1 = EcPublicKey<EcType::CURVE25519>::FromBytes(ToArray(x), ToArray(y), ToArray(z));
+		EcKeyPair<EcType::CURVE25519>   ecPrv3 = EcKeyPair<EcType::CURVE25519>::FromBytes(d, ToArray(x), ToArray(y), ToArray(z));
+
+		EcKeyPair<EcType::CURVE25519>   ecPrv2 = EcKeyPair<EcType::CURVE25519>::Generate();
+		dArr = ecPrv2.GetPrivateBytes();
+		std::tie(xArr, yArr, zArr) = ecPrv2.GetPublicBytes();
+		Declassify(d, dArr);
+		ToCArray(x, xArr);
+		ToCArray(y, yArr);
+		ToCArray(z, zArr);
+		EcPublicKey<EcType::CURVE25519> ecPub2 = EcPublicKey<EcType::CURVE25519>::FromBytes(ToArray(x), ToArray(y), ToArray(z));
+		EcKeyPair<EcType::CURVE25519>   ecPrv4 = EcKeyPair<EcType::CURVE25519>::FromBytes(d, ToArray(x), ToArray(y), ToArray(z));
+
+		EcKeyPair<EcType::CURVE25519>::KArray rArr;
+		EcKeyPair<EcType::CURVE25519>::KArray sArr;
+		uint8_t r[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+		uint8_t s[EcKeyPair<EcType::CURVE25519>::sk_kSize];
+
+		// Share Secect
+		EcKeyPair<EcType::CURVE25519>::KSecArray sk1 = ecPrv1.DeriveSharedKey(ecPub2);
+		EcKeyPair<EcType::CURVE25519>::KSecArray sk2 = ecPrv2.DeriveSharedKey(ecPub1);
+		EXPECT_EQ(sk1, sk2);
+
+		sk1 = ecPrv3.DeriveSharedKey(ecPub2);
+		sk2 = ecPrv4.DeriveSharedKey(ecPub1);
+		EXPECT_EQ(sk1, sk2);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
