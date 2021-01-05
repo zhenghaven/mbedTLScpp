@@ -202,6 +202,39 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
+		/**
+		 * @brief Construct a PKeyBase object (public part) from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static PKeyBase FromPEM(const std::string& pem)
+		{
+			return PKeyBase(pem);
+		}
+
+		/**
+		 * @brief Construct a PKeyBase object from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static PKeyBase FromPEM(const SecretString& pem)
+		{
+			return PKeyBase(pem);
+		}
+
+		/**
+		 * @brief Construct a PKeyBase object from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType, bool _IsSecType>
+		static PKeyBase FromDER(const ContCtnReadOnlyRef<_SecCtnType, _IsSecType>& der)
+		{
+			return PKeyBase(der);
+		}
+
+		friend class X509ReqWriter;
+
 	public:
 
 		/**

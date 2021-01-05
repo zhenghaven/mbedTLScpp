@@ -32,6 +32,7 @@ add_compile_options(
 )
 
 set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD 20)
 
 ################################################################################
 # Fetching dependencise

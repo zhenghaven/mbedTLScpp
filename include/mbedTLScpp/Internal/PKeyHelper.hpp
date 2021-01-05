@@ -27,19 +27,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	namespace Internal
 	{
 		constexpr char const PEM_BEGIN_PUBLIC_KEY[] = "-----BEGIN PUBLIC KEY-----\n";
-		constexpr char const PEM_END_PUBLIC_KEY[] = "-----END PUBLIC KEY-----\n";
+		constexpr char const PEM_END_PUBLIC_KEY[]   = "-----END PUBLIC KEY-----\n";
 
 		constexpr size_t PEM_PUBLIC_HEADER_SIZE = sizeof(PEM_BEGIN_PUBLIC_KEY) - 1;
 		constexpr size_t PEM_PUBLIC_FOOTER_SIZE = sizeof(PEM_END_PUBLIC_KEY) - 1;
 
 		constexpr char const PEM_BEGIN_PRIVATE_KEY_EC[] = "-----BEGIN EC PRIVATE KEY-----\n";
-		constexpr char const PEM_END_PRIVATE_KEY_EC[] = "-----END EC PRIVATE KEY-----\n";
+		constexpr char const PEM_END_PRIVATE_KEY_EC[]   = "-----END EC PRIVATE KEY-----\n";
 
 		constexpr size_t PEM_EC_PRIVATE_HEADER_SIZE = sizeof(PEM_BEGIN_PRIVATE_KEY_EC) - 1;
 		constexpr size_t PEM_EC_PRIVATE_FOOTER_SIZE = sizeof(PEM_END_PRIVATE_KEY_EC) - 1;
 
 		constexpr char const PEM_BEGIN_PRIVATE_KEY_RSA[] = "-----BEGIN RSA PRIVATE KEY-----\n";
-		constexpr char const PEM_END_PRIVATE_KEY_RSA[] = "-----END RSA PRIVATE KEY-----\n";
+		constexpr char const PEM_END_PRIVATE_KEY_RSA[]   = "-----END RSA PRIVATE KEY-----\n";
 
 		constexpr size_t PEM_RSA_PRIVATE_HEADER_SIZE = sizeof(PEM_BEGIN_PRIVATE_KEY_RSA) - 1;
 		constexpr size_t PEM_RSA_PRIVATE_FOOTER_SIZE = sizeof(PEM_END_PRIVATE_KEY_RSA) - 1;
@@ -62,6 +62,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 {
 	namespace Internal
 	{
+		/**
+		 * @brief
+		 *
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_rsa_pubkey_asn1_est_size(const mbedtls_rsa_context& rsa)
 		{
 			size_t len = 0;
@@ -78,6 +85,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return len;
 		}
 
+		/**
+		 * @brief
+		 *
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_rsa_prvkey_der_est_size(const mbedtls_rsa_context& rsa)
 		{
 			size_t len = 0;
@@ -135,6 +149,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 {
 	namespace Internal
 	{
+		/**
+		 * @brief
+		 *
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t ecp_point_write_binary_est_size(
 			const mbedtls_ecp_group& grp, const mbedtls_ecp_point& P, int format)
 		{
@@ -160,12 +181,27 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			throw InvalidArgumentException("mbedTLScpp::Internal::ecp_point_write_binary_est_size - Invalid ECP format is given.");
 		}
 
+		/**
+		 * @brief
+		 *
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_ec_pubkey_asn1_est_size(const mbedtls_ecp_keypair& ec)
 		{
 			return ecp_point_write_binary_est_size(ec.grp, ec.Q,
 				MBEDTLS_ECP_PF_UNCOMPRESSED);
 		}
 
+		/**
+		 * @brief
+		 *
+		 * @exception mbedTLSRuntimeError
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_ec_param_est_size(const mbedtls_ecp_keypair& ec)
 		{
 			const char *oid;
@@ -177,6 +213,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return asn1_write_oid_est_size(oid, oid_len);
 		}
 
+		/**
+		 * @brief
+		 *
+		 * @exception mbedTLSRuntimeError
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_ec_prvkey_der_est_size(const mbedtls_ecp_keypair& ec)
 		{
 			size_t len = 0;
@@ -213,6 +257,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return len;
 		}
 
+		/**
+		 * @brief
+		 *
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline constexpr size_t ec_signature_to_asn1_est_max_size(size_t rMaxSize, size_t sMaxSize)
 		{
 			return
@@ -243,6 +294,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	namespace Internal
 	{
 
+		/**
+		 * @brief
+		 *
+		 * @param key
+		 *
+		 * @exception mbedTLSRuntimeError
+		 * @exception InvalidArgumentException
+		 *
+		 * @return size_t
+		 */
 		inline size_t pk_write_pubkey_asn1_est_size(const mbedtls_pk_context& key)
 		{
 			if (key.pk_ctx == nullptr)

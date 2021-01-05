@@ -323,4 +323,36 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	private:
 		CObjType * m_ptr;
 	};
+
+	namespace Internal
+	{
+		template <typename DerivedCppObjType, typename MbedTlsCType>
+		struct IsCppObjOfCtypeImpl
+		{
+			using CleanDerivedCppObjType = typename remove_cvref<DerivedCppObjType>::type;
+
+			template<typename _ObjTrait>
+			static constexpr std::is_same<typename ObjectBase<_ObjTrait>::CObjType, MbedTlsCType>
+				test(const ObjectBase<_ObjTrait> *);
+
+			static constexpr std::false_type test(...);
+
+			using type = decltype(test(std::declval<CleanDerivedCppObjType*>()));
+		};
+	}
+
+	/**
+	 * @brief Checking if a given class type is derived from the \c ObjectBase
+	 *        class, and if so, checking if its internal mbed TLS C type matches
+	 *        the given type.
+	 *        It's based on idea from https://stackoverflow.com/questions/
+	 *        34672441/stdis-base-of-for-template-classes
+	 *
+	 * @tparam DerivedCppObjType  The mbed TLS cpp type to check with.
+	 * @tparam MbedTlsCType       The mbed TLS C type to check with.
+	 */
+	template <typename DerivedCppObjType, typename MbedTlsCType>
+	using IsCppObjOfCtype = typename Internal::IsCppObjOfCtypeImpl<DerivedCppObjType, MbedTlsCType>::type;
+
+	static_assert(IsCppObjOfCtype<std::string, bool>::value == false, "Programming Error");
 }

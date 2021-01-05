@@ -25,8 +25,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	/**
 	 * @brief Get the size (in bytes) of a given Hash type.
 	 *
-	 * @exception InvalidArgumentException Thrown when the given hash type is not supported.
 	 * @param type The type of the hash
+	 * @exception InvalidArgumentException Thrown when the given hash type is not supported.
 	 * @return constexpr uint8_t The size in bytes
 	 */
 	inline constexpr uint8_t GetHashByteSize(HashType type)
@@ -52,6 +52,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *        digest type.
 	 *
 	 * @param type mbed TLS cpp's message digest type.
+	 * @exception InvalidArgumentException Thrown when the given hash type is not supported.
 	 * @return constexpr mbedtls_md_type_t mbed TLS's message digest type.
 	 */
 	inline constexpr mbedtls_md_type_t GetMbedTlsMdType(HashType type)
@@ -65,6 +66,28 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			   (type == HashType::SHA512 ?
 			       mbedtls_md_type_t::MBEDTLS_MD_SHA512 :
                    throw InvalidArgumentException("Hash type given is not supported.")
+			   ))));
+	}
+
+	/**
+	 * @brief Translating mbed TLS's message digest type to mbed TLS cpp's message
+	 *        digest type.
+	 *
+	 * @param type mbed TLS's message digest type.
+	 * @exception InvalidArgumentException Thrown when the given hash type is not supported.
+	 * @return constexpr HashType mbed TLS cpp's message digest type.
+	 */
+	inline constexpr HashType GetHashType(mbedtls_md_type_t type)
+	{
+		return (type == mbedtls_md_type_t::MBEDTLS_MD_SHA224 ?
+		           HashType::SHA224 :
+			   (type == mbedtls_md_type_t::MBEDTLS_MD_SHA256 ?
+			       HashType::SHA256 :
+			   (type == mbedtls_md_type_t::MBEDTLS_MD_SHA384 ?
+			       HashType::SHA384 :
+			   (type == mbedtls_md_type_t::MBEDTLS_MD_SHA512 ?
+			       HashType::SHA512 :
+                   throw InvalidArgumentException("mbedtls_md_type_t given is not supported.")
 			   ))));
 	}
 
@@ -191,4 +214,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using ObjectBase<MdBaseTrait>::Get;
 	};
+
+	static_assert(IsCppObjOfCtype<MsgDigestBase<>, mbedtls_md_context_t>::value == true, "Programming Error");
 }

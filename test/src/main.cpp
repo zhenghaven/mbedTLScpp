@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+//using namespace std;
+
 #include "TestTester.hpp"
 #include "TestContainer.hpp"
 #include "TestSecretArray.hpp"
@@ -26,6 +28,8 @@
 
 #include "TestPKey.hpp"
 #include "TestEcKey.hpp"
+
+#include "TestX509Req.hpp"
 
 int main(int argc, char** argv)
 {
