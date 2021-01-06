@@ -52,3 +52,12 @@ constexpr char const gsk_testEcPubKeyPem[] =
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEC9Q2XVZB4d72yiB/niSHfDus6eyi\n\
 0u+dkh7pehMIj9qAF3v7Gui1vw97xFXyvab2u/JOD6cTcgLYwqMCwC05hg==\n\
 -----END PUBLIC KEY-----";
+
+constexpr char const gsk_testX509CrlPem[] =
+"-----BEGIN X509 CRL-----\n\
+MIHXMH4wCgYIKoZIzj0EAwIwUjELMAkGA1UEBhMCVVMxEzARBgNVBAgMClNvbWUt\n\
+U3RhdGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDELMAkGA1UE\n\
+AwwCQ0EXDTIxMDEwNjAwMzA0N1oXDTIzMDEwNjAwMzA0N1owCgYIKoZIzj0EAwID\n\
+SQAwRgIhAJ+RwEjFou1wC648VZHjXKhvNlFyZ1FfQvQutXy7BxLRAiEA9RHEjvUU\n\
+c69hI6SAn1kDYefI3PMgZTrzmlfEUEb2TkQ=\n\
+-----END X509 CRL-----";

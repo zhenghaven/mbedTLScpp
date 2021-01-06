@@ -3,6 +3,7 @@
 #include "ObjectBase.hpp"
 
 #include <mbedtls/x509_csr.h>
+#include <mbedtls/pem.h>
 
 #include "Common.hpp"
 #include "Exceptions.hpp"
@@ -242,7 +243,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		static X509Req FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
 		{
 			X509Req req;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Req::FromPEM,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Req::FromDER,
 				mbedtls_x509_csr_parse,
 				req.Get(),
 				der.BeginBytePtr(), der.GetRegionSize());

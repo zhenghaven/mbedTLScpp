@@ -30,6 +30,7 @@
 #include "TestEcKey.hpp"
 
 #include "TestX509Req.hpp"
+#include "TestX509Crl.hpp"
 
 int main(int argc, char** argv)
 {

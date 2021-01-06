@@ -29,6 +29,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		static constexpr size_t PEM_CSR_HEADER_SIZE = sizeof(PEM_BEGIN_CSR) - 1;
 		static constexpr size_t PEM_CSR_FOOTER_SIZE = sizeof(PEM_END_CSR) - 1;
+
+		static constexpr char const PEM_BEGIN_CRL[] = "-----BEGIN X509 CRL-----\n";
+		static constexpr char const PEM_END_CRL[]   = "-----END X509 CRL-----\n";
+
+		static constexpr size_t PEM_CRL_HEADER_SIZE = sizeof(PEM_BEGIN_CRL) - 1;
+		static constexpr size_t PEM_CRL_FOOTER_SIZE = sizeof(PEM_END_CRL) - 1;
 	}
 }
 
