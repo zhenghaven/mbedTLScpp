@@ -80,10 +80,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			ObjectBase<DefaultHmacDrbgTrait>::ObjectBase(),
 			m_entropy(std::move(entropy))
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacDrbg::HmacDrbg, mbedtls_hmac_drbg_seed, Get(), &GetMdInfo(_HashType), &EntropyInterface::CallBack, m_entropy.get(), nullptr, 0);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacDrbg::HmacDrbg, mbedtls_hmac_drbg_seed, NonVirtualGet(), &GetMdInfo(_HashType), &EntropyInterface::CallBack, m_entropy.get(), nullptr, 0);
 
-			mbedtls_hmac_drbg_set_prediction_resistance(Get(), _PredResist ? MBEDTLS_HMAC_DRBG_PR_ON : MBEDTLS_HMAC_DRBG_PR_OFF);
-			mbedtls_hmac_drbg_set_reseed_interval(Get(), _ReseedInterv);
+			mbedtls_hmac_drbg_set_prediction_resistance(NonVirtualGet(), _PredResist ? MBEDTLS_HMAC_DRBG_PR_ON : MBEDTLS_HMAC_DRBG_PR_OFF);
+			mbedtls_hmac_drbg_set_reseed_interval(NonVirtualGet(), _ReseedInterv);
 		}
 
 		/**

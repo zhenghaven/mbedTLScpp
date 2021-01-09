@@ -217,7 +217,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		CipherBase(const mbedtls_cipher_info_t& cipherInfo) :
 			ObjectBase<CipherBaseTrait>::ObjectBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(CipherBase::CipherBase, mbedtls_cipher_setup, Get(), &cipherInfo);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(CipherBase::CipherBase, mbedtls_cipher_setup, NonVirtualGet(), &cipherInfo);
 		}
 
 		/**
@@ -268,5 +268,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		using ObjectBase<CipherBaseTrait>::Get;
+		using ObjectBase<CipherBaseTrait>::NonVirtualGet;
 	};
 }

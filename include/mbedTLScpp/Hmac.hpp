@@ -45,7 +45,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::HmacerBase,
 				mbedtls_md_hmac_starts,
-				Get(),
+				NonVirtualGet(),
 				static_cast<const unsigned char*>(key.BeginPtr()),
 				key.GetRegionSize());
 		}

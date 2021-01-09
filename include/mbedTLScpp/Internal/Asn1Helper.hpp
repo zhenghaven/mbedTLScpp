@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <vector>
+
 #include <mbedtls/asn1.h>
 #include <mbedtls/bignum.h>
 
@@ -219,6 +221,131 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return asn1_write_raw_buffer_est_size(text, text_len) +
 				asn1_write_len_est_size(asn1_write_raw_buffer_est_size(text, text_len)) +
 				asn1_write_tag_est_size(tag);
+		}
+
+
+
+
+		/**
+		 * @brief
+		 *
+		 * @param list
+		 * @param oid
+		 * @exception InvalidArgumentException
+		 * @return const mbedtls_asn1_named_data&
+		 */
+		inline const mbedtls_asn1_named_data& Asn1GetNamedDataFromList(const mbedtls_asn1_named_data* list, const std::string& oid)
+		{
+			const mbedtls_asn1_named_data* curr = list;
+			while (curr != NULL)
+			{
+				if (curr->oid.len == oid.size() &&
+					memcmp(curr->oid.p, oid.data(), oid.size()) == 0)
+				{
+					return *curr;
+				}
+
+				curr = curr->next;
+			}
+
+			throw InvalidArgumentException("The given OID is not found in the list.");
+		}
+
+		/**
+		 * @brief
+		 *
+		 * @param dest
+		 * @param src
+		 * @exception std::bad_alloc
+		 */
+		inline void Asn1DeepCopy(mbedtls_asn1_buf& dest, const mbedtls_asn1_buf& src)
+		{
+			if (src.p == nullptr)
+			{
+				dest.p = nullptr;
+			}
+			else
+			{
+				dest.p = static_cast<unsigned char *>(mbedtls_calloc(1, src.len));
+				if (dest.p == nullptr)
+				{
+					throw std::bad_alloc();
+				}
+			}
+
+			dest.len = src.len;
+			dest.tag = src.tag;
+			std::memcpy(dest.p, src.p, src.len);
+		}
+
+		/**
+		 * @brief
+		 *
+		 * @param dest Dest is a pointer holding named data. If there is already
+		 *             something stored in dest (not-null), it will be freed.
+		 * @param src
+		 * @exception std::bad_alloc
+		 */
+		inline void Asn1DeepCopy(mbedtls_asn1_named_data*& dest, const mbedtls_asn1_named_data* src)
+		{
+			mbedtls_asn1_free_named_data_list(&dest);
+
+			dest = static_cast<mbedtls_asn1_named_data*>(mbedtls_calloc(1, sizeof(mbedtls_asn1_named_data)));
+			if (dest == nullptr)
+			{
+				throw std::bad_alloc();
+			}
+
+			const mbedtls_asn1_named_data* curSrc = src;
+			mbedtls_asn1_named_data* curDest = dest;
+
+			while (curSrc != nullptr)
+			{
+				Asn1DeepCopy(curDest->oid, curSrc->oid);
+				Asn1DeepCopy(curDest->val, curSrc->val);
+				curDest->next_merged = curSrc->next_merged;
+
+				if (curSrc->next != nullptr)
+				{
+					curDest->next = static_cast<mbedtls_asn1_named_data*>(mbedtls_calloc(1, sizeof(mbedtls_asn1_named_data)));
+					if (curDest->next == nullptr)
+					{
+						throw std::bad_alloc();
+					}
+				}
+
+				curSrc = curSrc->next;
+				curDest = curDest->next;
+			}
+		}
+
+		inline void Asn1ReverseNamedDataList(mbedtls_asn1_named_data*& dest)
+		{
+			std::vector<mbedtls_asn1_named_data*> stack;
+
+			mbedtls_asn1_named_data* cur = dest;
+			while(cur != nullptr)
+			{
+				stack.push_back(cur);
+				cur = cur->next;
+			}
+
+			if (stack.size() > 0)
+			{
+				dest = stack.back();
+				stack.pop_back();
+				dest->next = nullptr;
+			}
+
+			cur = dest;
+
+			while(stack.size() > 0)
+			{
+				cur->next = stack.back();
+				stack.pop_back();
+				cur = cur->next;
+				cur->next = nullptr;
+			}
 		}
 	}
 }

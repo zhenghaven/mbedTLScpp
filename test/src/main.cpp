@@ -31,6 +31,7 @@
 
 #include "TestX509Req.hpp"
 #include "TestX509Crl.hpp"
+#include "TestX509Cert.hpp"
 
 int main(int argc, char** argv)
 {

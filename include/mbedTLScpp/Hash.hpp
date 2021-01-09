@@ -74,7 +74,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		HasherBase(const mbedtls_md_info_t& mdInfo)  :
 			MsgDigestBase(mdInfo, false)
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HasherBase::HasherBase, mbedtls_md_starts, Get());
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(HasherBase::HasherBase, mbedtls_md_starts, NonVirtualGet());
 		}
 
 		/**

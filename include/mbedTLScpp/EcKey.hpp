@@ -213,7 +213,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ObjectBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcGroup::EcGroup,
-				mbedtls_ecp_group_load, Get(), ToEcGroupId(type));
+				mbedtls_ecp_group_load, NonVirtualGet(), ToEcGroupId(type));
 		}
 
 		template<// automated parts:
@@ -230,7 +230,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			else
 			{
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(EcGroup::EcGroup,
-					mbedtls_ecp_group_copy, Get(), other.Get());
+					mbedtls_ecp_group_copy, NonVirtualGet(), other.Get());
 			}
 		}
 
@@ -245,7 +245,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ObjectBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcGroup::EcGroup,
-				mbedtls_ecp_group_copy, Get(), &other);
+				mbedtls_ecp_group_copy, NonVirtualGet(), &other);
 		}
 
 		template<// automated parts:
@@ -309,6 +309,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 		using _Base::Swap;
 
 		void Load(EcType type)
@@ -330,6 +331,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // Static members, and methods will be used in constructors:
 
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 
 		/**
 		 * @brief	Move constructor that moves a general PKeyBase object to EC
@@ -393,7 +395,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcPublicKeyBase(mbedtls_pk_context* ptr) :
 			_Base::PKeyBase(ptr)
 		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
@@ -464,7 +466,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			if(rhs.Get()->pk_ctx != nullptr)
 			{
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(EcPublicKeyBase::EcPublicKeyBase,
-					mbedtls_pk_setup, Get(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
+					mbedtls_pk_setup, NonVirtualGet(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
 
 				const auto& rhsEcCtx = rhs.GetEcContext();
 				auto& ecCtx = GetEcContextNoNullCheck();
@@ -519,7 +521,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					if (rhs.Get()->pk_ctx != nullptr)
 					{
 						MBEDTLSCPP_MAKE_C_FUNC_CALL(EcPublicKeyBase::EcPublicKeyBase,
-							mbedtls_pk_setup, Get(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
+							mbedtls_pk_setup, NonVirtualGet(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
 
 						const auto& rhsEcCtx = rhs.GetEcContext();
 						auto& ecCtx = GetEcContextNoNullCheck();
@@ -672,7 +674,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::PKeyBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(EcPublicKeyBase::EcPublicKeyBase,
-				mbedtls_pk_setup, Get(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
+				mbedtls_pk_setup, NonVirtualGet(), mbedtls_pk_info_from_type(mbedtls_pk_type_t::MBEDTLS_PK_ECKEY));
 		}
 
 		EcPublicKeyBase(EcType type) :
@@ -696,7 +698,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcPublicKeyBase(const std::string& pem, const void*) :
 			_Base::PKeyBase(pem)
 		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
@@ -715,7 +717,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, false>& der, const void*) :
 			_Base::PKeyBase(der)
 		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
@@ -733,7 +735,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcPublicKeyBase(const SecretString& pem, const void*) :
 			_Base::PKeyBase(pem)
 		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
@@ -752,7 +754,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcPublicKeyBase(const ContCtnReadOnlyRef<ContainerType, true>& der, const void*) :
 			_Base::PKeyBase(der)
 		{
-			if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+			if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 			{
 				throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 			}
@@ -776,7 +778,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			try
 			{
 				// Is EC Key?
-				if (_Base::GetAlgmCat(*Get()) != PKeyAlgmCat::EC)
+				if (_Base::GetAlgmCat(*NonVirtualGet()) != PKeyAlgmCat::EC)
 				{
 					throw InvalidArgumentException("EcPublicKeyBase::EcPublicKeyBase - The given PK context is not a EC Key.");
 				}
@@ -905,7 +907,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		EcKeyPairBase(const EcKeyPairBase<_rhs_Trait>& rhs, const void* = nullptr) :
 			_Base::EcPublicKeyBase(rhs)
 		{
-			if(_Base::Get() != nullptr && _Base::Get()->pk_ctx != nullptr)
+			if(_Base::NonVirtualGet() != nullptr && _Base::NonVirtualGet()->pk_ctx != nullptr)
 			{
 				const auto& rhsEcCtx = rhs.GetEcContext();
 				auto& ecCtx = _Base::GetEcContextNoNullCheck();

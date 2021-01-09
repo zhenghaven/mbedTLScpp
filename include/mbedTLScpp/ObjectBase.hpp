@@ -131,6 +131,24 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // method will be used in constructors and destructors:
 
 		/**
+		 * @brief A non-virtual method for getting \c m_ptr , so that it
+		 *        guarantees to return \c m_ptr (unlike \c Get() virtual method).
+		 */
+		CObjType* NonVirtualGet() noexcept
+		{
+			return m_ptr;
+		}
+
+		/**
+		 * @brief A non-virtual method for getting \c m_ptr , so that it
+		 *        guarantees to return \c m_ptr (unlike \c Get() virtual method).
+		 */
+		const CObjType* NonVirtualGet() const noexcept
+		{
+			return m_ptr;
+		}
+
+		/**
 		 * @brief	Gets the pointer to the MbedTLS object.
 		 *
 		 * @exception None No exception thrown
@@ -321,7 +339,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 	private:
-		CObjType * m_ptr;
+		CObjType * m_ptr; // NOTE: must be a pointer.
 	};
 
 	namespace Internal

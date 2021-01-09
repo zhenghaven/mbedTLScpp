@@ -50,7 +50,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(CmacerBase::CmacerBase,
 				mbedtls_cipher_cmac_starts,
-				Get(),
+				NonVirtualGet(),
 				static_cast<const unsigned char*>(key.BeginPtr()),
 				key.GetRegionSize() * gsk_bitsPerByte);
 		}

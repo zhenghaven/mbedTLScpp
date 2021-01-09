@@ -65,11 +65,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		X509ReqWriter(HashType hashType, const PKeyBase<_PKObjTrait> & keyPair, const std::string& subjName) :
 			_Base::ObjectBase()
 		{
-			mbedtls_x509write_csr_set_key(Get(), keyPair.MutableGet());
-			mbedtls_x509write_csr_set_md_alg(Get(), GetMbedTlsMdType(hashType));
+			keyPair.NullCheck();
+
+			mbedtls_x509write_csr_set_key(NonVirtualGet(), keyPair.MutableGet());
+			mbedtls_x509write_csr_set_md_alg(NonVirtualGet(), GetMbedTlsMdType(hashType));
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509ReqWriter::X509ReqWriter,
-				mbedtls_x509write_csr_set_subject_name, Get(), subjName.c_str());
+				mbedtls_x509write_csr_set_subject_name, NonVirtualGet(), subjName.c_str());
 		}
 
 		/**
@@ -119,6 +121,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::NullCheck;
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 		using _Base::Swap;
 
 		/**

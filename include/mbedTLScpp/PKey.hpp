@@ -234,6 +234,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		friend class X509ReqWriter;
+		friend class X509CertWriter;
+		friend class X509Cert;
 
 	public:
 
@@ -274,7 +276,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		PKeyBase(const SecretString& pem) :
 			PKeyBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_key, Get(),
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_key, NonVirtualGet(),
 				reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1, nullptr, 0);
 		}
 
@@ -290,7 +292,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		PKeyBase(const std::string& pem) :
 			PKeyBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_public_key, Get(),
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_public_key, NonVirtualGet(),
 				reinterpret_cast<const unsigned char*>(pem.c_str()), pem.size() + 1);
 		}
 
@@ -307,7 +309,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		PKeyBase(const ContCtnReadOnlyRef<ContainerType, true>& der) :
 			PKeyBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_key, Get(),
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_key, NonVirtualGet(),
 				static_cast<const unsigned char*>(der.BeginPtr()), der.GetRegionSize(), nullptr, 0);
 		}
 
@@ -324,7 +326,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		PKeyBase(const ContCtnReadOnlyRef<ContainerType, false>& der) :
 			PKeyBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_public_key, Get(),
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(PKeyBase::PKeyBase, mbedtls_pk_parse_public_key, NonVirtualGet(),
 				static_cast<const unsigned char*>(der.BeginPtr()), der.GetRegionSize());
 		}
 
@@ -375,6 +377,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::NullCheck;
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 		using _Base::Swap;
 
 		/**

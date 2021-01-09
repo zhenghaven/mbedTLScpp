@@ -126,6 +126,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 
 		/**
 		 * @brief Swap the internal pointer of a Big Number base object with the
@@ -936,7 +937,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 			else
 			{
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, Get(), other.Get());
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, NonVirtualGet(), other.Get());
 			}
 		}
 
@@ -958,7 +959,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		BigNumber(const mbedtls_mpi& other) :
 			_Base::BigNumberBase()
 		{
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, Get(), &other);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_copy, NonVirtualGet(), &other);
 		}
 
 		/**
@@ -984,20 +985,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				const size_t size = data.GetRegionSize();
 				const size_t extraLimb  = (size % sizeof(mbedtls_mpi_uint)) ? 1 : 0;
 				const size_t totalLimbs = (size / sizeof(mbedtls_mpi_uint)) + extraLimb;
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_grow, Get(), totalLimbs);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_grow, NonVirtualGet(), totalLimbs);
 
-				memcpy(Get()->p, data.BeginPtr(), size);
+				memcpy(NonVirtualGet()->p, data.BeginPtr(), size);
 			}
 			else
 			{
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber,
 					mbedtls_mpi_read_binary,
-					Get(),
+					NonVirtualGet(),
 					static_cast<const unsigned char*>(data.BeginPtr()),
 					data.GetRegionSize())
 			}
 
-			Get()->s = isPositive ? 1 : -1;
+			NonVirtualGet()->s = isPositive ? 1 : -1;
 		}
 
 		/**
@@ -1126,6 +1127,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::Swap;
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 
 		/**
 		 * @brief Check if the current instance is holding a null pointer for

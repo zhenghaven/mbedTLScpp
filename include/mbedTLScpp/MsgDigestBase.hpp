@@ -165,7 +165,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			static_assert(false == 0, "The value of false is different with the one expected in mbedTLS.");
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(MsgDigestBase::MsgDigestBase, mbedtls_md_setup, Get(), &mdInfo, needHmac);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(MsgDigestBase::MsgDigestBase, mbedtls_md_setup, NonVirtualGet(), &mdInfo, needHmac);
 		}
 
 		/**
@@ -213,6 +213,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		using ObjectBase<MdBaseTrait>::Get;
+		using ObjectBase<MdBaseTrait>::NonVirtualGet;
 	};
 
 	static_assert(IsCppObjOfCtype<MsgDigestBase<>, mbedtls_md_context_t>::value == true, "Programming Error");
