@@ -33,6 +33,8 @@
 #include "TestX509Crl.hpp"
 #include "TestX509Cert.hpp"
 
+#include "TestGcm.hpp"
+
 int main(int argc, char** argv)
 {
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
