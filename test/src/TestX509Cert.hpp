@@ -130,25 +130,25 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
 	std::vector<uint8_t> caDer;
 	{
 		X509CertWriter writerCa = X509CertWriter::SelfSign(HashType::SHA256, testCaKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
-		writerCa.SetBasicConstraints(true, -1);
-		writerCa.SetKeyUsage(
+		writerCa.SetBasicConstraints(true, -1).
+		SetKeyUsage(
 			MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
 			MBEDTLS_X509_KU_NON_REPUDIATION   |
 			MBEDTLS_X509_KU_KEY_CERT_SIGN     |
-			MBEDTLS_X509_KU_CRL_SIGN);
-		writerCa.SetNsType(
+			MBEDTLS_X509_KU_CRL_SIGN).
+		SetNsType(
 			MBEDTLS_X509_NS_CERT_TYPE_SSL_CA |
 			MBEDTLS_X509_NS_CERT_TYPE_EMAIL_CA |
-			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA);
-		writerCa.SetSerialNum(
+			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA).
+		SetSerialNum(
 			BigNumber<>(12345)
-		);
-		writerCa.SetV3Extensions({
+		).
+		SetV3Extensions({
 			std::make_pair("1.2.3.4.5.6.7.1", std::make_pair(false, "TestData1")),
 			std::make_pair("1.2.3.4.5.6.7.2", std::make_pair(false, "TestData2")),
 			std::make_pair("1.2.3.4.5.6.7.3", std::make_pair(false, largeExtData)),
-		});
-		writerCa.SetValidationTime("20210101000000", "20211231235959");
+		}).
+		SetValidationTime("20210101000000", "20211231235959");
 
 		caPem = writerCa.GetPem();
 		caDer = writerCa.GetDer();

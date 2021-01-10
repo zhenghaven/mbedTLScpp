@@ -36,6 +36,7 @@
 #include "TestGcm.hpp"
 #include "TestTlsSession.hpp"
 #include "TestTlsSessTktMgr.hpp"
+#include "TestTlsConfig.hpp"
 
 #include "TestTlsPrf.hpp"
 

@@ -236,6 +236,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		friend class X509ReqWriter;
 		friend class X509CertWriter;
 		friend class X509Cert;
+		friend class TlsConfig;
 
 	public:
 

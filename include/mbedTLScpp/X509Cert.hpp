@@ -203,37 +203,47 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		template<typename _BigNumTrait>
-		void SetSerialNum(const BigNumberBase<_BigNumTrait> & serialNum)
+		X509CertWriter& SetSerialNum(const BigNumberBase<_BigNumTrait> & serialNum)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertWriter::SetSerialNum,
 				mbedtls_x509write_crt_set_serial, Get(), serialNum.Get());
+
+			return *this;
 		}
 
-		void SetValidationTime(const std::string & validSince, const std::string & expireAfter)
+		X509CertWriter& SetValidationTime(const std::string & validSince, const std::string & expireAfter)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertWriter::SetValidationTime,
 				mbedtls_x509write_crt_set_validity, Get(), validSince.c_str(), expireAfter.c_str());
+
+			return *this;
 		}
 
-		void SetBasicConstraints(bool isCa, int maxChainDepth)
+		X509CertWriter& SetBasicConstraints(bool isCa, int maxChainDepth)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertWriter::SetBasicConstraints,
 				mbedtls_x509write_crt_set_basic_constraints, Get(), isCa, maxChainDepth);
+
+			return *this;
 		}
 
-		void SetKeyUsage(unsigned int keyUsage)
+		X509CertWriter& SetKeyUsage(unsigned int keyUsage)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertWriter::SetKeyUsage,
 				mbedtls_x509write_crt_set_key_usage, Get(), keyUsage);
+
+			return *this;
 		}
 
-		void SetNsType(unsigned char nsType)
+		X509CertWriter& SetNsType(unsigned char nsType)
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertWriter::SetNsType,
 				mbedtls_x509write_crt_set_ns_cert_type, Get(), nsType);
+
+			return *this;
 		}
 
-		void SetV3Extensions(const std::map<std::string, std::pair<bool, std::string> >& v3ExtMap)
+		X509CertWriter& SetV3Extensions(const std::map<std::string, std::pair<bool, std::string> >& v3ExtMap)
 		{
 			for (const auto& item : v3ExtMap)
 			{
@@ -245,6 +255,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					reinterpret_cast<const uint8_t*>(item.second.second.data()), item.second.second.size() // Data
 				);
 			}
+
+			return *this;
 		}
 
 	protected:
@@ -294,6 +306,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using X509CertTrait = DefaultX509CertObjTrait;
 		using _Base         = ObjectBase<X509CertTrait>;
+
+		friend class TlsConfig;
 
 		/**
 		 * @brief Defines an alias representing the VerifyFunc used for

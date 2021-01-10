@@ -13,6 +13,54 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 {
 
 	/**
+	 * @brief Provide a pure interface class for getting the pointer to the
+	 *        mbed TLS's object/context struct.
+	 *
+	 * @tparam _CObjType The type of the mbed TLS's object/context struct.
+	 */
+	template<typename _CObjType>
+	class ObjIntf
+	{
+	public: // Static members
+
+		using CObjType = _CObjType;
+
+	public:
+		ObjIntf() = default;
+
+		virtual ~ObjIntf()
+		{}
+
+		/**
+		 * @brief Function for getting the pointer to the mbed TLS's
+		 *        object/context struct.
+		 *
+		 * @return pointer to the mbed TLS's object/context struct.
+		 */
+		virtual const CObjType* IntfGet() const = 0;
+
+		/**
+		 * @brief Function for getting the pointer to the mbed TLS's
+		 *        object/context struct.
+		 *
+		 * @return pointer to the mbed TLS's object/context struct.
+		 */
+		virtual CObjType* IntfGet() = 0;
+
+	protected:
+
+		/**
+		 * @brief Function for getting the non-const pointer to the mbed TLS's
+		 *        object/context struct, in case the child function needs to access
+		 *        the non-const struct even though the cpp object is const.
+		 *        NOTE: The child class is resposible for avoiding undefined behavior.
+		 *
+		 * @return pointer to the mbed TLS's object/context struct.
+		 */
+		virtual CObjType* IntfMutGet() const = 0;
+	};
+
+	/**
 	 * @brief The base of normal allocators
 	 *
 	 */
@@ -80,7 +128,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	/** @brief	An object base class for MbedTLS objects. */
 	template<typename _ObjTrait>
-	class ObjectBase
+	class ObjectBase : public ObjIntf<typename _ObjTrait::CObjType>
 	{
 	public: // Static members:
 
@@ -280,6 +328,32 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return m_ptr == nullptr;
 		}
 
+		/**
+		 * @brief Implementation for \ref mbedTLScpp::ObjIntf::IntfGet() "ObjIntf::IntfGet()" method.
+		 *
+		 * @return const CObjType*
+		 */
+		virtual const CObjType* IntfGet() const override
+		{
+			return m_ptr;
+		}
+
+		/**
+		 * @brief Implementation for \ref mbedTLScpp::ObjIntf::IntfGet() "ObjIntf::IntfGet()" method.
+		 *
+		 * @exception RuntimeException Thrown when the inner mbed TLS C object is const.
+		 *
+		 * @return CObjType*
+		 */
+		virtual CObjType* IntfGet() override
+		{
+			if (ObjTrait::sk_isConst)
+			{
+				throw RuntimeException("ObjectBase::IntfGet - A const object can't return non-const C object pointer.");
+			}
+			return m_ptr;
+		}
+
 	protected:
 
 		/**
@@ -334,6 +408,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @return CObjType* The pointer to the MbedTLS object.
 		 */
 		CObjType* MutableGet() const noexcept
+		{
+			return m_ptr;
+		}
+
+		/**
+		 * @brief Implementation for \ref mbedTLScpp::ObjIntf::IntfMutGet() "ObjIntf::IntfMutGet()" method.
+		 *
+		 * @return CObjType*
+		 */
+		virtual CObjType* IntfMutGet() const override
 		{
 			return m_ptr;
 		}
