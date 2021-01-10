@@ -37,7 +37,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		const ContCtnReadOnlyRef<_SaltContainerType, _SaltContainerSecrecy>& salt)
 	{
 		SKey<_keyLenInBits> res;
-		MBEDTLSCPP_MAKE_C_FUNC_CALL(::Hkdf, mbedtls_hkdf,
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			mbedTLScpp::Hkdf,
+			mbedtls_hkdf,
 			&GetMdInfo(_HashType),
 			static_cast<const unsigned char*>(salt.BeginPtr()), salt.GetRegionSize(),
 			static_cast<const unsigned char*>(skey.BeginPtr()), skey.GetRegionSize(),
