@@ -34,6 +34,8 @@
 #include "TestX509Cert.hpp"
 
 #include "TestGcm.hpp"
+#include "TestTlsSession.hpp"
+#include "TestTlsSessTktMgr.hpp"
 
 int main(int argc, char** argv)
 {

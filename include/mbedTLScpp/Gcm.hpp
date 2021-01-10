@@ -38,7 +38,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	/**
-	 * @brief X509 certificate request object trait.
+	 * @brief GCM object trait.
 	 *
 	 */
 	using DefaultGcmObjTrait = ObjTraitBase<GcmObjAllocator,
