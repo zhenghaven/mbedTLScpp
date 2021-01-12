@@ -56,6 +56,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using _Base        = ObjectBase<X509CrlTrait>;
 
 		friend class X509Cert;
+		friend class TlsConfig;
 
 		/**
 		 * @brief Construct a X509 certificate revocation list from a given PEM string.

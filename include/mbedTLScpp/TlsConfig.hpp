@@ -8,6 +8,7 @@
 #include "Exceptions.hpp"
 #include "DefaultRbg.hpp"
 #include "X509Cert.hpp"
+#include "X509Crl.hpp"
 #include "TlsSessTktMgrIntf.hpp"
 #include "PKey.hpp"
 
@@ -88,14 +89,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
-		enum class Mode
-		{
-			ServerVerifyPeer,   //This is server side, and it is required to verify peer's certificate.
-			ServerNoVerifyPeer, //This is server side, and there is no need to verify peer's certificate.
-			ClientHasCert,      //This is client side, and a certificate, which is required during TLS handshake, is possessed by the client.
-			ClientNoCert,       //This is client side, and there is no certificate possessed by the client.
-		};
-
 	public:
 
 		/**
@@ -111,14 +104,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * \param ticketMgr  Manager for TLS ticket.
 		 * \param rand       The Random Bit Generator.
 		 */
-		TlsConfig(bool isStream, Mode cntMode, int preset,
+		TlsConfig(
+			bool isStream, bool isServer, bool hasCert, bool vrfyPeer,
+			int preset,
 			std::shared_ptr<const X509Cert> ca,
+			std::shared_ptr<const X509Crl>  crl,
 			std::shared_ptr<const X509Cert> cert,
 			std::shared_ptr<const PKeyBase<> > prvKey,
 			std::shared_ptr<TlsSessTktMgrIntf > ticketMgr,
 			std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>()) :
 			_Base::ObjectBase(),
 			m_ca(ca),
+			m_crl(crl),
 			m_cert(cert),
 			m_prvKey(prvKey),
 			m_ticketMgr(ticketMgr),
@@ -137,22 +134,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					m_ticketMgr.get());
 			}
 
-			int endpoint = 0;
-			switch (cntMode)
-			{
-			case Mode::ServerVerifyPeer:
-			case Mode::ServerNoVerifyPeer:
-				endpoint = MBEDTLS_SSL_IS_SERVER;
-
-				break;
-			case Mode::ClientHasCert:
-			case Mode::ClientNoCert:
-				endpoint = MBEDTLS_SSL_IS_CLIENT;
-
-				break;
-			default:
-				throw RuntimeException("TlsConfig::TlsConfig - The given TLS connection mode is invalid.");
-			}
+			int endpoint = isServer ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT;
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
 				TlsConfig::TlsConfig,
@@ -162,15 +144,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				preset
 			);
 
-			switch (cntMode)
+			if (hasCert)
 			{
-			case Mode::ServerVerifyPeer: //Usually server always has certificate & key.
-			case Mode::ServerNoVerifyPeer:
-			case Mode::ClientHasCert:
-				if (!m_prvKey || !m_cert)
+				if (m_prvKey == nullptr ||
+					m_cert == nullptr)
 				{
-					throw RuntimeException("TlsConfig::TlsConfig - Key or certificate is required for this TLS config.");
+					throw InvalidArgumentException("TlsConfig::TlsConfig - Key or certificate is required for this TLS config.");
 				}
+				m_prvKey->NullCheck();
+				m_cert->NullCheck();
+
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
 					TlsConfig::TlsConfig,
 					mbedtls_ssl_conf_own_cert,
@@ -178,32 +161,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					m_cert->MutableGet(),
 					m_prvKey->MutableGet()
 				);
-
-				break;
-			case Mode::ClientNoCert:
-			default:
-				break;
 			}
 
-			switch (cntMode)
+			if (vrfyPeer)
 			{
-			case Mode::ServerNoVerifyPeer:
-				mbedtls_ssl_conf_authmode(NonVirtualGet(), MBEDTLS_SSL_VERIFY_NONE);
-
-				break;
-			case Mode::ServerVerifyPeer:
-			case Mode::ClientHasCert: //Usually in Decent RA, client side always verify server side.
-			case Mode::ClientNoCert:
-				if (!m_ca)
+				if (m_ca == nullptr)
 				{
-					throw RuntimeException("TlsConfig::TlsConfig - CA's certificate is required for this TLS config.");
+					throw InvalidArgumentException("TlsConfig::TlsConfig - CA's certificate is required for this TLS config.");
 				}
-				mbedtls_ssl_conf_ca_chain(NonVirtualGet(), m_ca->MutableGet(), nullptr);
+				mbedtls_x509_crl* crlPtr = nullptr;
+				if (m_crl != nullptr)
+				{
+					m_crl->NullCheck();
+					crlPtr = m_crl->MutableGet();
+				}
+				mbedtls_ssl_conf_ca_chain(NonVirtualGet(), m_ca->MutableGet(), crlPtr);
 				mbedtls_ssl_conf_authmode(NonVirtualGet(), MBEDTLS_SSL_VERIFY_REQUIRED);
-
-				break;
-			default:
-				break;
+			}
+			else
+			{
+				mbedtls_ssl_conf_authmode(NonVirtualGet(), MBEDTLS_SSL_VERIFY_NONE);
 			}
 		}
 
@@ -217,6 +194,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ObjectBase(std::forward<_Base>(rhs)), //noexcept
 			m_rand(std::move(rhs.m_rand)),          //noexcept
 			m_ca(std::move(rhs.m_ca)),              //noexcept
+			m_crl(std::move(rhs.m_crl)),            //noexcept
 			m_cert(std::move(rhs.m_cert)),          //noexcept
 			m_prvKey(std::move(rhs.m_prvKey)),      //noexcept
 			m_ticketMgr(std::move(rhs.m_ticketMgr)) //noexcept
@@ -247,6 +225,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				m_rand      = std::move(rhs.m_rand);      //noexcept
 				m_ca        = std::move(rhs.m_ca);        //noexcept
+				m_crl       = std::move(rhs.m_crl);       //noexcept
 				m_cert      = std::move(rhs.m_cert);      //noexcept
 				m_prvKey    = std::move(rhs.m_prvKey);    //noexcept
 				m_ticketMgr = std::move(rhs.m_ticketMgr); //noexcept
@@ -280,10 +259,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			return _Base::IsNull() ||
 				(m_rand == nullptr) ||
-				(m_ca == nullptr) ||
-				(m_cert == nullptr) ||
-				(m_prvKey == nullptr) ||
-				(m_ticketMgr == nullptr);
+				(m_prvKey == nullptr);
 		}
 
 		using _Base::NullCheck;
@@ -317,6 +293,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		private:
 			std::unique_ptr<RbgInterface> m_rand;
 			std::shared_ptr<const X509Cert> m_ca;
+			std::shared_ptr<const X509Crl>  m_crl;
 			std::shared_ptr<const X509Cert> m_cert;
 			std::shared_ptr<const PKeyBase<> > m_prvKey;
 			std::shared_ptr<TlsSessTktMgrIntf > m_ticketMgr;
