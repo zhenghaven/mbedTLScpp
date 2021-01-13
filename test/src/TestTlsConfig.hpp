@@ -47,14 +47,14 @@ GTEST_TEST(TestTlsConfig, TlsConfigClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TlsConfig tlsConf1(true, true, true, false,
+		TlsConfig tlsConf1(true, true, false,
 			MBEDTLS_SSL_PRESET_SUITEB, testCert, nullptr, testCert, testPrvKey, testTktMgr);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TlsConfig tlsConf2(true, false, true, true,
+		TlsConfig tlsConf2(true, false, true,
 			MBEDTLS_SSL_PRESET_SUITEB, testCert, nullptr, testCert, testPrvKey, testTktMgr);
 
 		// after successful initialization, we should have its allocation remains.

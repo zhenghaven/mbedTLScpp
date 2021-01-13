@@ -37,6 +37,7 @@
 #include "TestTlsSession.hpp"
 #include "TestTlsSessTktMgr.hpp"
 #include "TestTlsConfig.hpp"
+#include "TestTls.hpp"
 
 #include "TestTlsPrf.hpp"
 

@@ -92,20 +92,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public:
 
 		/**
-		 * \brief Default constructor that will create and initialize an TLS configuration. Both DRBG
-		 *        and verification callback function are set here.
+		 * \brief Default constructor that will create and initialize an TLS
+		 *        configuration.
 		 *
-		 * \param isStream   True if transport layer is stream (TLS), false if not (DTLS).
-		 * \param cntMode    The connection mode.
-		 * \param preset     The preset. Please refer to mbedTLS mbedtls_ssl_config_defaults.
-		 * \param ca         The CA.
-		 * \param cert       The certificate.
-		 * \param prvKey     The private key.
-		 * \param ticketMgr  Manager for TLS ticket.
+		 * \param isStream   True if transport layer is stream (TLS), false
+		 *                   if not (DTLS).
+		 * \param isServer   Is this the server side?
+		 * \param vrfyPeer   Do we want to verify the peer?
+		 * \param preset     The preset. Please refer to mbedTLS
+		 *                   mbedtls_ssl_config_defaults.
+		 * \param ca         The CA. Can be \c nullptr if we don't verify peer.
+		 * \param crl        Certificate Revocation List (Optional).
+		 * \param cert       The certificate of this side (Optional). If it's
+		 *                   not nullptr, the private key will be required.
+		 * \param prvKey     The private key of this side. Required if cert is
+		 *                   not \c nullptr .
+		 * \param ticketMgr  Manager for TLS ticket (Optional).
 		 * \param rand       The Random Bit Generator.
 		 */
 		TlsConfig(
-			bool isStream, bool isServer, bool hasCert, bool vrfyPeer,
+			bool isStream, bool isServer, bool vrfyPeer,
 			int preset,
 			std::shared_ptr<const X509Cert> ca,
 			std::shared_ptr<const X509Crl>  crl,
@@ -126,7 +132,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			mbedtls_ssl_conf_session_tickets(NonVirtualGet(), MBEDTLS_SSL_SESSION_TICKETS_ENABLED);
 
-			if (m_ticketMgr)
+			if (m_ticketMgr != nullptr)
 			{
 				mbedtls_ssl_conf_session_tickets_cb(NonVirtualGet(),
 					&TlsSessTktMgrIntf::Write,
@@ -144,12 +150,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				preset
 			);
 
-			if (hasCert)
+			if (m_cert != nullptr)
 			{
-				if (m_prvKey == nullptr ||
-					m_cert == nullptr)
+				if (m_prvKey == nullptr)
 				{
-					throw InvalidArgumentException("TlsConfig::TlsConfig - Key or certificate is required for this TLS config.");
+					throw InvalidArgumentException("TlsConfig::TlsConfig - Private key or is required for this TLS config.");
 				}
 				m_prvKey->NullCheck();
 				m_cert->NullCheck();
@@ -169,6 +174,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				{
 					throw InvalidArgumentException("TlsConfig::TlsConfig - CA's certificate is required for this TLS config.");
 				}
+				m_ca->NullCheck();
 				mbedtls_x509_crl* crlPtr = nullptr;
 				if (m_crl != nullptr)
 				{
