@@ -35,7 +35,7 @@ GTEST_TEST(TestSecretAllocator, SecretAllocatorWithStl)
 			EXPECT_EQ(uint8Vec[i], static_cast<uint8_t>(i));
 		}
 
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initCount, 50);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(initCount, 50);
 
 		uint8Vec.resize(120);
 		EXPECT_EQ(uint8Vec.size(), 120);
@@ -53,7 +53,7 @@ GTEST_TEST(TestSecretAllocator, SecretAllocatorWithStl)
 			EXPECT_EQ(uint8Vec[i], static_cast<uint8_t>(i));
 		}
 
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initCount, 120);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(initCount, 120);
 	}
 
 	{
@@ -71,7 +71,7 @@ GTEST_TEST(TestSecretAllocator, SecretAllocatorWithStl)
 			EXPECT_EQ(uint32Vec[i], static_cast<uint8_t>(i));
 		}
 
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initCount, 50);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(initCount, 50);
 
 		uint32Vec.resize(120);
 		EXPECT_EQ(uint32Vec.size(), 120);
@@ -89,7 +89,7 @@ GTEST_TEST(TestSecretAllocator, SecretAllocatorWithStl)
 			EXPECT_EQ(uint32Vec[i], static_cast<uint8_t>(i));
 		}
 
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initCount, 120);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(initCount, 120);
 	}
 
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

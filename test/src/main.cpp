@@ -41,6 +41,8 @@
 
 #include "TestTlsPrf.hpp"
 
+std::vector<uint8_t> TestTls::s_testTlsBuf;
+
 int main(int argc, char** argv)
 {
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;

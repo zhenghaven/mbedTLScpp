@@ -16,13 +16,13 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-static std::vector<uint8_t> gs_testTlsBuf;
-
 class TestTls : public Tls
 {
 public: // Static members:
 
 	using _Base       = Tls;
+
+	static std::vector<uint8_t> s_testTlsBuf;
 
 public:
 
@@ -71,16 +71,16 @@ protected:
 	virtual int Send(const void* buf, size_t len)
 	{
 		const uint8_t* begin = static_cast<const uint8_t*>(buf);
-		gs_testTlsBuf.insert(gs_testTlsBuf.end(), begin, begin + len);
-		return len;
+		s_testTlsBuf.insert(s_testTlsBuf.end(), begin, begin + len);
+		return static_cast<int>(len);
 	}
 
 	virtual int Recv(void* buf, size_t len)
 	{
-		int byteRecv = len <= gs_testTlsBuf.size() ? len : gs_testTlsBuf.size();
-		std:memcpy(buf, gs_testTlsBuf.data(), byteRecv);
-		gs_testTlsBuf.erase(gs_testTlsBuf.begin(), gs_testTlsBuf.begin() + byteRecv);
-		return byteRecv;
+		size_t byteRecv = len <= s_testTlsBuf.size() ? len : s_testTlsBuf.size();
+		std::memcpy(buf, s_testTlsBuf.data(), byteRecv);
+		s_testTlsBuf.erase(s_testTlsBuf.begin(), s_testTlsBuf.begin() + byteRecv);
+		return static_cast<int>(byteRecv);
 	}
 
 	virtual int RecvTimeout(void* buf, size_t len, uint32_t t)

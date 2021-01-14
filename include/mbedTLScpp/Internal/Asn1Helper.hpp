@@ -83,7 +83,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		inline constexpr size_t asn1_write_int_est_size_part1(int val) noexcept
 		{
 			return 1 +
-					((val > 0 && static_cast<unsigned char>(val) & 0x80) ? 1 : 0);
+					((val > 0 && static_cast<unsigned char>(val) & 0x80) ? static_cast<size_t>(1) : static_cast<size_t>(0));
 		}
 
 		/**
@@ -339,7 +339,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			cur = dest;
 
-			while(stack.size() > 0)
+			while(stack.size() > 0 && cur != nullptr)
 			{
 				cur->next = stack.back();
 				stack.pop_back();

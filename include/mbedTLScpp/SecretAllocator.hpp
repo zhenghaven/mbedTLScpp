@@ -46,6 +46,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	public:
 
+		using std::allocator<T>::allocator;
+
 #if __cplusplus < 201703L
 	pointer allocate(size_type n, const void * hint)
 	{

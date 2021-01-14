@@ -32,10 +32,16 @@ namespace mbedTLScppSecretMemoryLeakNS = MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #	define SECRET_MEMORY_LEAK_TEST_COUNT(X)            EXPECT_EQ(mbedTLScppSecretMemoryLeakNS::gs_secretAllocationLeft, X)
 #	define SECRET_MEMORY_LEAK_TEST_INCR_COUNT(INIT, X) SECRET_MEMORY_LEAK_TEST_COUNT(INIT + X)
 #	define SECRET_MEMORY_LEAK_TEST_GET_COUNT(D)        {D = mbedTLScppSecretMemoryLeakNS::gs_secretAllocationLeft;}
+
+#	define SECRET_MEMORY_LEAK_TEST_COUNT_GE(X)            EXPECT_GE(mbedTLScppSecretMemoryLeakNS::gs_secretAllocationLeft, X)
+#	define SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(INIT, X) SECRET_MEMORY_LEAK_TEST_COUNT_GE(INIT + X)
 #else
 #	define SECRET_MEMORY_LEAK_TEST_COUNT(X)
 #	define SECRET_MEMORY_LEAK_TEST_INCR_COUNT(INIT, X)
 #	define SECRET_MEMORY_LEAK_TEST_GET_COUNT(D)
+
+#	define SECRET_MEMORY_LEAK_TEST_COUNT_GE(X)
+#	define SECRET_MEMORY_LEAK_TEST_INCR_COUNT_GE(INIT, X)
 #endif
 
 template<typename _InnerType>

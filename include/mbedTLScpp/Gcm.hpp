@@ -74,7 +74,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				GcmBase::GcmBase,
 				mbedtls_gcm_setkey,
 				NonVirtualGet(), cipherId,
-				key.BeginBytePtr(), key.GetRegionSize() * gsk_bitsPerByte);
+				key.BeginBytePtr(), static_cast<unsigned int>(key.GetRegionSize() * gsk_bitsPerByte));
 		}
 
 		/**
