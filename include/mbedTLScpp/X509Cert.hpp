@@ -56,7 +56,49 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 											 false,
 											 false>;
 
-	class X509Cert;
+
+	/**
+	 * @brief X509 certificate request object allocator.
+	 *
+	 */
+	struct X509CertObjAllocator : DefaultAllocBase
+	{
+		typedef mbedtls_x509_crt      CObjType;
+
+		using DefaultAllocBase::NewObject;
+		using DefaultAllocBase::DelObject;
+
+		static void Init(CObjType* ptr)
+		{
+			return mbedtls_x509_crt_init(ptr);
+		}
+
+		static void Free(CObjType* ptr) noexcept
+		{
+			return mbedtls_x509_crt_free(ptr);
+		}
+	};
+
+	/**
+	 * @brief X509 certificate request object trait.
+	 *
+	 */
+	using DefaultX509CertObjTrait = ObjTraitBase<X509CertObjAllocator,
+											 false,
+											 false>;
+
+	/**
+	 * @brief Borrower X509 Certificate object trait.
+	 *
+	 */
+	using BorrowedX509CertTrait =
+		ObjTraitBase<BorrowAllocBase<mbedtls_x509_crt>,
+									true,
+									false>;
+
+	template<typename _X509CertObjTrait,
+		enable_if_t<std::is_same<typename _X509CertObjTrait::CObjType, mbedtls_x509_crt>::value, int> >
+	class X509CertBase;
 
 	class X509CertWriter : public ObjectBase<DefaultX509CertWtrObjTrait>
 	{
@@ -89,9 +131,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return wrt;
 		}
 
-		template<typename _CaPKObjTrait, typename _SubPKObjTrait>
+		template<typename _CaCertObjTrait,
+			typename _CaPKObjTrait,
+			typename _SubPKObjTrait>
 		static X509CertWriter CaSign(HashType hashType,
-				const X509Cert & caCert,
+				const X509CertBase<_CaCertObjTrait, 0> & caCert,
 				const PKeyBase<_CaPKObjTrait> & caKey,
 				const PKeyBase<_SubPKObjTrait> & subjKey,
 				const std::string & subjName);
@@ -270,41 +314,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 
 
-	/**
-	 * @brief X509 certificate request object allocator.
-	 *
-	 */
-	struct X509CertObjAllocator : DefaultAllocBase
-	{
-		typedef mbedtls_x509_crt      CObjType;
 
-		using DefaultAllocBase::NewObject;
-		using DefaultAllocBase::DelObject;
-
-		static void Init(CObjType* ptr)
-		{
-			return mbedtls_x509_crt_init(ptr);
-		}
-
-		static void Free(CObjType* ptr) noexcept
-		{
-			return mbedtls_x509_crt_free(ptr);
-		}
-	};
-
-	/**
-	 * @brief X509 certificate request object trait.
-	 *
-	 */
-	using DefaultX509CertObjTrait = ObjTraitBase<X509CertObjAllocator,
-											 false,
-											 false>;
-
-	class X509Cert : public ObjectBase<DefaultX509CertObjTrait>
+	template<typename _X509CertObjTrait = DefaultX509CertObjTrait,
+			 enable_if_t<std::is_same<typename _X509CertObjTrait::CObjType, mbedtls_x509_crt>::value, int> = 0>
+	class X509CertBase : public ObjectBase<_X509CertObjTrait>
 	{
 	public: // Static members:
 
-		using X509CertTrait = DefaultX509CertObjTrait;
+		using X509CertTrait = _X509CertObjTrait;
 		using _Base         = ObjectBase<X509CertTrait>;
 
 		friend class TlsConfig;
@@ -314,37 +331,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        certificate chain verification.
 		 */
 		typedef int(*VerifyFunc)(void *, mbedtls_x509_crt *, int, uint32_t *);
-
-		/**
-		 * @brief Construct a X509 certificate (chain) from a given PEM string.
-		 *
-		 * @param pem PEM string in std::string
-		 */
-		static X509Cert FromPEM(const std::string& pem)
-		{
-			X509Cert cert;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromPEM,
-				mbedtls_x509_crt_parse,
-				cert.Get(),
-				reinterpret_cast<const uint8_t*>(pem.c_str()), pem.size() + 1);
-			return cert;
-		}
-
-		/**
-		 * @brief Construct a X509 certificate from a given DER bytes.
-		 *
-		 * @param der DER bytes referenced by ContCtnReadOnlyRef
-		 */
-		template<typename _SecCtnType>
-		static X509Cert FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
-		{
-			X509Cert cert;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromDER,
-				mbedtls_x509_crt_parse,
-				cert.Get(),
-				der.BeginBytePtr(), der.GetRegionSize());
-			return cert;
-		}
 
 		static std::vector<uint8_t> GetDer(
 			typename std::add_lvalue_reference<
@@ -382,9 +368,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception Unclear Depends on \c std::vector .
-		 * @param rhs The other X509Cert instance.
+		 * @param rhs The other X509CertBase instance.
 		 */
-		X509Cert(X509Cert&& rhs) :
+		X509CertBase(X509CertBase&& rhs) :
 			_Base::ObjectBase(std::forward<_Base>(rhs)), //noexcept
 			m_certStack(std::move(rhs.m_certStack)),
 			m_currPtr(rhs.m_currPtr)
@@ -392,19 +378,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			rhs.m_currPtr = nullptr;
 		}
 
-		X509Cert(const X509Cert& rhs) = delete;
+		X509CertBase(const X509CertBase& rhs) = delete;
 
-		virtual ~X509Cert()
+		virtual ~X509CertBase()
 		{}
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
 		 *
 		 * @exception Unclear Depends on \c std::vector .
-		 * @param rhs The other X509Cert instance.
-		 * @return X509Cert& A reference to this instance.
+		 * @param rhs The other X509CertBase instance.
+		 * @return X509CertBase& A reference to this instance.
 		 */
-		X509Cert& operator=(X509Cert&& rhs)
+		X509CertBase& operator=(X509CertBase&& rhs)
 		{
 			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
@@ -419,7 +405,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return *this;
 		}
 
-		X509Cert& operator=(const X509Cert& other) = delete;
+		X509CertBase& operator=(const X509CertBase& other) = delete;
 
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
@@ -432,7 +418,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509Cert).name());
+			_Base::NullCheck(typeid(X509CertBase).name());
 		}
 
 		virtual bool IsNull() const noexcept override
@@ -442,6 +428,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::NullCheck;
 		using _Base::Get;
+		using _Base::NonVirtualGet;
 		using _Base::Swap;
 
 		/**
@@ -450,7 +437,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception None No exception thrown
 		 * @return	The pointer to the current certificate.
 		 */
-		const CObjType* GetCurr() const noexcept
+		const typename _Base::CObjType* GetCurr() const noexcept
 		{
 			return m_currPtr;
 		}
@@ -461,7 +448,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception None No exception thrown
 		 * @return	The pointer to the current certificate.
 		 */
-		CObjType* GetCurr() noexcept
+		typename _Base::CObjType* GetCurr() noexcept
 		{
 			return m_currPtr;
 		}
@@ -527,6 +514,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return GetPem(*m_currPtr);
 		}
 
+		template<typename _dummy_CertTrait = X509CertTrait,
+			enable_if_t<!_dummy_CertTrait::sk_isConst, int> = 0>
 		PKeyBase<BorrowedPKeyTrait> BorrowPublicKey()
 		{
 			NullCheck();
@@ -598,16 +587,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			std::unique_ptr<uint8_t[]> hash = Internal::make_unique<uint8_t[]>(hashLen);
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::VerifySignature,
+				X509CertBase::VerifySignature,
 				mbedtls_md, mdInfo, m_currPtr->tbs.p, m_currPtr->tbs.len, hash.get());
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::VerifySignature,
+				X509CertBase::VerifySignature,
 				mbedtls_pk_verify_ext, m_currPtr->sig_pk, m_currPtr->sig_opts, pubKey.MutableGet(),
 				m_currPtr->sig_md, hash.get(), hashLen, m_currPtr->sig.p, m_currPtr->sig.len);
 		}
 
-		void VerifySignature()
+		void VerifySignature() const
 		{
 			NullCheck();
 
@@ -618,11 +607,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			std::unique_ptr<uint8_t[]> hash = Internal::make_unique<uint8_t[]>(hashLen);
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::VerifySignature,
+				X509CertBase::VerifySignature,
 				mbedtls_md, mdInfo, m_currPtr->tbs.p, m_currPtr->tbs.len, hash.get());
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::VerifySignature,
+				X509CertBase::VerifySignature,
 				mbedtls_pk_verify_ext, m_currPtr->sig_pk, m_currPtr->sig_opts, &m_currPtr->pk,
 				m_currPtr->sig_md, hash.get(), hashLen, m_currPtr->sig.p, m_currPtr->sig.len);
 		}
@@ -652,11 +641,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			size_t extDataSize = 0;
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::GetV3Extensions,
+				X509CertBase::GetV3Extensions,
 				mbedtls_asn1_get_tag, p, end, &len, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
 			if (*p + len != end)
 			{
-				throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extensions - Invalid length returned by ASN1.");
+				throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extensions - Invalid length returned by ASN1.");
 			}
 
 			while (*p < end)
@@ -664,14 +653,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				is_critical = 0; /* DEFAULT FALSE */
 
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
-					X509Cert::GetV3Extensions,
+					X509CertBase::GetV3Extensions,
 					mbedtls_asn1_get_tag, p, end, &len, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
 
 				end_ext_data = *p + len;
 
 				/* Get extension ID */
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
-					X509Cert::GetV3Extensions,
+					X509CertBase::GetV3Extensions,
 					mbedtls_asn1_get_tag, p, end_ext_data, &len, MBEDTLS_ASN1_OID);
 
 				oidPtr = reinterpret_cast<char*>(*p);
@@ -683,12 +672,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				mbedRet = mbedtls_asn1_get_bool(p, end_ext_data, &is_critical);
 				if (mbedRet != MBEDTLS_EXIT_SUCCESS && mbedRet != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG)
 				{
-					throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extensions - Invalid tag returned by ASN1.");
+					throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extensions - Invalid tag returned by ASN1.");
 				}
 
 				/* Data should be octet string type */
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
-					X509Cert::GetV3Extensions,
+					X509CertBase::GetV3Extensions,
 					mbedtls_asn1_get_tag, p, end_ext_data, &len, MBEDTLS_ASN1_OCTET_STRING);
 
 				extDataPtr = reinterpret_cast<char*>(*p);
@@ -698,7 +687,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 				if (end_ext_octet != end_ext_data)
 				{
-					throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extensions - Invalid length returned by ASN1.");
+					throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extensions - Invalid length returned by ASN1.");
 				}
 
 				//Insert into the map.
@@ -735,11 +724,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			size_t extDataSize = 0;
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::GetV3Extension,
+				X509CertBase::GetV3Extension,
 				mbedtls_asn1_get_tag, p, end, &len, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
 			if (*p + len != end)
 			{
-				throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extension - Invalid length returned by ASN1.");
+				throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extension - Invalid length returned by ASN1.");
 			}
 
 			while (*p < end)
@@ -747,14 +736,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				is_critical = 0; /* DEFAULT FALSE */
 
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
-					X509Cert::GetV3Extension,
+					X509CertBase::GetV3Extension,
 					mbedtls_asn1_get_tag, p, end, &len, MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE);
 
 				end_ext_data = *p + len;
 
 				/* Get extension ID */
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
-					X509Cert::GetV3Extension,
+					X509CertBase::GetV3Extension,
 					mbedtls_asn1_get_tag, p, end_ext_data, &len, MBEDTLS_ASN1_OID);
 
 				oidPtr = reinterpret_cast<char*>(*p);
@@ -771,12 +760,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					mbedRet = mbedtls_asn1_get_bool(p, end_ext_data, &is_critical);
 					if (mbedRet != MBEDTLS_EXIT_SUCCESS && mbedRet != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG)
 					{
-						throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extension - Invalid tag returned by ASN1.");
+						throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extension - Invalid tag returned by ASN1.");
 					}
 
 					/* Data should be octet string type */
 					MBEDTLSCPP_MAKE_C_FUNC_CALL(
-						X509Cert::GetV3Extension,
+						X509CertBase::GetV3Extension,
 						mbedtls_asn1_get_tag, p, end_ext_data, &len, MBEDTLS_ASN1_OCTET_STRING);
 
 					extDataPtr = reinterpret_cast<char*>(*p);
@@ -786,7 +775,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 					if (end_ext_octet != end_ext_data)
 					{
-						throw RuntimeException("mbedTLScpp::X509Cert::GetV3Extension - Invalid length returned by ASN1.");
+						throw RuntimeException("mbedTLScpp::X509CertBase::GetV3Extension - Invalid length returned by ASN1.");
 					}
 
 					return std::make_pair(is_critical != 0, std::string(extDataPtr, extDataSize));
@@ -798,11 +787,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			throw RuntimeException("The given OID is not found in the extension list.");
 		}
 
-		void VerifyChainWithCa(const X509Cert & ca,
+		template<typename _CaObjTrait>
+		void VerifyChainWithCa(
+			const X509CertBase<_CaObjTrait> & ca,
 			const X509Crl* crl,
 			const char * cn, uint32_t & flags,
 			const mbedtls_x509_crt_profile & prof,
-			VerifyFunc vrfyFunc, void * vrfyParam)
+			VerifyFunc vrfyFunc, void * vrfyParam) const
 		{
 			NullCheck();
 			mbedtls_x509_crl* crlPtr = nullptr;
@@ -814,7 +805,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
-				X509Cert::VerifyChainWithCa,
+				X509CertBase::VerifyChainWithCa,
 				mbedtls_x509_crt_verify_with_profile,
 				MutableGet(), ca.MutableGet(),
 				crlPtr,
@@ -822,7 +813,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				vrfyFunc, vrfyParam);
 		}
 
-		void ShrinkChain(const X509Cert & ca)
+		template<typename _CaObjTrait,
+			typename _dummy_CertTrait = X509CertTrait,
+			enable_if_t<!_dummy_CertTrait::sk_isConst, int> = 0>
+		void ShrinkChain(const X509CertBase<_CaObjTrait> & ca)
 		{
 			NullCheck();
 			ca.NullCheck();
@@ -888,7 +882,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	protected:
 
-		X509Cert() :
+		using _Base::MutableGet;
+		using _Base::SetPtr;
+
+		template<typename _dummy_CertTrait = X509CertTrait,
+			enable_if_t<!_dummy_CertTrait::sk_isBorrower, int> = 0>
+		X509CertBase() :
 			_Base::ObjectBase(),
 			m_certStack(1, NonVirtualGet()),
 			m_currPtr(NonVirtualGet())
@@ -910,9 +909,106 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		typename std::add_pointer<typename _Base::CObjType>::type m_currPtr; // For noexcept
 	};
 
-	template<typename _CaPKObjTrait, typename _SubPKObjTrait>
-	inline X509CertWriter X509CertWriter::CaSign(HashType hashType,
-			const X509Cert & caCert,
+	class X509Cert : public X509CertBase<>
+	{
+	public: // Static members:
+
+		using _Base = X509CertBase<>;
+
+		/**
+		 * @brief Construct a X509 certificate (chain) from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static X509Cert FromPEM(const std::string& pem)
+		{
+			X509Cert cert;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromPEM,
+				mbedtls_x509_crt_parse,
+				cert.Get(),
+				reinterpret_cast<const uint8_t*>(pem.c_str()), pem.size() + 1);
+			return cert;
+		}
+
+		/**
+		 * @brief Construct a X509 certificate from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static X509Cert FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
+		{
+			X509Cert cert;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromDER,
+				mbedtls_x509_crt_parse,
+				cert.Get(),
+				der.BeginBytePtr(), der.GetRegionSize());
+			return cert;
+		}
+
+	public:
+
+		/**
+		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
+		 *
+		 * @exception Unclear Depends on \c std::vector .
+		 * @param rhs The other X509Cert instance.
+		 */
+		X509Cert(X509Cert&& rhs) :
+			_Base::X509CertBase(std::forward<_Base>(rhs)) //noexcept
+		{}
+
+		X509Cert(const X509Cert& rhs) = delete;
+
+		virtual ~X509Cert()
+		{}
+
+		/**
+		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
+		 *
+		 * @exception Unclear Depends on \c std::vector .
+		 * @param rhs The other X509Cert instance.
+		 * @return X509Cert& A reference to this instance.
+		 */
+		X509Cert& operator=(X509Cert&& rhs)
+		{
+			_Base::operator=(std::forward<_Base>(rhs));
+
+			return *this;
+		}
+
+		X509Cert& operator=(const X509Cert& other) = delete;
+
+		/**
+		 * @brief Check if the current instance is holding a null pointer for
+		 *        the mbedTLS object. If so, exception will be thrown. Helper
+		 *        function to be called before accessing the mbedTLS object.
+		 *
+		 * @exception InvalidObjectException Thrown when the current instance is
+		 *                                   holding a null pointer for the C mbed TLS
+		 *                                   object.
+		 */
+		virtual void NullCheck() const override
+		{
+			_Base::NullCheck(typeid(X509Cert).name());
+		}
+
+		using _Base::NullCheck;
+		using _Base::Get;
+
+	protected:
+
+		X509Cert() :
+			_Base::X509CertBase()
+		{}
+	};
+
+	template<typename _CaCertObjTrait,
+		typename _CaPKObjTrait,
+		typename _SubPKObjTrait>
+	inline X509CertWriter X509CertWriter::CaSign(
+			HashType hashType,
+			const X509CertBase<_CaCertObjTrait> & caCert,
 			const PKeyBase<_CaPKObjTrait> & caKey,
 			const PKeyBase<_SubPKObjTrait> & subjKey,
 			const std::string & subjName)

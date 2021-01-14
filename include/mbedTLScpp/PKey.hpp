@@ -235,8 +235,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		friend class X509ReqWriter;
 		friend class X509CertWriter;
-		friend class X509Cert;
 		friend class TlsConfig;
+
+		template<typename T,
+			enable_if_t<std::is_same<typename T::CObjType, mbedtls_x509_crt>::value, int> >
+		friend class X509CertBase;
 
 	public:
 

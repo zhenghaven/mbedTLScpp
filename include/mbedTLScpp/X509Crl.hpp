@@ -55,8 +55,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using X509CrlTrait = DefaultX509CrlObjTrait;
 		using _Base        = ObjectBase<X509CrlTrait>;
 
-		friend class X509Cert;
 		friend class TlsConfig;
+
+		template<typename T,
+			enable_if_t<std::is_same<typename T::CObjType, mbedtls_x509_crt>::value, int> >
+		friend class X509CertBase;
 
 		/**
 		 * @brief Construct a X509 certificate revocation list from a given PEM string.
