@@ -1,10 +1,13 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
-#include <mbedTLScpp/TlsSession.hpp>
+#include <mbedTLScpp/X509Crl.hpp>
 
+#include "SharedVars.hpp"
 #include "MemoryTest.hpp"
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
@@ -12,7 +15,17 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-GTEST_TEST(TestTlsSession, TlsSessionClass)
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestX509Crl, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
+
+GTEST_TEST(TestX509Crl, X509CrlClass)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -20,39 +33,58 @@ GTEST_TEST(TestTlsSession, TlsSessionClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TlsSession tlsSess1;
+		X509Crl crl1 = X509Crl::FromPEM(gsk_testX509CrlPem);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TlsSession tlsSess2;
+		X509Crl crl2 = X509Crl::FromDER(CtnFullR(crl1.GetDer()));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		tlsSess1 = std::move(tlsSess1);
+		crl1 = std::move(crl1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		tlsSess1 = std::move(tlsSess2);
+		crl1 = std::move(crl2);
 
 		// Moved, allocation should reduce.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
-		TlsSession tlsSess3(std::move(tlsSess1));
+		X509Crl crl3(std::move(crl1));
 
 		// This should success.
-		tlsSess3.NullCheck();
+		crl3.NullCheck();
 
 		//mdBase1.NullCheck();
-		EXPECT_THROW(tlsSess1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(tlsSess2.NullCheck(), InvalidObjectException);
+		EXPECT_THROW(crl1.NullCheck(), InvalidObjectException);
+		EXPECT_THROW(crl2.NullCheck(), InvalidObjectException);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+GTEST_TEST(TestX509Crl, X509CrlExport)
+{
+	X509Crl crl = X509Crl::FromPEM(gsk_testX509CrlPem);
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EXPECT_NO_THROW(X509Crl crl1 = X509Crl::FromPEM(crl.GetPem()););
+		EXPECT_NO_THROW(X509Crl crl1 = X509Crl::FromDER(CtnFullR(crl.GetDer())););
 	}
 
 	// Finally, all allocation should be cleaned after exit.

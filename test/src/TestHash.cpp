@@ -1,10 +1,13 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/Hash.hpp>
+#include <mbedTLScpp/Internal/Codec.hpp>
 
 #include "MemoryTest.hpp"
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
@@ -12,34 +15,54 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestHash, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
+
 GTEST_TEST(TestHash, MsgDigestBaseClass)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		// An invalid initialization should fail.
 		EXPECT_THROW({MsgDigestBase<> mdBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), false);}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		MEMORY_LEAK_TEST_COUNT(0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		MsgDigestBase<> mdBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		MsgDigestBase<> mdBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), false);
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		mdBase1 = std::move(mdBase1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		mdBase1 = std::move(mdBase2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		MsgDigestBase<> mdBase3(std::move(mdBase1));
@@ -53,37 +76,48 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHash, HasherBaseClass)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		// An invalid initialization should fail.
 		EXPECT_THROW({HasherBase hashBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		MEMORY_LEAK_TEST_COUNT(0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		HasherBase hashBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		HasherBase hashBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hashBase1 = std::move(hashBase1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hashBase2 = std::move(hashBase1);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		HasherBase hashBase3(std::move(hashBase2));
@@ -97,11 +131,17 @@ GTEST_TEST(TestHash, HasherBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHash, HasherBaseCalc)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		HasherBase hashBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
@@ -141,32 +181,42 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHash, HasherClass)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 
 		Hasher<HashType::SHA256> hash2561;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		Hasher<HashType::SHA256> hash2562;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hash2561 = std::move(hash2561);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hash2562 = std::move(hash2561);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Hasher<HashType::SHA256> hash2563(std::move(hash2562));
@@ -180,11 +230,17 @@ GTEST_TEST(TestHash, HasherClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHash, HasherCalc)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		Hasher<HashType::SHA256> hasher256;
 
@@ -275,5 +331,6 @@ GTEST_TEST(TestHash, HasherCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }

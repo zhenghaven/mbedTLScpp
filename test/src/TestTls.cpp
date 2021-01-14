@@ -1,5 +1,3 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/Tls.hpp>
@@ -10,11 +8,25 @@
 
 #include "MemoryTest.hpp"
 
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestTlsIntf, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
 
 class TestTls : public Tls
 {
@@ -91,6 +103,8 @@ protected:
 private:
 
 };
+
+std::vector<uint8_t> TestTls::s_testTlsBuf;
 
 GTEST_TEST(TestTlsIntf, TlsClass)
 {

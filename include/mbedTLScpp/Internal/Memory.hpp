@@ -18,7 +18,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        It's only used for memory leak testing.
 		 *
 		 */
-		std::atomic_int64_t gs_allocationLeft(0);
+		extern std::atomic_int64_t gs_allocationLeft;
 #endif
 
 		/**

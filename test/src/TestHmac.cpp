@@ -1,5 +1,3 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/Hmac.hpp>
@@ -7,42 +5,66 @@
 
 #include "MemoryTest.hpp"
 
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestHmac, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
+
 GTEST_TEST(TestHmac, HmacerBaseClass)
 {
 	SecretArray<uint8_t, 32> testKey;
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		// An invalid initialization should fail.
 		EXPECT_THROW({HmacerBase hmacBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_NONE), CtnFullR(testKey));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		MEMORY_LEAK_TEST_COUNT(0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		HmacerBase hmacBase1(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		HmacerBase hmacBase2(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hmacBase1 = std::move(hmacBase1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hmacBase2 = std::move(hmacBase1);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		HmacerBase hmacBase3(std::move(hmacBase2));
@@ -56,7 +78,8 @@ GTEST_TEST(TestHmac, HmacerBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHmac, HmacerBaseCalc)
@@ -64,6 +87,11 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 	static constexpr char const testKeyStr[] = "TestKey1";
 	SecretArray<uint8_t, 8> testKey;
 	std::copy(std::begin(testKeyStr), std::end(testKeyStr) - 1, testKey.Get().begin());
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		HmacerBase hmacBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), CtnFullR(testKey));
@@ -104,7 +132,8 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHmac, HmacerClass)
@@ -113,28 +142,37 @@ GTEST_TEST(TestHmac, HmacerClass)
 	SecretArray<uint8_t, 8> testKey;
 	std::copy(std::begin(testKeyStr), std::end(testKeyStr) - 1, testKey.Get().begin());
 
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		Hmacer<HashType::SHA256> hmac2561(CtnFullR(testKey));
 		hmac2561.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		Hmacer<HashType::SHA256> hmac2562(CtnFullR(testKey));
 		hmac2562.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hmac2561 = std::move(hmac2561);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		hmac2562 = std::move(hmac2561);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Hmacer<HashType::SHA256> hmac2563(std::move(hmac2562));
@@ -150,7 +188,8 @@ GTEST_TEST(TestHmac, HmacerClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHmac, HmacerCalc)
@@ -158,6 +197,11 @@ GTEST_TEST(TestHmac, HmacerCalc)
 	static constexpr char const testKeyStr[] = "TestKey1";
 	SecretArray<uint8_t, 8> testKey;
 	std::copy(std::begin(testKeyStr), std::end(testKeyStr) - 1, testKey.Get().begin());
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		Hmacer<HashType::SHA256> hmacer256(CtnFullR(testKey));
@@ -252,5 +296,6 @@ GTEST_TEST(TestHmac, HmacerCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }

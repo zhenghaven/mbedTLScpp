@@ -176,7 +176,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *
 	 * @return std::unique_ptr<EntropyInterface> The pointer to the shared entropy object.
 	 */
-	inline static std::unique_ptr<EntropyInterface> GetSharedEntropy()
+	inline std::unique_ptr<EntropyInterface> GetSharedEntropy()
 	{
 		static Entropy<> sharedEntropy;
 

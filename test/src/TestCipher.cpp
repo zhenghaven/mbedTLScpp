@@ -1,16 +1,28 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/CipherBase.hpp>
 
 #include "MemoryTest.hpp"
 
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
+
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
 #else
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestCipher, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
 
 GTEST_TEST(TestCipher, TestGetCipherInfo)
 {
@@ -38,32 +50,42 @@ GTEST_TEST(TestCipher, TestGetCipherInfo)
 
 GTEST_TEST(TestCipher, CipherBaseClass)
 {
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		// An invalid initialization should fail.
 		EXPECT_THROW({CipherBase<> cpBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		MEMORY_LEAK_TEST_COUNT(0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		CipherBase<> cpBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::GCM));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		CipherBase<> cpBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::GCM));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cpBase1 = std::move(cpBase1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cpBase1 = std::move(cpBase2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		CipherBase<> cpBase3(std::move(cpBase1));
@@ -77,5 +99,6 @@ GTEST_TEST(TestCipher, CipherBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }

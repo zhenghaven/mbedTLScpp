@@ -22,7 +22,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *        It's only used for secret memory leak testing.
 		 *
 		 */
-		std::atomic_int64_t gs_secretAllocationLeft(0);
+		extern std::atomic_int64_t gs_secretAllocationLeft;
 #endif
 
 	template<class T>

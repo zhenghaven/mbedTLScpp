@@ -1,50 +1,34 @@
 #include <gtest/gtest.h>
 
-//using namespace std;
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
 
-#include "TestTester.hpp"
-#include "TestContainer.hpp"
-#include "TestSecretArray.hpp"
-#include "TestSecretContainer.hpp"
-#include "TestException.hpp"
+#include <mbedTLScpp/Entropy.hpp>
 
-#include "TestHash.hpp"
-#include "TestHmac.hpp"
+#ifdef MBEDTLSCPP_MEMORY_TEST
+#include <atomic> //size_t
 
-#include "TestCipher.hpp"
-#include "TestCmac.hpp"
+namespace mbedTLScpp
+{
+	namespace Internal
+	{
+		std::atomic_int64_t gs_allocationLeft(0);
+	}
 
-#include "TestEntropy.hpp"
+	std::atomic_int64_t gs_secretAllocationLeft(0);
+}
+#endif
 
-#include "TestRbg.hpp"
-
-#include "TestBigNumber.hpp"
-
-#include "TestHkdf.hpp"
-
-#include "TestSecretAllocator.hpp"
-#include "TestSecretVector.hpp"
-#include "TestSecretString.hpp"
-
-#include "TestPKey.hpp"
-#include "TestEcKey.hpp"
-
-#include "TestX509Req.hpp"
-#include "TestX509Crl.hpp"
-#include "TestX509Cert.hpp"
-
-#include "TestGcm.hpp"
-#include "TestTlsSession.hpp"
-#include "TestTlsSessTktMgr.hpp"
-#include "TestTlsConfig.hpp"
-#include "TestTls.hpp"
-
-#include "TestTlsPrf.hpp"
-
-std::vector<uint8_t> TestTls::s_testTlsBuf;
+namespace mbedTLScpp_Test
+{
+	size_t g_numOfTestFile = 0;
+}
 
 int main(int argc, char** argv)
 {
+	constexpr size_t EXPECTED_NUM_OF_TEST_FILE = 27;
+
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
 	std::cout << std::endl;
 
@@ -54,9 +38,32 @@ int main(int argc, char** argv)
 	std::cout << "      memory test: OFF." << std::endl;
 #endif
 
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+	std::cout << "      std NS test: ON." << std::endl;
+#else
+	std::cout << "      std NS test: OFF." << std::endl;
+#endif
+
 	std::cout << std::endl;
 	std::cout << "===== mbed TLS cpp test start   =====" << std::endl;
 
+	{
+		std::unique_ptr<mbedTLScpp::EntropyInterface> shared = mbedTLScpp::GetSharedEntropy();
+	}
+
 	testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	int testRet = RUN_ALL_TESTS();
+
+	if (mbedTLScpp_Test::g_numOfTestFile != EXPECTED_NUM_OF_TEST_FILE)
+	{
+		std::cout << "********************************************************************************" << std::endl;
+		std::cout << "***** WARNING: Expecting " << EXPECTED_NUM_OF_TEST_FILE;
+		std::cout << " testing source files, but only ";
+		std::cout << mbedTLScpp_Test::g_numOfTestFile << " were ran. *****" << std::endl;
+		std::cout << "********************************************************************************" << std::endl;
+
+		return -1;
+	}
+
+	return testRet;
 }

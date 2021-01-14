@@ -1,10 +1,13 @@
-#pragma once
-
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/Cmac.hpp>
+#include <mbedTLScpp/Internal/Codec.hpp>
 
 #include "MemoryTest.hpp"
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 using namespace mbedTLScpp;
@@ -12,36 +15,56 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-GTEST_TEST(TestCipher, CmacerBaseClass)
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+GTEST_TEST(TestCmac, CountTestFile)
+{
+	++mbedTLScpp_Test::g_numOfTestFile;
+}
+
+GTEST_TEST(TestCmac, CmacerBaseClass)
 {
 	SecretArray<uint8_t, 32> testKey;
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		// An invalid initialization should fail.
 		EXPECT_THROW({CmacerBase cmacBase(*mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_NONE), CtnFullR(testKey));}, mbedTLSRuntimeError);
 
 		// Failed initialization should delete the allocated memory.
-		MEMORY_LEAK_TEST_COUNT(0);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		CmacerBase cmacBase1(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		CmacerBase cmacBase2(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(testKey));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cmacBase1 = std::move(cmacBase1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cmacBase1 = std::move(cmacBase2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		CmacerBase cmacBase3(std::move(cmacBase1));
@@ -55,7 +78,8 @@ GTEST_TEST(TestCipher, CmacerBaseClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestCmac, CmacerBaseCalc)
@@ -74,6 +98,11 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 	//546573744B6579310000000000000000546573744B6579310000000000000000
 	SecretArray<uint8_t, sizeof(testKey256Str)> test256Key;
 	std::copy(std::begin(testKey256Str), std::end(testKey256Str), test256Key.Get().begin());
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		CmacerBase cmacBase(GetCipherInfo(CipherType::AES, 128, CipherMode::ECB), CtnFullR(test128Key));
@@ -130,7 +159,8 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestHmac, CmacerClass)
@@ -140,28 +170,37 @@ GTEST_TEST(TestHmac, CmacerClass)
 	SecretArray<uint8_t, sizeof(testKey128Str)> test128Key;
 	std::copy(std::begin(testKey128Str), std::end(testKey128Str), test128Key.Get().begin());
 
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
 	{
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1281(CtnFullR(test128Key));
 		cmac1281.Update(CtnItemRangeR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1282(CtnFullR(test128Key));
 		cmac1282.Update(CtnItemRangeR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cmac1281 = std::move(cmac1281);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_COUNT(2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		cmac1281 = std::move(cmac1282);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_COUNT(1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1283(std::move(cmac1281));
@@ -177,7 +216,8 @@ GTEST_TEST(TestHmac, CmacerClass)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
 GTEST_TEST(TestCmac, CmacerCalc)
@@ -196,6 +236,11 @@ GTEST_TEST(TestCmac, CmacerCalc)
 	//546573744B6579310000000000000000546573744B6579310000000000000000
 	SecretArray<uint8_t, sizeof(testKey256Str)> test256Key;
 	std::copy(std::begin(testKey256Str), std::end(testKey256Str), test256Key.Get().begin());
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac128(CtnFullR(test128Key));
@@ -230,5 +275,6 @@ GTEST_TEST(TestCmac, CmacerCalc)
 	}
 
 	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_COUNT(0);
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }

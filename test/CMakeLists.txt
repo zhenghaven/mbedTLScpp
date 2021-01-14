@@ -67,6 +67,7 @@ file(GLOB_RECURSE SOURCES ${SOURCES_DIR_PATH}/*.[ch]*)
 
 add_executable(mbedTLScpp_test ${SOURCES})
 
-target_compile_definitions(mbedTLScpp_test PUBLIC MBEDTLSCPP_MEMORY_TEST)
+target_compile_definitions(mbedTLScpp_test PUBLIC MBEDTLSCPP_MEMORY_TEST
+                                           PRIVATE MBEDTLSCPPTEST_TEST_STD_NS)
 
 target_link_libraries(mbedTLScpp_test mbedtls mbedTLScpp gtest)
