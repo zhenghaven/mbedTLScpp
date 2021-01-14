@@ -302,6 +302,9 @@ GTEST_TEST(TestX509Cert, X509CertGetters)
 		auto exts = cert.GetV3Extensions();
 		EXPECT_EQ(exts["1.2.3.4.5.6.7.1"].second, "TestData1");
 		EXPECT_EQ(exts["1.2.3.4.5.6.7.2"].second, "TestData2");
+
+		EXPECT_EQ(static_cast<const X509Cert&>(cert).BorrowPublicKey().GetPublicDer(),
+			cert.GetPublicKey<PKeyBase<> >().GetPublicDer());
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

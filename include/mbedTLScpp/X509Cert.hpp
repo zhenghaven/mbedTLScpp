@@ -378,6 +378,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			rhs.m_currPtr = nullptr;
 		}
 
+		/**
+		 * @brief Construct a new X509CertBase object that borrows the C object.
+		 *
+		 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
+		 *                        the constructor is only available for borrowers.
+		 * @param ptr pointer to the borrowed C object.
+		 */
+		template<typename _dummy_ObjTrait = X509CertTrait,
+			enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0>
+		X509CertBase(mbedtls_x509_crt* ptr) :
+			_Base::ObjectBase(ptr),
+			m_certStack(1, NonVirtualGet()),
+			m_currPtr(NonVirtualGet())
+		{}
+
 		X509CertBase(const X509CertBase& rhs) = delete;
 
 		virtual ~X509CertBase()
@@ -523,14 +538,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return PKeyBase<BorrowedPKeyTrait>(&m_currPtr->pk);
 		}
 
+		const PKeyBase<BorrowedPKeyTrait> BorrowPublicKey() const
+		{
+			NullCheck();
+
+			return PKeyBase<BorrowedPKeyTrait>(&m_currPtr->pk);
+		}
+
 		template<typename PKeyType,
 			enable_if_t<IsCppObjOfCtype<PKeyType, mbedtls_pk_context>::value, int> = 0>
 		PKeyType GetPublicKey() const
 		{
-			NullCheck();
-
-			PKeyBase<BorrowedPKeyTrait> borrowed(&m_currPtr->pk);
-			std::vector<uint8_t> pubDer = borrowed.GetPublicDer();
+			std::vector<uint8_t> pubDer = BorrowPublicKey().GetPublicDer();
 
 			return PKeyType::FromDER(CtnFullR(pubDer));
 		}

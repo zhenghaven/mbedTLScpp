@@ -347,6 +347,43 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return retVal;
 		}
 
+		TlsSession GetSession() const
+		{
+			NullCheck();
+
+			TlsSession sess;
+
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				Tls::GetSession,
+				mbedtls_ssl_get_session,
+				Get(), sess.Get()
+			);
+
+			return sess;
+		}
+
+		const X509CertBase<BorrowedX509CertTrait> BorrowPeerCert() const
+		{
+			NullCheck();
+
+			const mbedtls_x509_crt* ptr = mbedtls_ssl_get_peer_cert(Get());
+			if (ptr == nullptr)
+			{
+				throw InvalidArgumentException("Tls::BorrowPeerCert - Can't get peer's certificate in this TLS context (Hint: Was peer cert required? Has TLS handshake done?).");
+			}
+
+			return X509CertBase<BorrowedX509CertTrait>(
+				const_cast<mbedtls_x509_crt*>(ptr)
+			);
+		}
+
+		X509Cert GetPeerCert() const
+		{
+			std::vector<uint8_t> borrowedDer = BorrowPeerCert().GetDer();
+
+			return X509Cert::FromDER(CtnFullR(borrowedDer));
+		}
+
 	protected:
 
 		virtual int Send(const void* buf, size_t len) = 0;

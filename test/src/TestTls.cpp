@@ -427,6 +427,15 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 		svrTls->SendData(&secretDataSent, sizeof(secretDataSent));
 		cltTls->RecvData(&secretDataRecv, sizeof(secretDataRecv));
 		EXPECT_EQ(secretDataSent, secretDataRecv);
+
+		// Getters
+		EXPECT_NO_THROW(cltTls->GetSession().NullCheck(););
+
+		EXPECT_EQ(cltTls->BorrowPeerCert().GetDer(), svrCert->GetDer());
+		EXPECT_EQ(cltTls->GetPeerCert().GetDer(), svrCert->GetDer());
+
+		EXPECT_EQ(svrTls->BorrowPeerCert().GetDer(), cltCert->GetDer());
+		EXPECT_EQ(svrTls->GetPeerCert().GetDer(), cltCert->GetDer());
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
