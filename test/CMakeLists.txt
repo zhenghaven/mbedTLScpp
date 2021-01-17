@@ -56,33 +56,10 @@ FetchContent_Declare(
   GIT_TAG        v2.24.0
 )
 FetchContent_MakeAvailable(git_mbedtls)
-target_include_directories(mbedcrypto
-	PUBLIC
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
-)
-target_include_directories(mbedx509
-	PUBLIC
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
-)
-target_include_directories(mbedtls
-	PUBLIC
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
-		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
-)
-target_compile_definitions(mbedcrypto
-	PUBLIC
-		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
-)
-target_compile_definitions(mbedx509
-	PUBLIC
-		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
-)
-target_compile_definitions(mbedtls
-	PUBLIC
-		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
-)
+include($ENV{MBEDTLSCPP_HOME}/cmake/mbedTLScpp_UseMbedtlsHeaders.cmake)
+mbedTLScpp_UseMbedtlsHeaders_Normal(mbedcrypto)
+mbedTLScpp_UseMbedtlsHeaders_Normal(mbedx509)
+mbedTLScpp_UseMbedtlsHeaders_Normal(mbedtls)
 
 ################################################################################
 # Adding testing executable
