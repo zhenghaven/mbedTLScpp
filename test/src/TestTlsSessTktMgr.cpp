@@ -20,6 +20,12 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
+#ifdef MBEDTLS_THREADING_C
+	static constexpr bool gsk_threadEnabled = true;
+#else
+	static constexpr bool gsk_threadEnabled = false;
+#endif
+
 GTEST_TEST(TestTlsSessTktMgr, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -36,25 +42,25 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSess1;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSess2;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		tlsSess1 = std::move(tlsSess1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		tlsSess1 = std::move(tlsSess2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.

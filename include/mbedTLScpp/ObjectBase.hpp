@@ -2,6 +2,7 @@
 
 #include "Common.hpp"
 #include "Exceptions.hpp"
+#include "LibInitializer.hpp"
 
 #include "Internal/Memory.hpp"
 
@@ -229,6 +230,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<!_dummy_ObjTrait::sk_isBorrower, int> = 0>
 		ObjectBase() :
+			m_libInit(LibInitializer::GetInst()), //noexcept
 			m_ptr(nullptr)
 		{
 			InitBaseObject();
@@ -243,6 +245,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_ObjTrait = ObjTrait, enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0>
 		ObjectBase(CObjType* ptr) noexcept :
+			m_libInit(LibInitializer::GetInst()), //noexcept
 			m_ptr(ptr)
 		{}
 
@@ -255,6 +258,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param [in,out]	other	The other instance.
 		 */
 		ObjectBase(ObjectBase&& rhs) noexcept :
+			m_libInit(rhs.m_libInit), //noexcept
 			m_ptr(rhs.m_ptr)
 		{
 			rhs.m_ptr = nullptr;
@@ -423,6 +427,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 	private:
+		LibInitializer& m_libInit;
 		CObjType * m_ptr; // NOTE: must be a pointer.
 	};
 

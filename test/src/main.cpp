@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
 
-#ifdef MBEDTLSCPPTEST_TEST_STD_NS
-using namespace std;
-#endif
+#include <mbedtls/version.h>
+#include <mbedtls/threading.h>
 
 #include <mbedTLScpp/Entropy.hpp>
 
 #ifdef MBEDTLSCPP_MEMORY_TEST
 #include <atomic> //size_t
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
 
 namespace mbedTLScpp
 {
@@ -31,6 +34,20 @@ int main(int argc, char** argv)
 
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
 	std::cout << std::endl;
+
+	std::cout << "      mbed TLS Ver: " MBEDTLS_VERSION_STRING_FULL "." << std::endl;
+
+#ifdef MBEDTLS_CONFIG_FILE
+	std::cout << "      mbed TLS Cfg: " MBEDTLS_CONFIG_FILE "." << std::endl;
+#else
+	std::cout << "      mbed TLS Cfg: default - config.h." << std::endl;
+#endif
+
+#ifdef MBEDTLS_THREADING_C
+	std::cout << "      Thread test: ON." << std::endl;
+#else
+	std::cout << "      Thread test: OFF." << std::endl;
+#endif
 
 #ifdef MBEDTLSCPP_MEMORY_TEST
 	std::cout << "      memory test: ON." << std::endl;

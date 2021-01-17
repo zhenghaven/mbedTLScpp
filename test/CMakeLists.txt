@@ -10,13 +10,13 @@ project(mbedTLScpp_test VERSION 0.1 LANGUAGES CXX)
 ################################################################################
 
 if(MSVC)
-	set(COMMON_OPTIONS /W3 /wd4996 /we4239 /we4002 /we4700 /we4305 /EHsc /MP /DMBEDTLS_CMAC_C)
+	set(COMMON_OPTIONS /W3 /wd4996 /we4239 /we4002 /we4700 /we4305 /EHsc /MP)
 	set(DEBUG_OPTIONS /MTd /Od /Zi /DDEBUG)
-	set(RELEASE_OPTIONS /MT /Ox /Oi /Ob2 /fp:fast /GR- /DEDEBUG)# /DNDEBUG
+	set(RELEASE_OPTIONS /MT /Ox /Oi /Ob2 /fp:fast /GR-)# /DNDEBUG
 else()
-	set(COMMON_OPTIONS -pthread -DMBEDTLS_CMAC_C)
-	set(DEBUG_OPTIONS -O0 -g -DDEBUG -UNDEBUG -UEDEBUG)
-	set(RELEASE_OPTIONS -O2 -DEDEBUG -UDEBUG) #-DNDEBUG defined by default
+	set(COMMON_OPTIONS -pthread)
+	set(DEBUG_OPTIONS -O0 -g -DDEBUG)
+	set(RELEASE_OPTIONS -O2) #-DNDEBUG defined by default
 endif()
 
 set(DEBUG_OPTIONS ${COMMON_OPTIONS} ${DEBUG_OPTIONS})
@@ -56,6 +56,33 @@ FetchContent_Declare(
   GIT_TAG        v2.24.0
 )
 FetchContent_MakeAvailable(git_mbedtls)
+target_include_directories(mbedcrypto
+	PUBLIC
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
+)
+target_include_directories(mbedx509
+	PUBLIC
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
+)
+target_include_directories(mbedtls
+	PUBLIC
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/common
+		$ENV{MBEDTLSCPP_MBEDTLS_HEADERS}/normal
+)
+target_compile_definitions(mbedcrypto
+	PUBLIC
+		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
+)
+target_compile_definitions(mbedx509
+	PUBLIC
+		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
+)
+target_compile_definitions(mbedtls
+	PUBLIC
+		MBEDTLS_CONFIG_FILE="mbedtlscpp-config.h"
+)
 
 ################################################################################
 # Adding testing executable
@@ -67,7 +94,10 @@ file(GLOB_RECURSE SOURCES ${SOURCES_DIR_PATH}/*.[ch]*)
 
 add_executable(mbedTLScpp_test ${SOURCES})
 
-target_compile_definitions(mbedTLScpp_test PUBLIC MBEDTLSCPP_MEMORY_TEST
-                                           PRIVATE MBEDTLSCPPTEST_TEST_STD_NS)
+target_compile_definitions(mbedTLScpp_test
+	PRIVATE
+		MBEDTLSCPP_MEMORY_TEST
+		MBEDTLSCPPTEST_TEST_STD_NS
+)
 
 target_link_libraries(mbedTLScpp_test mbedtls mbedTLScpp gtest)

@@ -19,6 +19,12 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
+#ifdef MBEDTLS_THREADING_C
+	static constexpr bool gsk_threadEnabled = true;
+#else
+	static constexpr bool gsk_threadEnabled = false;
+#endif
+
 GTEST_TEST(TestEntropy, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -35,22 +41,22 @@ GTEST_TEST(TestEntropy, EntropyClass)
 		Entropy<> entropy1;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		Entropy<> entropy2;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		entropy1 = std::move(entropy1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		entropy2 = std::move(entropy1);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		// Moved to initialize new one, allocation should remain the same.
 		Entropy<> entropy3(std::move(entropy2));
@@ -87,7 +93,7 @@ GTEST_TEST(TestEntropy, SharedEntropy)
 
 		EXPECT_NE(shared->GetRawPtr(), entropy1.GetRawPtr());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 	}
 
 	for(size_t i = 0; i < 10000; ++i)

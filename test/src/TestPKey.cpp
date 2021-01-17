@@ -20,6 +20,12 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
+#ifdef MBEDTLS_THREADING_C
+	static constexpr bool gsk_threadEnabled = true;
+#else
+	static constexpr bool gsk_threadEnabled = false;
+#endif
+
 GTEST_TEST(TestPKey, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -36,25 +42,25 @@ GTEST_TEST(TestPKey, PKeyBaseClass)
 		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		PKeyBase<> rsaPrvPem2 = SecretString(gsk_testRsaPrvKeyPem);
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		rsaPrvPem1 = std::move(rsaPrvPem1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		rsaPrvPem1 = std::move(rsaPrvPem2);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
@@ -88,9 +94,11 @@ GTEST_TEST(TestPKey, PemParse)
 		EXPECT_TRUE(rsaPrvPem1.HasPrvKey());
 		EXPECT_TRUE(rsaPrvPem1.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	{
 		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
 
 		EXPECT_EQ(rsaPubPem1.GetAlgmCat(), PKeyAlgmCat::RSA);
@@ -98,9 +106,11 @@ GTEST_TEST(TestPKey, PemParse)
 		EXPECT_FALSE(rsaPubPem1.HasPrvKey());
 		EXPECT_TRUE(rsaPubPem1.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	{
 		PKeyBase<> ecPrvPem1 = SecretString(gsk_testEcPrvKeyPem);
 
 		EXPECT_EQ(ecPrvPem1.GetAlgmCat(), PKeyAlgmCat::EC);
@@ -108,9 +118,11 @@ GTEST_TEST(TestPKey, PemParse)
 		EXPECT_TRUE(ecPrvPem1.HasPrvKey());
 		EXPECT_TRUE(ecPrvPem1.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 3);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	{
 		PKeyBase<> ecPubPem1 = std::string(gsk_testEcPubKeyPem);
 
 		EXPECT_EQ(ecPubPem1.GetAlgmCat(), PKeyAlgmCat::EC);
@@ -118,7 +130,7 @@ GTEST_TEST(TestPKey, PemParse)
 		EXPECT_FALSE(ecPubPem1.HasPrvKey());
 		EXPECT_TRUE(ecPubPem1.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 	}
 
@@ -142,7 +154,7 @@ GTEST_TEST(TestPKey, DerGeneration)
 		EXPECT_EQ(rsaPrv1.HasPrvKey(),  rsaPrv2.HasPrvKey());
 		EXPECT_EQ(rsaPrv1.HasPubKey(),  rsaPrv2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
@@ -154,7 +166,7 @@ GTEST_TEST(TestPKey, DerGeneration)
 		EXPECT_EQ(rsaPub1.HasPrvKey(),  rsaPub2.HasPrvKey());
 		EXPECT_EQ(rsaPub1.HasPubKey(),  rsaPub2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
@@ -165,7 +177,7 @@ GTEST_TEST(TestPKey, DerGeneration)
 		EXPECT_EQ(ecPrv1.HasPrvKey(),  ecPrv2.HasPrvKey());
 		EXPECT_EQ(ecPrv1.HasPubKey(),  ecPrv2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 6);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 6 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
@@ -177,7 +189,7 @@ GTEST_TEST(TestPKey, DerGeneration)
 		EXPECT_EQ(ecPub1.HasPrvKey(),  ecPub2.HasPrvKey());
 		EXPECT_EQ(ecPub1.HasPubKey(),  ecPub2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 8);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 8 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 	}
 
@@ -201,9 +213,14 @@ GTEST_TEST(TestPKey, PemGeneration)
 		EXPECT_EQ(rsaPrv1.HasPrvKey(),  rsaPrv2.HasPrvKey());
 		EXPECT_EQ(rsaPrv1.HasPubKey(),  rsaPrv2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
 		PKeyBase<> rsaPub2 = rsaPub1.GetPublicPem();
 		EXPECT_THROW(rsaPub1.GetPrivatePem();, mbedTLSRuntimeError);
@@ -213,9 +230,14 @@ GTEST_TEST(TestPKey, PemGeneration)
 		EXPECT_EQ(rsaPub1.HasPrvKey(),  rsaPub2.HasPrvKey());
 		EXPECT_EQ(rsaPub1.HasPubKey(),  rsaPub2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
 		PKeyBase<> ecPrv2 = ecPrv1.GetPrivatePem();
 
@@ -224,9 +246,14 @@ GTEST_TEST(TestPKey, PemGeneration)
 		EXPECT_EQ(ecPrv1.HasPrvKey(),  ecPrv2.HasPrvKey());
 		EXPECT_EQ(ecPrv1.HasPubKey(),  ecPrv2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 6);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
 		PKeyBase<> ecPub2 = ecPub1.GetPublicPem();
 		EXPECT_THROW(ecPub1.GetPrivatePem();, mbedTLSRuntimeError);
@@ -236,7 +263,7 @@ GTEST_TEST(TestPKey, PemGeneration)
 		EXPECT_EQ(ecPub1.HasPrvKey(),  ecPub2.HasPrvKey());
 		EXPECT_EQ(ecPub1.HasPubKey(),  ecPub2.HasPubKey());
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 8);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 	}
 
@@ -250,6 +277,8 @@ GTEST_TEST(TestPKey, SignAndVerifySign)
 	int64_t initSecCount = 0;
 
 	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+	std::vector<uint8_t> sign1;
+	std::vector<uint8_t> sign2;
 
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
@@ -257,43 +286,58 @@ GTEST_TEST(TestPKey, SignAndVerifySign)
 	{
 		PKeyBase<> rsaPrv1 = SecretString(gsk_testRsaPrvKeyPem);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		auto rsaSign1 = rsaPrv1.DerSign<HashType::SHA256>(testHash);
-		auto rsaSign2 = rsaPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
-		rsaPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(rsaSign1));
-		rsaPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(rsaSign2));
+		sign1 = rsaPrv1.DerSign<HashType::SHA256>(testHash);
+		sign2 = rsaPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
+		rsaPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
+		rsaPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		EXPECT_THROW(rsaPub1.DerSign<HashType::SHA256>(testHash);, mbedTLSRuntimeError);
 		EXPECT_THROW(rsaPub1.DerSign(HashType::SHA256, CtnFullR(testHash));, mbedTLSRuntimeError);
-		rsaPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(rsaSign1));
-		rsaPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(rsaSign2));
+		rsaPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
+		rsaPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 3);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		auto ecSign1 = ecPrv1.DerSign<HashType::SHA256>(testHash);
-		auto ecSign2 = ecPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
-		ecPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(ecSign1));
-		ecPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(ecSign2));
+		sign1 = ecPrv1.DerSign<HashType::SHA256>(testHash);
+		sign2 = ecPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
+		ecPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
+		ecPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
+	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	{
 		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		EXPECT_THROW(ecPub1.DerSign<HashType::SHA256>(testHash);, mbedTLSRuntimeError);
 		EXPECT_THROW(ecPub1.DerSign(HashType::SHA256, CtnFullR(testHash));, mbedTLSRuntimeError);
-		ecPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(ecSign1));
-		ecPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(ecSign2));
+		ecPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
+		ecPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

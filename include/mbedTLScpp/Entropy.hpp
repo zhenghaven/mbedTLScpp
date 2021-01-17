@@ -50,7 +50,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 *
 	 * @tparam _EntropyObjTrait The object trait used.
 	 */
-	template<typename _EntropyObjTrait = DefaultEntropyObjTrait>
+	template<typename _EntropyObjTrait = DefaultEntropyObjTrait,
+			 enable_if_t<std::is_same<typename _EntropyObjTrait::CObjType, mbedtls_entropy_context>::value, int> = 0>
 	class Entropy : public ObjectBase<_EntropyObjTrait>, public EntropyInterface
 	{
 	public: // Static members:

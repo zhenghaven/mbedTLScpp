@@ -22,6 +22,12 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
+#ifdef MBEDTLS_THREADING_C
+	static constexpr bool gsk_threadEnabled = true;
+#else
+	static constexpr bool gsk_threadEnabled = false;
+#endif
+
 GTEST_TEST(TestRbg, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -39,27 +45,27 @@ GTEST_TEST(TestRbg, CtrDrbgClass)
 		CtrDrbg<> rbg1;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		CtrDrbg<> rbg2;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		rbg1 = std::move(rbg1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		rbg2 = std::move(rbg1);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		// Moved to initialize new one, allocation should remain the same.
 		CtrDrbg<> rbg3(std::move(rbg2));
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		// This should success.
 		rbg3.NullCheck();
@@ -94,27 +100,27 @@ GTEST_TEST(TestRbg, HmacDrbgClass)
 		HmacDrbg<> rbg1;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		HmacDrbg<> rbg2;
 
 		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		rbg1 = std::move(rbg1);
 
 		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
 		rbg2 = std::move(rbg1);
 
 		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		// Moved to initialize new one, allocation should remain the same.
 		HmacDrbg<> rbg3(std::move(rbg2));
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 
 		// This should success.
 		rbg3.NullCheck();
