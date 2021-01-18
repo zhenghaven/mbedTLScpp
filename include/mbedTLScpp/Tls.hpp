@@ -45,10 +45,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 											 false,
 											 false>;
 
+	template<typename _ConnType>
 	class Tls : public ObjectBase<DefaultTlsObjTrait>
 	{
 	public: // Static members:
 
+		using ConnType    = _ConnType;
 		using TlsObjTrait = DefaultTlsObjTrait;
 		using _Base       = ObjectBase<TlsObjTrait>;
 
@@ -62,7 +64,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			try
 			{
-				return static_cast<Tls*>(ctx)->Send(buf, len);
+				Tls* ctxTls = static_cast<Tls*>(ctx);
+				ctxTls->NullCheck();
+				if(ctxTls->m_conn == nullptr)
+				{
+					return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+				}
+				else
+				{
+					return ctxTls->m_conn->Send(buf, len);
+				}
 			}
 			catch (const mbedTLSRuntimeError& e)
 			{
@@ -84,7 +95,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			try
 			{
-				return static_cast<Tls*>(ctx)->Recv(buf, len);
+				Tls* ctxTls = static_cast<Tls*>(ctx);
+				ctxTls->NullCheck();
+				if(ctxTls->m_conn == nullptr)
+				{
+					return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+				}
+				else
+				{
+					return ctxTls->m_conn->Recv(buf, len);
+				}
 			}
 			catch (const mbedTLSRuntimeError& e)
 			{
@@ -106,7 +126,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			try
 			{
-				return static_cast<Tls*>(ctx)->RecvTimeout(buf, len, t);
+				Tls* ctxTls = static_cast<Tls*>(ctx);
+				ctxTls->NullCheck();
+				if(ctxTls->m_conn == nullptr)
+				{
+					return MBEDTLS_ERR_SSL_BAD_INPUT_DATA;
+				}
+				else
+				{
+					return ctxTls->m_conn->RecvTimeout(buf, len, t);
+				}
 			}
 			catch (const mbedTLSRuntimeError& e)
 			{
@@ -120,9 +149,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	public:
 
-		Tls(std::shared_ptr<const TlsConfig> tlsConfig, std::shared_ptr<const TlsSession> session, bool deferHandshake) :
+		Tls(std::shared_ptr<const TlsConfig> tlsConfig, std::shared_ptr<const TlsSession> session, std::unique_ptr<ConnType> connForHandshake) :
 			_Base::ObjectBase(),
-			m_tlsConfig(tlsConfig)
+			m_tlsConfig(tlsConfig),
+			m_conn(std::move(connForHandshake))
 		{
 			if (m_tlsConfig == nullptr)
 			{
@@ -158,7 +188,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				);
 			}
 
-			if (!deferHandshake)
+			if (m_conn != nullptr)
 			{
 				MBEDTLSCPP_MAKE_C_FUNC_CALL(
 					Tls::Tls,
@@ -176,7 +206,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		Tls(Tls&& rhs) noexcept :
 			_Base::ObjectBase(std::forward<_Base>(rhs)), //noexcept
-			m_tlsConfig(std::move(rhs.m_tlsConfig))
+			m_tlsConfig(std::move(rhs.m_tlsConfig)),
+			m_conn(std::move(rhs.m_conn))
 		{
 			if (NonVirtualGet()->f_recv_timeout != nullptr)
 			{
@@ -207,6 +238,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			if (this != &rhs)
 			{
 				m_tlsConfig = std::move(rhs.m_tlsConfig);
+				m_conn = std::move(rhs.m_conn);
 
 				if (Get()->f_recv_timeout != nullptr)
 				{
@@ -235,6 +267,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		virtual void NullCheck() const
 		{
 			_Base::NullCheck(typeid(Tls).name());
+		}
+
+		virtual bool IsNull() const noexcept override
+		{
+			return _Base::IsNull() || (m_tlsConfig == nullptr);
 		}
 
 		using _Base::NullCheck;
@@ -386,13 +423,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 	protected:
 
-		virtual int Send(const void* buf, size_t len) = 0;
+		const std::unique_ptr<ConnType>& GetConnPtr() const
+		{
+			return m_conn;
+		}
 
-		virtual int Recv(void* buf, size_t len) = 0;
-
-		virtual int RecvTimeout(void* buf, size_t len, uint32_t t) = 0;
+		std::unique_ptr<ConnType>& GetConnPtr()
+		{
+			return m_conn;
+		}
 
 	private:
 		std::shared_ptr<const TlsConfig> m_tlsConfig;
+		std::unique_ptr<ConnType> m_conn;
 	};
 }

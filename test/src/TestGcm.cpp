@@ -112,7 +112,7 @@ GTEST_TEST(TestGcmBase, GcmBaseCryption)
 		memcpy(&cipherStr[0], cipher.data(), cipher.size());
 		EXPECT_NE(data, cipherStr);
 
-		std::vector<uint8_t> plain;
+		SecretVector<uint8_t> plain;
 		plain = gcm.Decrypt(
 			CtnFullR(cipher),
 			CtnFullR(iv),
@@ -206,7 +206,6 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	std::vector<uint8_t> cipher;
 	std::array<uint8_t, 16> tag;
-	std::vector<uint8_t> plain;
 
 	// 128 Encrypt
 	{
@@ -228,7 +227,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 	{
 		Gcm<CipherType::AES, 128> gcm(CtnItemRangeR<0, 16>(skey));
 
-		plain = gcm.Decrypt(
+		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),
 			CtnFullR(iv),
 			CtnFullR(add),
@@ -261,7 +260,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 	{
 		Gcm<CipherType::AES, 192> gcm(CtnItemRangeR<0, 24>(skey));
 
-		plain = gcm.Decrypt(
+		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),
 			CtnFullR(iv),
 			CtnFullR(add),
@@ -294,7 +293,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 	{
 		Gcm<CipherType::AES, 256> gcm(CtnItemRangeR<0, 32>(skey));
 
-		plain = gcm.Decrypt(
+		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),
 			CtnFullR(iv),
 			CtnFullR(add),

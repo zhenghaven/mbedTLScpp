@@ -28,19 +28,56 @@ GTEST_TEST(TestTlsIntf, CountTestFile)
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-class TestTls : public Tls
+class TestConn
+{
+public:
+
+	static std::vector<uint8_t> s_testTlsBuf;
+
+public:
+	TestConn() = default;
+
+	virtual ~TestConn()
+	{}
+
+	virtual int Send(const void* buf, size_t len)
+	{
+		const uint8_t* begin = static_cast<const uint8_t*>(buf);
+		s_testTlsBuf.insert(s_testTlsBuf.end(), begin, begin + len);
+		return static_cast<int>(len);
+	}
+
+	virtual int Recv(void* buf, size_t len)
+	{
+		size_t byteRecv = len <= s_testTlsBuf.size() ? len : s_testTlsBuf.size();
+		std::memcpy(buf, s_testTlsBuf.data(), byteRecv);
+		s_testTlsBuf.erase(s_testTlsBuf.begin(), s_testTlsBuf.begin() + byteRecv);
+		return static_cast<int>(byteRecv);
+	}
+
+	virtual int RecvTimeout(void* buf, size_t len, uint32_t t)
+	{
+		throw mbedTLSRuntimeError(MBEDTLS_ERR_SSL_FEATURE_UNAVAILABLE, "TestTls does not support RecvTimeout");
+	}
+};
+
+std::vector<uint8_t> TestConn::s_testTlsBuf;
+
+class TestTls : public Tls<TestConn>
 {
 public: // Static members:
 
 	using _Base       = Tls;
 
-	static std::vector<uint8_t> s_testTlsBuf;
-
 public:
 
-	TestTls(std::shared_ptr<const TlsConfig> tlsConfig, std::shared_ptr<const TlsSession> session, bool deferHandshake) :
-		_Base::Tls(tlsConfig, session, deferHandshake)
-	{}
+	TestTls(std::shared_ptr<const TlsConfig> tlsConfig,
+		std::shared_ptr<const TlsSession> session,
+		std::unique_ptr<TestConn> conn = Internal::make_unique<TestConn>()) :
+		_Base::Tls(tlsConfig, session, nullptr)
+	{
+		_Base::GetConnPtr() = std::move(conn);
+	}
 
 	/**
 	 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
@@ -78,33 +115,10 @@ public:
 	using _Base::NonVirtualGet;
 	using _Base::Swap;
 
-protected:
-
-	virtual int Send(const void* buf, size_t len)
-	{
-		const uint8_t* begin = static_cast<const uint8_t*>(buf);
-		s_testTlsBuf.insert(s_testTlsBuf.end(), begin, begin + len);
-		return static_cast<int>(len);
-	}
-
-	virtual int Recv(void* buf, size_t len)
-	{
-		size_t byteRecv = len <= s_testTlsBuf.size() ? len : s_testTlsBuf.size();
-		std::memcpy(buf, s_testTlsBuf.data(), byteRecv);
-		s_testTlsBuf.erase(s_testTlsBuf.begin(), s_testTlsBuf.begin() + byteRecv);
-		return static_cast<int>(byteRecv);
-	}
-
-	virtual int RecvTimeout(void* buf, size_t len, uint32_t t)
-	{
-		throw mbedTLSRuntimeError(MBEDTLS_ERR_SSL_FEATURE_UNAVAILABLE, "TestTls does not support RecvTimeout");
-	}
-
 private:
 
+	std::unique_ptr<TestConn> m_conn;
 };
-
-std::vector<uint8_t> TestTls::s_testTlsBuf;
 
 GTEST_TEST(TestTlsIntf, TlsClass)
 {
@@ -141,13 +155,13 @@ GTEST_TEST(TestTlsIntf, TlsClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TestTls tls1(testConfig, nullptr, true);
+		TestTls tls1(testConfig, nullptr);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TestTls tls2(testConfig, nullptr, true);
+		TestTls tls2(testConfig, nullptr);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -260,7 +274,7 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 
 	{
 		std::unique_ptr<TestTls> svrTlsPre = Internal::make_unique<TestTls>(
-			svrConfig, nullptr, true
+			svrConfig, nullptr
 		);
 		std::unique_ptr<TestTls> svrTls = Internal::make_unique<TestTls>(
 			std::move(*svrTlsPre)
@@ -269,10 +283,10 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 		EXPECT_EQ(svrTlsPre.get(), nullptr);
 
 		std::unique_ptr<TestTls> cltTlsPre = Internal::make_unique<TestTls>(
-			cltConfig, nullptr, true
+			cltConfig, nullptr
 		);
 		std::unique_ptr<TestTls> cltTls = Internal::make_unique<TestTls>(
-			svrConfig, nullptr, true
+			svrConfig, nullptr
 		);
 		*cltTls = std::move(*cltTlsPre);
 		cltTlsPre.reset();

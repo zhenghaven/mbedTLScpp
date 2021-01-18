@@ -160,7 +160,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			typename _IvCtnType, bool _IvSec,
 			typename _AddCtnType, bool _AddSec,
 			typename _TagCtnType>
-		std::vector<uint8_t> Decrypt(
+		SecretVector<uint8_t> Decrypt(
 			const ContCtnReadOnlyRef<_DataCtnType, _DataSec>& data,
 			const ContCtnReadOnlyRef<_IvCtnType,   _IvSec  >& iv,
 			const ContCtnReadOnlyRef<_AddCtnType,  _AddSec >& add,
@@ -169,7 +169,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			std::vector<uint8_t> decRes(data.GetRegionSize());
+			SecretVector<uint8_t> decRes(data.GetRegionSize());
 
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(
 				Gcm::Decrypt,
