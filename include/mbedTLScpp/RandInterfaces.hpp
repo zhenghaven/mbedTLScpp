@@ -77,7 +77,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param stru A reference to the struct.
 		 */
 		template<typename T,
-			enable_if_t<std::is_standard_layout<T>::value && std::is_trivial<T>::value, int> = 0>
+			enable_if_t<IsCTypeAlike<T>::value, int> = 0>
 		void RandStruct(T& stru)
 		{
 			Rand(&stru, sizeof(T));

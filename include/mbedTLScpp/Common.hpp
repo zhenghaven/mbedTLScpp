@@ -35,6 +35,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	/**
+	 * @brief Type trait that check if a type is like a type in C, similar to
+	 *        Old-Plain-Data. Currently, the given type needs to satisfy both
+	 *        \c std::is_standard_layout and \c std::is_trivial .
+	 *
+	 * @tparam T The type to check with.
+	 */
+	template<typename T>
+	struct IsCTypeAlike : std::integral_constant<bool,
+		std::is_standard_layout<T>::value &&
+		std::is_trivial<T>::value
+	> {};
+
+	/**
 	 * @brief Dummy struct to indicate safety check is unnecessary. Usually it's
 	 *        because the safety check is already done before calling the
 	 *        function using this dummy struct.

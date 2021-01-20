@@ -30,7 +30,7 @@ namespace mbedTLScpp_Test
 
 int main(int argc, char** argv)
 {
-	constexpr size_t EXPECTED_NUM_OF_TEST_FILE = 27;
+	constexpr size_t EXPECTED_NUM_OF_TEST_FILE = 28;
 
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
 	std::cout << std::endl;

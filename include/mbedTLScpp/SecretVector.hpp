@@ -42,7 +42,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // Static members:
 
 		template<typename _value_type = value_type,
-			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+			enable_if_t<IsCTypeAlike<_value_type>::value, int> = 0>
 		static void BuildEqualLengthString(uint8_t* a_buf, uint8_t* b_buf,
 			const _value_type* a, size_type a_size,
 			const _value_type* b, size_type b_size)
@@ -91,7 +91,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		template<typename _value_type = value_type,
-			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+			enable_if_t<IsCTypeAlike<_value_type>::value, int> = 0>
 		static bool SafeCompareEqual(const _value_type* a, size_type a_size, const _value_type* b, size_type b_size)
 		{
 			using buf_allocator = typename allocator_traits::template rebind_alloc<uint8_t>;
@@ -123,7 +123,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		template<typename _value_type = value_type,
-			enable_if_t<std::is_standard_layout<_value_type>::value && std::is_trivial<_value_type>::value, int> = 0>
+			enable_if_t<IsCTypeAlike<_value_type>::value, int> = 0>
 		static bool SafeCompareNotEqual(const _value_type* a, size_type a_size, const _value_type* b, size_type b_size)
 		{
 			using buf_allocator = typename allocator_traits::template rebind_alloc<uint8_t>;
@@ -1326,7 +1326,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	};
 
 	template<typename _ValType, typename _Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator==(const SecretVector<_ValType, _Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
@@ -1334,7 +1334,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	}
 
 	template<typename _ValType, typename _Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator!=(const SecretVector<_ValType, _Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
@@ -1342,7 +1342,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	}
 
 	template<typename _ValType, typename _Alloc, typename _std_Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator==(const SecretVector<_ValType, _Alloc>& lhs, const std::vector<_ValType, _std_Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
@@ -1350,7 +1350,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	}
 
 	template<typename _ValType, typename _Alloc, typename _std_Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator!=(const SecretVector<_ValType, _Alloc>& lhs, const std::vector<_ValType, _std_Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
@@ -1358,7 +1358,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	}
 
 	template<typename _ValType, typename _Alloc, typename _std_Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator==(const std::vector<_ValType, _std_Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
@@ -1366,7 +1366,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	}
 
 	template<typename _ValType, typename _Alloc, typename _std_Alloc,
-		enable_if_t<std::is_standard_layout<_ValType>::value && std::is_trivial<_ValType>::value, int> = 0>
+		enable_if_t<IsCTypeAlike<_ValType>::value, int> = 0>
 	bool operator!=(const std::vector<_ValType, _std_Alloc>& lhs, const SecretVector<_ValType, _Alloc>& rhs)
 	{
 		using vec_type = SecretVector<_ValType, _Alloc>;
