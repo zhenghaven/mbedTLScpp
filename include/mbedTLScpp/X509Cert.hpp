@@ -327,6 +327,38 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		friend class TlsConfig;
 
 		/**
+		 * @brief Construct a X509 certificate (chain) from a given PEM string.
+		 *
+		 * @param pem PEM string in std::string
+		 */
+		static X509CertBase<DefaultX509CertObjTrait> FromPEM(const std::string& pem)
+		{
+			X509CertBase<DefaultX509CertObjTrait> cert;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509CertBase::FromPEM,
+				mbedtls_x509_crt_parse,
+				cert.Get(),
+				reinterpret_cast<const uint8_t*>(pem.c_str()), pem.size() + 1);
+			return cert;
+		}
+
+		/**
+		 * @brief Construct a X509 certificate from a given DER bytes.
+		 *
+		 * @param der DER bytes referenced by ContCtnReadOnlyRef
+		 */
+		template<typename _SecCtnType>
+		static X509CertBase<DefaultX509CertObjTrait>
+			FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
+		{
+			X509CertBase<DefaultX509CertObjTrait> cert;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromDER,
+				mbedtls_x509_crt_parse,
+				cert.Get(),
+				der.BeginBytePtr(), der.GetRegionSize());
+			return cert;
+		}
+
+		/**
 		 * @brief Defines an alias representing the VerifyFunc used for
 		 *        certificate chain verification.
 		 */
@@ -529,29 +561,33 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return GetPem(*m_currPtr);
 		}
 
-		template<typename _dummy_CertTrait = X509CertTrait,
-			enable_if_t<!_dummy_CertTrait::sk_isConst, int> = 0>
-		PKeyBase<BorrowedPKeyTrait> BorrowPublicKey()
+		template<typename _PKeyType = PKeyBase<BorrowedPKeyTrait>,
+			typename _dummy_CertTrait = X509CertTrait,
+			enable_if_t<!_dummy_CertTrait::sk_isConst, int> = 0,
+			enable_if_t<IsCppObjOfCtype<_PKeyType, mbedtls_pk_context>::value, int> = 0>
+		_PKeyType BorrowPublicKey()
 		{
 			NullCheck();
 
-			return PKeyBase<BorrowedPKeyTrait>(&m_currPtr->pk);
+			return _PKeyType(&m_currPtr->pk);
 		}
 
-		const PKeyBase<BorrowedPKeyTrait> BorrowPublicKey() const
+		template<typename _PKeyType = PKeyBase<BorrowedPKeyTrait>,
+			enable_if_t<IsCppObjOfCtype<_PKeyType, mbedtls_pk_context>::value, int> = 0>
+		const _PKeyType BorrowPublicKey() const
 		{
 			NullCheck();
 
-			return PKeyBase<BorrowedPKeyTrait>(&m_currPtr->pk);
+			return _PKeyType(&m_currPtr->pk);
 		}
 
-		template<typename PKeyType,
-			enable_if_t<IsCppObjOfCtype<PKeyType, mbedtls_pk_context>::value, int> = 0>
-		PKeyType GetPublicKey() const
+		template<typename _PKeyType = PKeyBase<>,
+			enable_if_t<IsCppObjOfCtype<_PKeyType, mbedtls_pk_context>::value, int> = 0>
+		_PKeyType GetPublicKey() const
 		{
 			std::vector<uint8_t> pubDer = BorrowPublicKey().GetPublicDer();
 
-			return PKeyType::FromDER(CtnFullR(pubDer));
+			return _PKeyType::FromDER(CtnFullR(pubDer));
 		}
 
 		HashType GetHashType() const
@@ -928,99 +964,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		typename std::add_pointer<typename _Base::CObjType>::type m_currPtr; // For noexcept
 	};
 
-	class X509Cert : public X509CertBase<>
-	{
-	public: // Static members:
-
-		using _Base = X509CertBase<>;
-
-		/**
-		 * @brief Construct a X509 certificate (chain) from a given PEM string.
-		 *
-		 * @param pem PEM string in std::string
-		 */
-		static X509Cert FromPEM(const std::string& pem)
-		{
-			X509Cert cert;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromPEM,
-				mbedtls_x509_crt_parse,
-				cert.Get(),
-				reinterpret_cast<const uint8_t*>(pem.c_str()), pem.size() + 1);
-			return cert;
-		}
-
-		/**
-		 * @brief Construct a X509 certificate from a given DER bytes.
-		 *
-		 * @param der DER bytes referenced by ContCtnReadOnlyRef
-		 */
-		template<typename _SecCtnType>
-		static X509Cert FromDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
-		{
-			X509Cert cert;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(X509Cert::FromDER,
-				mbedtls_x509_crt_parse,
-				cert.Get(),
-				der.BeginBytePtr(), der.GetRegionSize());
-			return cert;
-		}
-
-	public:
-
-		/**
-		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
-		 *
-		 * @exception Unclear Depends on \c std::vector .
-		 * @param rhs The other X509Cert instance.
-		 */
-		X509Cert(X509Cert&& rhs) :
-			_Base::X509CertBase(std::forward<_Base>(rhs)) //noexcept
-		{}
-
-		X509Cert(const X509Cert& rhs) = delete;
-
-		virtual ~X509Cert()
-		{}
-
-		/**
-		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
-		 *
-		 * @exception Unclear Depends on \c std::vector .
-		 * @param rhs The other X509Cert instance.
-		 * @return X509Cert& A reference to this instance.
-		 */
-		X509Cert& operator=(X509Cert&& rhs)
-		{
-			_Base::operator=(std::forward<_Base>(rhs));
-
-			return *this;
-		}
-
-		X509Cert& operator=(const X509Cert& other) = delete;
-
-		/**
-		 * @brief Check if the current instance is holding a null pointer for
-		 *        the mbedTLS object. If so, exception will be thrown. Helper
-		 *        function to be called before accessing the mbedTLS object.
-		 *
-		 * @exception InvalidObjectException Thrown when the current instance is
-		 *                                   holding a null pointer for the C mbed TLS
-		 *                                   object.
-		 */
-		virtual void NullCheck() const override
-		{
-			_Base::NullCheck(typeid(X509Cert).name());
-		}
-
-		using _Base::NullCheck;
-		using _Base::Get;
-
-	protected:
-
-		X509Cert() :
-			_Base::X509CertBase()
-		{}
-	};
+	using X509Cert = X509CertBase<>;
 
 	template<typename _CaCertObjTrait,
 		typename _CaPKObjTrait,

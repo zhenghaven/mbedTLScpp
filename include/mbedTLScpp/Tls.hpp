@@ -399,7 +399,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			return sess;
 		}
 
-		const X509CertBase<BorrowedX509CertTrait> BorrowPeerCert() const
+		template<typename _CertType = X509CertBase<BorrowedX509CertTrait>,
+			enable_if_t<IsCppObjOfCtype<_CertType, mbedtls_x509_crt>::value, int> = 0>
+		const _CertType BorrowPeerCert() const
 		{
 			NullCheck();
 
@@ -409,16 +411,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				throw InvalidArgumentException("Tls::BorrowPeerCert - Can't get peer's certificate in this TLS context (Hint: Was peer cert required? Has TLS handshake done?).");
 			}
 
-			return X509CertBase<BorrowedX509CertTrait>(
+			return _CertType(
 				const_cast<mbedtls_x509_crt*>(ptr)
 			);
 		}
 
-		X509Cert GetPeerCert() const
+		template<typename _CertType = X509Cert,
+			enable_if_t<IsCppObjOfCtype<_CertType, mbedtls_x509_crt>::value, int> = 0>
+		_CertType GetPeerCert() const
 		{
 			std::vector<uint8_t> borrowedDer = BorrowPeerCert().GetDer();
 
-			return X509Cert::FromDER(CtnFullR(borrowedDer));
+			return _CertType::FromDER(CtnFullR(borrowedDer));
 		}
 
 	protected:
