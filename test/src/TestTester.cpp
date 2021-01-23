@@ -50,3 +50,31 @@ GTEST_TEST(TestGeneral, TestBytes2Bin)
 	EXPECT_EQ(Internal::Bytes2BinLitEnd<9>(CtnFullR(CDynArray<const uint64_t>{&a, 1})), "110110011001010011100100101010111010101010101000011010100000000000000000");
 	EXPECT_EQ(Internal::Bytes2BinLitEnd<9>(CtnFullR(CDynArray<const uint64_t>{&b, 1})), "110101010100010111010101010101011010100110101011000010010000000000000000");
 }
+
+namespace
+{
+	struct TestStruct1
+	{
+		uint16_t a;
+		uint32_t b;
+	};
+
+	struct TestStruct2
+	{
+		TestStruct1 a;
+		uint8_t     b[16];
+		uint64_t    c[32];
+	};
+}
+
+GTEST_TEST(TestGeneral, TestCTypeOffset)
+{
+	constexpr size_t ofs1a = ctype_offsetof(&TestStruct1::a);
+	EXPECT_EQ(ofs1a, offsetof(TestStruct1, a));
+	constexpr size_t ofs1b = ctype_offsetof(&TestStruct1::b);
+	EXPECT_EQ(ofs1b, offsetof(TestStruct1, b));
+	constexpr size_t ofs2b = ctype_offsetof(&TestStruct2::b);
+	EXPECT_EQ(ofs2b, offsetof(TestStruct2, b));
+	constexpr size_t ofs2c = ctype_offsetof(&TestStruct2::c);
+	EXPECT_EQ(ofs2c, offsetof(TestStruct2, c));
+}

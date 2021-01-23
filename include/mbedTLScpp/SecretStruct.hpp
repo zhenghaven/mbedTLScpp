@@ -30,13 +30,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		enable_if_t<IsCTypeAlike<_CStructType>::value, int> = 0>
 	struct SecretStruct
 	{
-	public: // Static members:
+		_CStructType m_data;
 
 		using CStructType = _CStructType;
-
-	public:
-
-		SecretStruct() = default;
 
 		~SecretStruct()
 		{
@@ -55,8 +51,5 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			return StaticLoadedFunctions::GetInstance().ConstTimeMemNotEqual(&m_data, &rhs.m_data, sizeof(m_data));
 		}
-
-	public:
-		CStructType m_data;
 	};
 }

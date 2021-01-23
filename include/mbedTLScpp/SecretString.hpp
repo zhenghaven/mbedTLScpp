@@ -684,40 +684,5 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return str_type::SafeCompareNotEqual(lhs.data(), lhs.size(), rhs.data(), rhs.size());
 	}
 
-
-#if __cplusplus >= 201402L
-
-	inline namespace literals
-	{
-		inline namespace string_literals
-		{
-			inline SecretBasicString<char>
-			operator""s(const char* str, size_t len)
-			{
-				return SecretBasicString<char>{str, len};
-			}
-
-			inline SecretBasicString<wchar_t>
-			operator""s(const wchar_t* str, size_t len)
-			{
-				return SecretBasicString<wchar_t>{str, len};
-			}
-
-			inline SecretBasicString<char16_t>
-			operator""s(const char16_t* str, size_t len)
-			{
-				return SecretBasicString<char16_t>{str, len};
-			}
-
-			inline SecretBasicString<char32_t>
-			operator""s(const char32_t* str, size_t len)
-			{
-				return SecretBasicString<char32_t>{str, len};
-			}
-		}
-	}
-
-#endif // C++14
-
 	using SecretString = SecretBasicString<char>;
 }
