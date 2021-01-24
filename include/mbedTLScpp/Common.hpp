@@ -47,43 +47,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		std::is_trivial<T>::value
 	> {};
 
-	namespace Internal
-	{
-		constexpr size_t ctype_offsetof_impl_get_offset_impl(
-			const void* end, const void* start)
-		{
-			return static_cast<const uint8_t*>(end) -
-				static_cast<const uint8_t*>(start);
-		}
-
-		template <typename _StructType, typename _FieldType>
-		struct ctype_offsetof_impl
-		{
-			static constexpr _StructType empty_val{};
-
-			static constexpr size_t get_offset(_FieldType _StructType::* a)
-			{
-				return ctype_offsetof_impl_get_offset_impl(
-					&(empty_val.*a), &empty_val);
-			}
-		};
-	}
-
-	/**
-	 * @brief Calculate the offset of a field of C struct. But, different from
-	 *        \c offsetof, this function calculates in compile time.
-	 *
-	 * @param field The field to calculate, which should be provided in
-	 *              \c &Strcut::Field format.
-	 * @return constexpr size_t The offset.
-	 */
-	template <typename _StructType, typename _FieldType,
-		enable_if_t<IsCTypeAlike<_StructType>::value, int> = 0>
-	constexpr size_t ctype_offsetof(_FieldType _StructType::* field)
-	{
-		return Internal::ctype_offsetof_impl<_StructType, _FieldType>::get_offset(field);
-	}
-
 	/**
 	 * @brief Dummy struct to indicate safety check is unnecessary. Usually it's
 	 *        because the safety check is already done before calling the
