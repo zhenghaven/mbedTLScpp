@@ -119,7 +119,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(GcmBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(GcmBase));
 		}
 
 		using _Base::NullCheck;
@@ -255,7 +255,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(Gcm).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(Gcm));
 		}
 
 	private:

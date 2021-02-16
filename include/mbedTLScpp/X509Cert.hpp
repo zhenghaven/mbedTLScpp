@@ -184,7 +184,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509CertWriter).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(X509CertWriter));
 		}
 
 		using _Base::NullCheck;
@@ -465,7 +465,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509CertBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(X509CertBase));
 		}
 
 		virtual bool IsNull() const noexcept override

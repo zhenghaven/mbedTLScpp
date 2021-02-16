@@ -376,7 +376,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(PKeyBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(PKeyBase));
 		}
 
 		using _Base::NullCheck;

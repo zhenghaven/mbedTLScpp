@@ -98,7 +98,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(TlsSession).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(TlsSession));
 		}
 
 		using _Base::NullCheck;

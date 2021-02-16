@@ -305,7 +305,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(EcGroup).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(EcGroup));
 		}
 
 		using _Base::Get;
@@ -553,7 +553,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(EcPublicKeyBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(EcPublicKeyBase));
 		}
 
 		/**
@@ -1436,7 +1436,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(EcPublicKey).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(EcPublicKey));
 		}
 
 		/**
@@ -1801,7 +1801,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(EcKeyPair).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(EcKeyPair));
 		}
 
 		/**

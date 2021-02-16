@@ -202,6 +202,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // Static members:
 
 		using CipherBaseTrait = _CipherTrait;
+		using _Base           = ObjectBase<CipherBaseTrait>;
 
 	public:
 
@@ -215,7 +216,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param cipherInfo The cipher info provided by mbed TLS library.
 		 */
 		CipherBase(const mbedtls_cipher_info_t& cipherInfo) :
-			ObjectBase<CipherBaseTrait>::ObjectBase()
+			_Base::ObjectBase()
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(CipherBase::CipherBase, mbedtls_cipher_setup, NonVirtualGet(), &cipherInfo);
 		}
@@ -226,7 +227,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other CipherBase instance.
 		 */
 		CipherBase(CipherBase&& rhs) noexcept :
-			ObjectBase<CipherBaseTrait>::ObjectBase(std::forward<ObjectBase<CipherBaseTrait> >(rhs)) //noexcept
+			_Base::ObjectBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
 		CipherBase(const CipherBase& rhs) = delete;
@@ -246,7 +247,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		CipherBase& operator=(CipherBase&& rhs) noexcept
 		{
-			ObjectBase<CipherBaseTrait>::operator=(std::forward<ObjectBase<CipherBaseTrait> >(rhs)); //noexcept
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -264,10 +265,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<CipherBaseTrait>::NullCheck(typeid(CipherBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(CipherBase));
 		}
 
-		using ObjectBase<CipherBaseTrait>::Get;
-		using ObjectBase<CipherBaseTrait>::NonVirtualGet;
+		using _Base::Get;
+		using _Base::NonVirtualGet;
 	};
 }

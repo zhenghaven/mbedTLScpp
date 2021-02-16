@@ -136,7 +136,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509Crl).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(X509Crl));
 		}
 
 		using _Base::NullCheck;

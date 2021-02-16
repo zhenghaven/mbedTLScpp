@@ -61,6 +61,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			int      _ReseedInterv = MBEDTLS_HMAC_DRBG_RESEED_INTERVAL>
 	class HmacDrbg : public ObjectBase<DefaultHmacDrbgTrait>, public RbgInterface
 	{
+	public: //Static members:
+
+		using _Base     = ObjectBase<DefaultHmacDrbgTrait>;
+		using _BaseIntf = RbgInterface;
+
 	public:
 
 		/**
@@ -77,7 +82,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param entropy The entropy given to use
 		 */
 		HmacDrbg(std::unique_ptr<EntropyInterface> entropy) :
-			ObjectBase<DefaultHmacDrbgTrait>::ObjectBase(),
+			_Base::ObjectBase(),
 			m_entropy(std::move(entropy))
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacDrbg::HmacDrbg, mbedtls_hmac_drbg_seed, NonVirtualGet(), &GetMdInfo(_HashType), &EntropyInterface::CallBack, m_entropy.get(), nullptr, 0);
@@ -92,7 +97,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other HmacDrbg instance.
 		 */
 		HmacDrbg(HmacDrbg&& rhs) noexcept :
-			ObjectBase<DefaultHmacDrbgTrait>::ObjectBase(std::forward<ObjectBase<DefaultHmacDrbgTrait> >(rhs)),
+			_Base::ObjectBase(std::forward<_Base>(rhs)),
 			m_entropy(std::move(rhs.m_entropy))
 		{}
 
@@ -110,7 +115,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		HmacDrbg& operator=(HmacDrbg&& rhs) noexcept
 		{
-			ObjectBase<DefaultHmacDrbgTrait>::operator=(std::forward<ObjectBase<DefaultHmacDrbgTrait> >(rhs));
+			_Base::operator=(std::forward<_Base>(rhs));
 			m_entropy = std::move(rhs.m_entropy);
 
 			return *this;
@@ -141,7 +146,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<DefaultHmacDrbgTrait>::NullCheck(typeid(HmacDrbg).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(HmacDrbg));
 		}
 
 	private:

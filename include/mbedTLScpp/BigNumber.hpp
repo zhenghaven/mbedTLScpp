@@ -122,7 +122,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(BigNumberBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(BigNumberBase));
 		}
 
 		using _Base::Get;
@@ -707,6 +707,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			return res;
 		}
+
+		protected:
+
+			using _Base::NullCheck;
 	};
 
 
@@ -1140,7 +1144,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<_ObjTrait>::NullCheck(typeid(BigNumber).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(BigNumber));
 		}
 
 		/**

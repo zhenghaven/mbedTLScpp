@@ -57,6 +57,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // Static members:
 
 		using EntropyTrait = _EntropyObjTrait;
+		using _Base        = ObjectBase<EntropyTrait>;
+		using _BaseIntf    = EntropyInterface;
 
 	public:
 
@@ -66,7 +68,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_trait = EntropyTrait, enable_if_t<!_dummy_trait::sk_isBorrower, int> = 0>
 		Entropy() :
-			ObjectBase<EntropyTrait>::ObjectBase()
+			_Base::ObjectBase()
 		{}
 
 		/**
@@ -78,7 +80,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		template<typename _dummy_trait = EntropyTrait, enable_if_t<_dummy_trait::sk_isBorrower, int> = 0>
 		Entropy(mbedtls_entropy_context* ptr) noexcept :
-			ObjectBase<EntropyTrait>::ObjectBase(ptr)
+			_Base::ObjectBase(ptr)
 		{}
 
 		/**
@@ -87,7 +89,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other Entropy instance.
 		 */
 		Entropy(Entropy&& rhs) noexcept :
-			ObjectBase<EntropyTrait>::ObjectBase(std::forward<ObjectBase<EntropyTrait> >(rhs)) //noexcept
+			_Base::ObjectBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
 		Entropy(const Entropy& rhs) = delete;
@@ -104,7 +106,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		Entropy& operator=(Entropy&& rhs) noexcept
 		{
-			ObjectBase<EntropyTrait>::operator=(std::forward<ObjectBase<EntropyTrait> >(rhs)); //noexcept
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -122,10 +124,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<EntropyTrait>::NullCheck(typeid(Entropy).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(Entropy));
 		}
 
-		using ObjectBase<EntropyTrait>::Get;
+		using _Base::Get;
 
 		/**
 		 * @brief Get the internal pointer to the C mbed TLS object.
@@ -134,7 +136,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void* GetRawPtr() noexcept override
 		{
-			return ObjectBase<EntropyTrait>::Get();
+			return _Base::Get();
 		}
 
 		/**
@@ -144,7 +146,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual const void* GetRawPtr() const noexcept override
 		{
-			return ObjectBase<EntropyTrait>::Get();
+			return _Base::Get();
 		}
 
 		/**
@@ -157,7 +159,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(Entropy::FillEntropy, mbedtls_entropy_func, Get(), static_cast<unsigned char *>(buf), size);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				Entropy::FillEntropy,
+				mbedtls_entropy_func,
+				Get(), static_cast<unsigned char *>(buf), size
+			);
 		}
 	};
 

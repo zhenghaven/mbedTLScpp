@@ -116,7 +116,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509ReqWriter).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(X509ReqWriter));
 		}
 
 		using _Base::NullCheck;
@@ -297,7 +297,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(X509Req).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(X509Req));
 		}
 
 		using _Base::NullCheck;

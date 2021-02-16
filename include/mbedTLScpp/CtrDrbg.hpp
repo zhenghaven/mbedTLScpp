@@ -60,6 +60,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			int    _ReseedInterv = MBEDTLS_CTR_DRBG_RESEED_INTERVAL>
 	class CtrDrbg : public ObjectBase<DefaultCtrDrbgTrait>, public RbgInterface
 	{
+	public: // Static members:
+
+		using _Base     = ObjectBase<DefaultCtrDrbgTrait>;
+		using _BaseIntf = RbgInterface;
+
 	public:
 
 		/**
@@ -76,7 +81,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param entropy The entropy given to use
 		 */
 		CtrDrbg(std::unique_ptr<EntropyInterface> entropy) :
-			ObjectBase<DefaultCtrDrbgTrait>::ObjectBase(),
+			_Base::ObjectBase(),
 			m_entropy(std::move(entropy))
 		{
 			MBEDTLSCPP_MAKE_C_FUNC_CALL(CtrDrbg::CtrDrbg, mbedtls_ctr_drbg_seed, NonVirtualGet(), &EntropyInterface::CallBack, m_entropy.get(), nullptr, 0);
@@ -92,7 +97,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other CtrDrbg instance.
 		 */
 		CtrDrbg(CtrDrbg&& rhs) noexcept :
-			ObjectBase<DefaultCtrDrbgTrait>::ObjectBase(std::forward<ObjectBase<DefaultCtrDrbgTrait> >(rhs)),
+			_Base::ObjectBase(std::forward<_Base>(rhs)),
 			m_entropy(std::move(rhs.m_entropy))
 		{}
 
@@ -110,7 +115,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		CtrDrbg& operator=(CtrDrbg&& rhs) noexcept
 		{
-			ObjectBase<DefaultCtrDrbgTrait>::operator=(std::forward<ObjectBase<DefaultCtrDrbgTrait> >(rhs));
+			_Base::operator=(std::forward<_Base>(rhs));
 			m_entropy = std::move(rhs.m_entropy);
 
 			return *this;
@@ -141,7 +146,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<DefaultCtrDrbgTrait>::NullCheck(typeid(CtrDrbg).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(CtrDrbg));
 		}
 
 	private:

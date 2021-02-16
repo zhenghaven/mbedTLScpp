@@ -266,7 +266,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			_Base::NullCheck(typeid(Tls).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(Tls));
 		}
 
 		virtual bool IsNull() const noexcept override

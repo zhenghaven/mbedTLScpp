@@ -149,6 +149,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // Static members:
 
 		using MdBaseTrait = _MdObjTrait;
+		using _Base       = ObjectBase<MdBaseTrait>;
 
 	public:
 
@@ -161,7 +162,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param needHmac Is HMAC calculation needed?
 		 */
 		MsgDigestBase(const mbedtls_md_info_t& mdInfo, bool needHmac) :
-			ObjectBase<MdBaseTrait>::ObjectBase()
+			_Base::ObjectBase()
 		{
 			static_assert(false == 0, "The value of false is different with the one expected in mbedTLS.");
 
@@ -174,7 +175,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param rhs The other MsgDigestBase instance.
 		 */
 		MsgDigestBase(MsgDigestBase&& rhs) noexcept :
-			ObjectBase<MdBaseTrait>::ObjectBase(std::forward<ObjectBase<MdBaseTrait> >(rhs)) //noexcept
+			_Base::ObjectBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
 		MsgDigestBase(const MsgDigestBase& rhs) = delete;
@@ -191,7 +192,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		MsgDigestBase& operator=(MsgDigestBase&& rhs) noexcept
 		{
-			ObjectBase<MdBaseTrait>::operator=(std::forward<ObjectBase<MdBaseTrait> >(rhs)); //noexcept
+			_Base::operator=(std::forward<_Base>(rhs)); //noexcept
 
 			return *this;
 		}
@@ -209,11 +210,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		virtual void NullCheck() const
 		{
-			ObjectBase<MdBaseTrait>::NullCheck(typeid(MsgDigestBase).name());
+			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(MsgDigestBase));
 		}
 
-		using ObjectBase<MdBaseTrait>::Get;
-		using ObjectBase<MdBaseTrait>::NonVirtualGet;
+		using _Base::Get;
+		using _Base::NonVirtualGet;
 	};
 
 	static_assert(IsCppObjOfCtype<MsgDigestBase<>, mbedtls_md_context_t>::value == true, "Programming Error");
