@@ -145,7 +145,7 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 	{
 		HasherBase hashBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256));
 
-		hashBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hashBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		auto hash = hashBase.Finish();
 		auto hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash));
@@ -154,7 +154,7 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 
 		hashBase = HasherBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA512));
 
-		hashBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hashBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		hash = hashBase.Finish();
 		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash));
@@ -163,7 +163,7 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 
 		hashBase = HasherBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA384));
 
-		hashBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hashBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		hash = hashBase.Finish();
 		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash));
@@ -172,7 +172,7 @@ GTEST_TEST(TestHash, HasherBaseCalc)
 
 		hashBase = HasherBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA224));
 
-		hashBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hashBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		hash = hashBase.Finish();
 		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash));
@@ -283,7 +283,7 @@ GTEST_TEST(TestHash, HasherCalc)
 
 		Hasher<HashType::SHA384> hasher384;
 
-		hasher384.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hasher384.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		Hash<HashType::SHA384> hash384 = hasher384.Finish();
 		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash384));
@@ -307,7 +307,7 @@ GTEST_TEST(TestHash, HasherCalc)
 
 		Hasher<HashType::SHA224> hasher224;
 
-		hasher224.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		hasher224.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		Hash<HashType::SHA224> hash224 = hasher224.Finish();
 		hashHex = Internal::Bytes2HexLitEnd(CtnFullR(hash224));

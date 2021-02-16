@@ -146,13 +146,13 @@ GTEST_TEST(TestGcm, GcmClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		Gcm<CipherType::AES, 128> gcm1(CtnItemRangeR<0, 16>(skey));
+		Gcm<CipherType::AES, 128> gcm1(CtnItemRgR<0, 16>(skey));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		Gcm<CipherType::AES, 128> gcm2(CtnItemRangeR<0, 16>(skey));
+		Gcm<CipherType::AES, 128> gcm2(CtnItemRgR<0, 16>(skey));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -209,7 +209,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 128 Encrypt
 	{
-		Gcm<CipherType::AES, 128> gcm(CtnItemRangeR<0, 16>(skey));
+		Gcm<CipherType::AES, 128> gcm(CtnItemRgR<0, 16>(skey));
 
 		std::tie(cipher, tag) = gcm.Encrypt(
 			CtnFullR(data),
@@ -225,7 +225,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 128 Decrypt
 	{
-		Gcm<CipherType::AES, 128> gcm(CtnItemRangeR<0, 16>(skey));
+		Gcm<CipherType::AES, 128> gcm(CtnItemRgR<0, 16>(skey));
 
 		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),
@@ -242,7 +242,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 192 Encrypt
 	{
-		Gcm<CipherType::AES, 192> gcm(CtnItemRangeR<0, 24>(skey));
+		Gcm<CipherType::AES, 192> gcm(CtnItemRgR<0, 24>(skey));
 
 		std::tie(cipher, tag) = gcm.Encrypt(
 			CtnFullR(data),
@@ -258,7 +258,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 192 Decrypt
 	{
-		Gcm<CipherType::AES, 192> gcm(CtnItemRangeR<0, 24>(skey));
+		Gcm<CipherType::AES, 192> gcm(CtnItemRgR<0, 24>(skey));
 
 		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),
@@ -275,7 +275,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 256 Encrypt
 	{
-		Gcm<CipherType::AES, 256> gcm(CtnItemRangeR<0, 32>(skey));
+		Gcm<CipherType::AES, 256> gcm(CtnItemRgR<0, 32>(skey));
 
 		std::tie(cipher, tag) = gcm.Encrypt(
 			CtnFullR(data),
@@ -291,7 +291,7 @@ GTEST_TEST(TestGcm, GcmCryption)
 
 	// 256 Decrypt
 	{
-		Gcm<CipherType::AES, 256> gcm(CtnItemRangeR<0, 32>(skey));
+		Gcm<CipherType::AES, 256> gcm(CtnItemRgR<0, 32>(skey));
 
 		auto plain = gcm.Decrypt(
 			CtnFullR(cipher),

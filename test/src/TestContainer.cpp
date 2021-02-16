@@ -184,33 +184,33 @@ GTEST_TEST(TestContainer, ContainerByteStaticRangeWithBothEnds)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	auto stat_vecCtn1 = [vecCtn](){CtnByteRangeR<0, 51 * sizeof(uint16_t)>(vecCtn);};
+	auto stat_vecCtn1 = [vecCtn](){CtnByteRgR<0, 51 * sizeof(uint16_t)>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn1();}, std::out_of_range);
-	auto stat_strCtn1 = [strCtn](){CtnByteRangeR<0, 56 * sizeof(char)>(strCtn);};
+	auto stat_strCtn1 = [strCtn](){CtnByteRgR<0, 56 * sizeof(char)>(strCtn);};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
-	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnByteRangeR<0, 51 * sizeof(uint64_t)>(cDynArrayCtnSt);};
+	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnByteRgR<0, 51 * sizeof(uint64_t)>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_cDynAr1();}, std::out_of_range);
 
-	auto stat_vecCtn2 = [vecCtn](){CtnByteRangeR<51 * sizeof(uint16_t), 51 * sizeof(uint16_t)>(vecCtn);};
+	auto stat_vecCtn2 = [vecCtn](){CtnByteRgR<51 * sizeof(uint16_t), 51 * sizeof(uint16_t)>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn2();}, std::out_of_range);
-	auto stat_strCtn2 = [strCtn](){CtnByteRangeR<56 * sizeof(char), 56 * sizeof(char)>(strCtn);};
+	auto stat_strCtn2 = [strCtn](){CtnByteRgR<56 * sizeof(char), 56 * sizeof(char)>(strCtn);};
 	EXPECT_THROW({stat_strCtn2();}, std::out_of_range);
-	auto stat_cDynAr2 = [cDynArrayCtnSt](){CtnByteRangeR<51 * sizeof(uint64_t), 51 * sizeof(uint64_t)>(cDynArrayCtnSt);};
+	auto stat_cDynAr2 = [cDynArrayCtnSt](){CtnByteRgR<51 * sizeof(uint64_t), 51 * sizeof(uint64_t)>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_cDynAr2();}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnByteRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnByteRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnByteRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnByteRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnByteRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnByteRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnByteRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnByteRgR(listCtn, 0, 0);
 
-	//auto ctnR_cArrayCtn   = CtnByteRangeR<0, 101 * sizeof(uint16_t)>(cArrayCtn);
-	//auto ctnR_cArrayCtn   = CtnByteRangeR<10 * sizeof(uint16_t), 5 * sizeof(uint16_t)>(cArrayCtn);
-	//auto ctnR_stdArrayCtn = CtnByteRangeR<0, 102 * sizeof(uint16_t)>(stdArrayCtn);
-	auto ctnR_cArrayCtn   = CtnByteRangeR<5  * sizeof(uint16_t), 70 * sizeof(uint16_t)>(cArrayCtn);
-	auto ctnR_stdArrayCtn = CtnByteRangeR<10 * sizeof(uint16_t), 75 * sizeof(uint16_t)>(stdArrayCtn);
-	auto ctnR_vecCtn      = CtnByteRangeR<15 * sizeof(uint16_t), 45 * sizeof(uint16_t)>(vecCtn);
-	auto ctnR_strCtn      = CtnByteRangeR<20 * sizeof(char)    , 50 * sizeof(char)    >(strCtn);
-	auto ctnR_cDynCtn     = CtnByteRangeR<25 * sizeof(uint64_t), 49 * sizeof(uint64_t)>(cDynArrayCtnSt);
+	//auto ctnR_cArrayCtn   = CtnByteRgR<0, 101 * sizeof(uint16_t)>(cArrayCtn);
+	//auto ctnR_cArrayCtn   = CtnByteRgR<10 * sizeof(uint16_t), 5 * sizeof(uint16_t)>(cArrayCtn);
+	//auto ctnR_stdArrayCtn = CtnByteRgR<0, 102 * sizeof(uint16_t)>(stdArrayCtn);
+	auto ctnR_cArrayCtn   = CtnByteRgR<5  * sizeof(uint16_t), 70 * sizeof(uint16_t)>(cArrayCtn);
+	auto ctnR_stdArrayCtn = CtnByteRgR<10 * sizeof(uint16_t), 75 * sizeof(uint16_t)>(stdArrayCtn);
+	auto ctnR_vecCtn      = CtnByteRgR<15 * sizeof(uint16_t), 45 * sizeof(uint16_t)>(vecCtn);
+	auto ctnR_strCtn      = CtnByteRgR<20 * sizeof(char)    , 50 * sizeof(char)    >(strCtn);
+	auto ctnR_cDynCtn     = CtnByteRgR<25 * sizeof(uint64_t), 49 * sizeof(uint64_t)>(cDynArrayCtnSt);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -264,25 +264,25 @@ GTEST_TEST(TestContainer, ContainerByteStaticRangeWithBegin)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	auto stat_vecCtn1 = [vecCtn](){CtnByteRangeR<51 * sizeof(uint16_t)>(vecCtn);};
+	auto stat_vecCtn1 = [vecCtn](){CtnByteRgR<51 * sizeof(uint16_t)>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn1();}, std::out_of_range);
-	auto stat_strCtn1 = [strCtn](){CtnByteRangeR<56 * sizeof(char)>(strCtn);};
+	auto stat_strCtn1 = [strCtn](){CtnByteRgR<56 * sizeof(char)>(strCtn);};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
-	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnByteRangeR<51 * sizeof(char)>(cDynArrayCtnSt);};
+	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnByteRgR<51 * sizeof(char)>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnByteRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnByteRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnByteRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnByteRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnByteRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnByteRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnByteRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnByteRgR(listCtn, 0, 0);
 
-	//auto ctnR_cArrayCtn   = CtnByteRangeR<101 * sizeof(uint16_t)>(cArrayCtn);
-	//auto ctnR_stdArrayCtn = CtnByteRangeR<102 * sizeof(uint16_t)>(stdArrayCtn);
-	auto ctnR_cArrayCtn   = CtnByteRangeR<12 * sizeof(uint16_t)>(cArrayCtn);
-	auto ctnR_stdArrayCtn = CtnByteRangeR<17 * sizeof(uint16_t)>(stdArrayCtn);
-	auto ctnR_vecCtn      = CtnByteRangeR<22 * sizeof(uint16_t)>(vecCtn);
-	auto ctnR_strCtn      = CtnByteRangeR<27 * sizeof(char)    >(strCtn);
-	auto ctnR_cDynCtn     = CtnByteRangeR<29 * sizeof(uint64_t)>(cDynArrayCtnSt);
+	//auto ctnR_cArrayCtn   = CtnByteRgR<101 * sizeof(uint16_t)>(cArrayCtn);
+	//auto ctnR_stdArrayCtn = CtnByteRgR<102 * sizeof(uint16_t)>(stdArrayCtn);
+	auto ctnR_cArrayCtn   = CtnByteRgR<12 * sizeof(uint16_t)>(cArrayCtn);
+	auto ctnR_stdArrayCtn = CtnByteRgR<17 * sizeof(uint16_t)>(stdArrayCtn);
+	auto ctnR_vecCtn      = CtnByteRgR<22 * sizeof(uint16_t)>(vecCtn);
+	auto ctnR_strCtn      = CtnByteRgR<27 * sizeof(char)    >(strCtn);
+	auto ctnR_cDynCtn     = CtnByteRgR<29 * sizeof(uint64_t)>(cDynArrayCtnSt);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -336,28 +336,28 @@ GTEST_TEST(TestContainer, ContainerByteDynRangeWithBothEnds)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	EXPECT_THROW({CtnByteRangeR(cArrayCtn,   50 * sizeof(uint16_t), 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnByteRangeR(stdArrayCtn, 50 * sizeof(uint16_t), 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnByteRangeR(vecCtn,      50 * sizeof(uint16_t), 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnByteRangeR(strCtn,      50 * sizeof(uint16_t), 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnByteRangeR(cDynArrayCtnSt, 50 * sizeof(uint64_t), 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnByteRgR(cArrayCtn,   50 * sizeof(uint16_t), 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnByteRgR(stdArrayCtn, 50 * sizeof(uint16_t), 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnByteRgR(vecCtn,      50 * sizeof(uint16_t), 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnByteRgR(strCtn,      50 * sizeof(uint16_t), 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnByteRgR(cDynArrayCtnSt, 50 * sizeof(uint64_t), 0);}, std::invalid_argument);
 
-	EXPECT_THROW({CtnByteRangeR(cArrayCtn,   0, 101 * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(stdArrayCtn, 0, 102 * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(vecCtn,      0, 51  * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(strCtn  ,    0, 56  * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(cDynArrayCtnSt, 0, 51  * sizeof(uint64_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(cArrayCtn,   0, 101 * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(stdArrayCtn, 0, 102 * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(vecCtn,      0, 51  * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(strCtn  ,    0, 56  * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(cDynArrayCtnSt, 0, 51  * sizeof(uint64_t));}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnByteRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnByteRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnByteRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnByteRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnByteRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnByteRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnByteRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnByteRgR(listCtn, 0, 0);
 
-	auto ctnR_cArrayCtn   = CtnByteRangeR(cArrayCtn,   5  * sizeof(uint16_t), 70 * sizeof(uint16_t));
-	auto ctnR_stdArrayCtn = CtnByteRangeR(stdArrayCtn, 10 * sizeof(uint16_t), 75 * sizeof(uint16_t));
-	auto ctnR_vecCtn      = CtnByteRangeR(vecCtn,      15 * sizeof(uint16_t), 45 * sizeof(uint16_t));
-	auto ctnR_strCtn      = CtnByteRangeR(strCtn,      20 * sizeof(char)    , 50 * sizeof(char));
-	auto ctnR_cDynCtn     = CtnByteRangeR(cDynArrayCtnSt, 25 * sizeof(uint64_t), 49 * sizeof(uint64_t));
+	auto ctnR_cArrayCtn   = CtnByteRgR(cArrayCtn,   5  * sizeof(uint16_t), 70 * sizeof(uint16_t));
+	auto ctnR_stdArrayCtn = CtnByteRgR(stdArrayCtn, 10 * sizeof(uint16_t), 75 * sizeof(uint16_t));
+	auto ctnR_vecCtn      = CtnByteRgR(vecCtn,      15 * sizeof(uint16_t), 45 * sizeof(uint16_t));
+	auto ctnR_strCtn      = CtnByteRgR(strCtn,      20 * sizeof(char)    , 50 * sizeof(char));
+	auto ctnR_cDynCtn     = CtnByteRgR(cDynArrayCtnSt, 25 * sizeof(uint64_t), 49 * sizeof(uint64_t));
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -411,22 +411,22 @@ GTEST_TEST(TestContainer, ContainerByteDynRangeWithBegin)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	EXPECT_THROW({CtnByteRangeR(cArrayCtn,   101 * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(stdArrayCtn, 102 * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(vecCtn,      51  * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(strCtn  ,    56  * sizeof(uint16_t));}, std::out_of_range);
-	EXPECT_THROW({CtnByteRangeR(cDynArrayCtnSt, 51  * sizeof(uint64_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(cArrayCtn,   101 * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(stdArrayCtn, 102 * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(vecCtn,      51  * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(strCtn  ,    56  * sizeof(uint16_t));}, std::out_of_range);
+	EXPECT_THROW({CtnByteRgR(cDynArrayCtnSt, 51  * sizeof(uint64_t));}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnByteRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnByteRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnByteRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnByteRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnByteRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnByteRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnByteRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnByteRgR(listCtn, 0, 0);
 
-	auto ctnR_cArrayCtn   = CtnByteRangeR(cArrayCtn,   12 * sizeof(uint16_t));
-	auto ctnR_stdArrayCtn = CtnByteRangeR(stdArrayCtn, 17 * sizeof(uint16_t));
-	auto ctnR_vecCtn      = CtnByteRangeR(vecCtn,      22 * sizeof(uint16_t));
-	auto ctnR_strCtn      = CtnByteRangeR(strCtn,      27 * sizeof(char));
-	auto ctnR_cDynCtn     = CtnByteRangeR(cDynArrayCtnSt, 29 * sizeof(uint64_t));
+	auto ctnR_cArrayCtn   = CtnByteRgR(cArrayCtn,   12 * sizeof(uint16_t));
+	auto ctnR_stdArrayCtn = CtnByteRgR(stdArrayCtn, 17 * sizeof(uint16_t));
+	auto ctnR_vecCtn      = CtnByteRgR(vecCtn,      22 * sizeof(uint16_t));
+	auto ctnR_strCtn      = CtnByteRgR(strCtn,      27 * sizeof(char));
+	auto ctnR_cDynCtn     = CtnByteRgR(cDynArrayCtnSt, 29 * sizeof(uint64_t));
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -480,33 +480,33 @@ GTEST_TEST(TestContainer, ContainerItemStaticRangeWithBothEnds)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	auto stat_vecCtn1 = [vecCtn](){CtnItemRangeR<0, 51>(vecCtn);};
+	auto stat_vecCtn1 = [vecCtn](){CtnItemRgR<0, 51>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn1();}, std::out_of_range);
-	auto stat_strCtn1 = [strCtn](){CtnItemRangeR<0, 56>(strCtn);};
+	auto stat_strCtn1 = [strCtn](){CtnItemRgR<0, 56>(strCtn);};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
-	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnItemRangeR<0, 51>(cDynArrayCtnSt);};
+	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnItemRgR<0, 51>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_cDynAr1();}, std::out_of_range);
 
-	auto stat_vecCtn2 = [vecCtn](){CtnItemRangeR<51, 51>(vecCtn);};
+	auto stat_vecCtn2 = [vecCtn](){CtnItemRgR<51, 51>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn2();}, std::out_of_range);
-	auto stat_strCtn2 = [strCtn](){CtnItemRangeR<56, 56>(strCtn);};
+	auto stat_strCtn2 = [strCtn](){CtnItemRgR<56, 56>(strCtn);};
 	EXPECT_THROW({stat_strCtn2();}, std::out_of_range);
-	auto stat_cDynAr2 = [cDynArrayCtnSt](){CtnItemRangeR<51, 51>(cDynArrayCtnSt);};
+	auto stat_cDynAr2 = [cDynArrayCtnSt](){CtnItemRgR<51, 51>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_cDynAr2();}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnItemRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnItemRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnItemRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnItemRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnItemRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnItemRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnItemRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnItemRgR(listCtn, 0, 0);
 
-	//auto ctnR_cArrayCtn   = CtnItemRangeR<0, 101>(cArrayCtn);
-	//auto ctnR_cArrayCtn   = CtnItemRangeR<10, 5>(cArrayCtn);
-	//auto ctnR_stdArrayCtn = CtnItemRangeR<0, 102>(stdArrayCtn);
-	auto ctnR_cArrayCtn   = CtnItemRangeR<5 , 70>(cArrayCtn);
-	auto ctnR_stdArrayCtn = CtnItemRangeR<10, 75>(stdArrayCtn);
-	auto ctnR_vecCtn      = CtnItemRangeR<15, 45>(vecCtn);
-	auto ctnR_strCtn      = CtnItemRangeR<20, 50>(strCtn);
-	auto ctnR_cDynCtn     = CtnItemRangeR<25, 49>(cDynArrayCtnSt);
+	//auto ctnR_cArrayCtn   = CtnItemRgR<0, 101>(cArrayCtn);
+	//auto ctnR_cArrayCtn   = CtnItemRgR<10, 5>(cArrayCtn);
+	//auto ctnR_stdArrayCtn = CtnItemRgR<0, 102>(stdArrayCtn);
+	auto ctnR_cArrayCtn   = CtnItemRgR<5 , 70>(cArrayCtn);
+	auto ctnR_stdArrayCtn = CtnItemRgR<10, 75>(stdArrayCtn);
+	auto ctnR_vecCtn      = CtnItemRgR<15, 45>(vecCtn);
+	auto ctnR_strCtn      = CtnItemRgR<20, 50>(strCtn);
+	auto ctnR_cDynCtn     = CtnItemRgR<25, 49>(cDynArrayCtnSt);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -560,25 +560,25 @@ GTEST_TEST(TestContainer, ContainerItemStaticRangeWithBegin)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	auto stat_vecCtn1 = [vecCtn](){CtnItemRangeR<51>(vecCtn);};
+	auto stat_vecCtn1 = [vecCtn](){CtnItemRgR<51>(vecCtn);};
 	EXPECT_THROW({stat_vecCtn1();}, std::out_of_range);
-	auto stat_strCtn1 = [strCtn](){CtnItemRangeR<56>(strCtn);};
+	auto stat_strCtn1 = [strCtn](){CtnItemRgR<56>(strCtn);};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
-	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnItemRangeR<51>(cDynArrayCtnSt);};
+	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnItemRgR<51>(cDynArrayCtnSt);};
 	EXPECT_THROW({stat_cDynAr1();}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnItemRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnItemRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnItemRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnItemRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnItemRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnItemRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnItemRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnItemRgR(listCtn, 0, 0);
 
-	//auto ctnR_cArrayCtn1    = CtnItemRangeR<101>(cArrayCtn);
-	//auto ctnR_stdArrayCtn11 = CtnItemRangeR<102>(stdArrayCtn);
-	auto ctnR_cArrayCtn   = CtnItemRangeR<12>(cArrayCtn);
-	auto ctnR_stdArrayCtn = CtnItemRangeR<17>(stdArrayCtn);
-	auto ctnR_vecCtn      = CtnItemRangeR<22>(vecCtn);
-	auto ctnR_strCtn      = CtnItemRangeR<27>(strCtn);
-	auto ctnR_cDynCtn     = CtnItemRangeR<29>(cDynArrayCtnSt);
+	//auto ctnR_cArrayCtn1    = CtnItemRgR<101>(cArrayCtn);
+	//auto ctnR_stdArrayCtn11 = CtnItemRgR<102>(stdArrayCtn);
+	auto ctnR_cArrayCtn   = CtnItemRgR<12>(cArrayCtn);
+	auto ctnR_stdArrayCtn = CtnItemRgR<17>(stdArrayCtn);
+	auto ctnR_vecCtn      = CtnItemRgR<22>(vecCtn);
+	auto ctnR_strCtn      = CtnItemRgR<27>(strCtn);
+	auto ctnR_cDynCtn     = CtnItemRgR<29>(cDynArrayCtnSt);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -632,28 +632,28 @@ GTEST_TEST(TestContainer, ContainerItemDynRangeWithBothEnds)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	EXPECT_THROW({CtnItemRangeR(cArrayCtn,   50, 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnItemRangeR(stdArrayCtn, 50, 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnItemRangeR(vecCtn,      50, 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnItemRangeR(strCtn,      50, 0);}, std::invalid_argument);
-	EXPECT_THROW({CtnItemRangeR(cDynArrayCtnSt, 50, 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnItemRgR(cArrayCtn,   50, 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnItemRgR(stdArrayCtn, 50, 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnItemRgR(vecCtn,      50, 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnItemRgR(strCtn,      50, 0);}, std::invalid_argument);
+	EXPECT_THROW({CtnItemRgR(cDynArrayCtnSt, 50, 0);}, std::invalid_argument);
 
-	EXPECT_THROW({CtnItemRangeR(cArrayCtn,   0, 101);}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(stdArrayCtn, 0, 102);}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(vecCtn,      0, 51 );}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(strCtn  ,    0, 56 );}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(cDynArrayCtnSt, 0, 51);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(cArrayCtn,   0, 101);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(stdArrayCtn, 0, 102);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(vecCtn,      0, 51 );}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(strCtn  ,    0, 56 );}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(cDynArrayCtnSt, 0, 51);}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnItemRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnItemRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnItemRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnItemRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnItemRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnItemRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnItemRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnItemRgR(listCtn, 0, 0);
 
-	auto ctnR_cArrayCtn   = CtnItemRangeR(cArrayCtn,   5, 70);
-	auto ctnR_stdArrayCtn = CtnItemRangeR(stdArrayCtn, 10, 75);
-	auto ctnR_vecCtn      = CtnItemRangeR(vecCtn,      15, 45);
-	auto ctnR_strCtn      = CtnItemRangeR(strCtn,      20, 50);
-	auto ctnR_cDynCtn     = CtnItemRangeR(cDynArrayCtnSt, 25, 49);
+	auto ctnR_cArrayCtn   = CtnItemRgR(cArrayCtn,   5, 70);
+	auto ctnR_stdArrayCtn = CtnItemRgR(stdArrayCtn, 10, 75);
+	auto ctnR_vecCtn      = CtnItemRgR(vecCtn,      15, 45);
+	auto ctnR_strCtn      = CtnItemRgR(strCtn,      20, 50);
+	auto ctnR_cDynCtn     = CtnItemRgR(cDynArrayCtnSt, 25, 49);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));
@@ -707,22 +707,22 @@ GTEST_TEST(TestContainer, ContainerItemDynRangeWithBegin)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	EXPECT_THROW({CtnItemRangeR(cArrayCtn,   101);}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(stdArrayCtn, 102);}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(vecCtn,      51 );}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(strCtn  ,    56 );}, std::out_of_range);
-	EXPECT_THROW({CtnItemRangeR(cDynArrayCtnSt, 51);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(cArrayCtn,   101);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(stdArrayCtn, 102);}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(vecCtn,      51 );}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(strCtn  ,    56 );}, std::out_of_range);
+	EXPECT_THROW({CtnItemRgR(cDynArrayCtnSt, 51);}, std::out_of_range);
 
-	//auto ctnR_vecBoolCtn = CtnItemRangeR<0, 0>(vecBoolCtn);
-	//auto ctnR_listCtn = CtnItemRangeR<0, 0>(listCtn);
-	//auto ctnR_vecBoolCtn = CtnItemRangeR(vecBoolCtn, 0, 0);
-	//auto ctnR_listCtn = CtnItemRangeR(listCtn, 0, 0);
+	//auto ctnR_vecBoolCtn = CtnItemRgR<0, 0>(vecBoolCtn);
+	//auto ctnR_listCtn = CtnItemRgR<0, 0>(listCtn);
+	//auto ctnR_vecBoolCtn = CtnItemRgR(vecBoolCtn, 0, 0);
+	//auto ctnR_listCtn = CtnItemRgR(listCtn, 0, 0);
 
-	auto ctnR_cArrayCtn   = CtnItemRangeR(cArrayCtn,   12);
-	auto ctnR_stdArrayCtn = CtnItemRangeR(stdArrayCtn, 17);
-	auto ctnR_vecCtn      = CtnItemRangeR(vecCtn,      22);
-	auto ctnR_strCtn      = CtnItemRangeR(strCtn,      27);
-	auto ctnR_cDynCtn      = CtnItemRangeR(cDynArrayCtnSt, 29);
+	auto ctnR_cArrayCtn   = CtnItemRgR(cArrayCtn,   12);
+	auto ctnR_stdArrayCtn = CtnItemRgR(stdArrayCtn, 17);
+	auto ctnR_vecCtn      = CtnItemRgR(vecCtn,      22);
+	auto ctnR_strCtn      = CtnItemRgR(strCtn,      27);
+	auto ctnR_cDynCtn      = CtnItemRgR(cDynArrayCtnSt, 29);
 
 	EXPECT_EQ(ctnR_cArrayCtn.GetValSize(),   sizeof(uint16_t));
 	EXPECT_EQ(ctnR_stdArrayCtn.GetValSize(), sizeof(uint16_t));

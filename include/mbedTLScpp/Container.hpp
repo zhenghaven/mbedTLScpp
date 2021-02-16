@@ -1544,7 +1544,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 int> = 0,
 			 size_t regStSize = endOffset - beginOffset>
 	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
-		CtnByteRangeR(const ContainerType& ctn) noexcept
+		CtnByteRgR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
 		static_assert(endOffset <= CtnType<ContainerType>::sk_ctnSize, "The end of the range is outside of the container.");
@@ -1574,7 +1574,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 int> = 0,
 			 size_t regStSize = CtnType<ContainerType>::sk_ctnSize - beginOffset>
 	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
-		CtnByteRangeR(const ContainerType& ctn) noexcept
+		CtnByteRgR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginOffset <= CtnType<ContainerType>::sk_ctnSize, "The begining of the range is outside of the container.");
 
@@ -1603,7 +1603,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				!CtnType<ContainerType>::sk_isCtnStatic,
 			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnByteRangeR(const ContainerType& ctn)
+		CtnByteRgR(const ContainerType& ctn)
 	{
 		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
 
@@ -1635,7 +1635,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				!CtnType<ContainerType>::sk_isCtnStatic,
 			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnByteRangeR(const ContainerType& ctn)
+		CtnByteRgR(const ContainerType& ctn)
 	{
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
 		if(beginOffset > endOffset)
@@ -1665,7 +1665,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 typename ContainerType,
 			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset, size_t endOffset)
+		CtnByteRgR(const ContainerType& ctn, size_t beginOffset, size_t endOffset)
 	{
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
@@ -1688,7 +1688,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 typename ContainerType,
 			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnByteRangeR(const ContainerType& ctn, size_t beginOffset)
+		CtnByteRgR(const ContainerType& ctn, size_t beginOffset)
 	{
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);
 		if(beginOffset > endOffset)
@@ -1726,7 +1726,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 int> = 0,
 			 size_t   regStSize = (endCount - beginCount) * CtnType<ContainerType>::sk_valSize>
 	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
-		CtnItemRangeR(const ContainerType& ctn) noexcept
+		CtnItemRgR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
 		static_assert(endCount <= CtnType<ContainerType>::sk_itemCount, "The end of the range is outside of the container.");
@@ -1761,7 +1761,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 int> = 0,
 			 size_t   regStSize = CtnType<ContainerType>::sk_ctnSize - (beginCount* CtnType<ContainerType>::sk_valSize)>
 	inline ContCtnReadOnlyStRef<ContainerType, regStSize>
-		CtnItemRangeR(const ContainerType& ctn) noexcept
+		CtnItemRgR(const ContainerType& ctn) noexcept
 	{
 		static_assert(beginCount <= CtnType<ContainerType>::sk_itemCount, "The begining of the range is outside of the container.");
 
@@ -1794,7 +1794,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				!CtnType<ContainerType>::sk_isCtnStatic,
 			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnItemRangeR(const ContainerType& ctn)
+		CtnItemRgR(const ContainerType& ctn)
 	{
 		static_assert(beginCount <= endCount, "The begining of the range should be smaller than or equal to the end of the range.");
 
@@ -1830,7 +1830,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				!CtnType<ContainerType>::sk_isCtnStatic,
 			 int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnItemRangeR(const ContainerType& ctn)
+		CtnItemRgR(const ContainerType& ctn)
 	{
 		if(beginCount > CtnType<ContainerType>::GetItemCount(ctn))
 		{
@@ -1862,7 +1862,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 typename ContainerType,
 			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnItemRangeR(const ContainerType& ctn, size_t beginCount, size_t endCount)
+		CtnItemRgR(const ContainerType& ctn, size_t beginCount, size_t endCount)
 	{
 		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		const size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
@@ -1888,7 +1888,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 typename ContainerType,
 			 enable_if_t<CtnType<ContainerType>::sk_isCtnCont, int> = 0>
 	inline ContCtnReadOnlyRef<ContainerType>
-		CtnItemRangeR(const ContainerType& ctn, size_t beginCount)
+		CtnItemRgR(const ContainerType& ctn, size_t beginCount)
 	{
 		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
 		const size_t endOffset = CtnType<ContainerType>::GetCtnSize(ctn);

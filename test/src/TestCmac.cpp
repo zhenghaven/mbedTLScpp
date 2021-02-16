@@ -107,7 +107,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 	{
 		CmacerBase cmacBase(GetCipherInfo(CipherType::AES, 128, CipherMode::ECB), CtnFullR(test128Key));
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		auto cmac = cmacBase.Finish();
 		auto cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -115,7 +115,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		EXPECT_EQ(cmacHex, "d5102239eab3db7190b7c3e79ccba537");
 		cmacBase.Restart();
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -124,7 +124,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 
 		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 192, CipherMode::ECB), CtnFullR(test192Key));
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		cmac = cmacBase.Finish();
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -132,7 +132,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		EXPECT_EQ(cmacHex, "1ec7434c627af04468d7808c7e3240e3");
 		cmacBase.Restart();
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -141,7 +141,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 
 		cmacBase = CmacerBase(GetCipherInfo(CipherType::AES, 256, CipherMode::ECB), CtnFullR(test256Key));
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		cmac = cmacBase.Finish();
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -149,7 +149,7 @@ GTEST_TEST(TestCmac, CmacerBaseCalc)
 		EXPECT_EQ(cmacHex, "90514dec0f6ddca0135f513dc4548c41");
 		cmacBase.Restart();
 
-		cmacBase.Update(CtnItemRangeR<0, 12>("TestMessage2"));
+		cmacBase.Update(CtnItemRgR<0, 12>("TestMessage2"));
 
 		cmac = cmacBase.Finish();
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
@@ -177,14 +177,14 @@ GTEST_TEST(TestHmac, CmacerClass)
 
 	{
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1281(CtnFullR(test128Key));
-		cmac1281.Update(CtnItemRangeR<0, 12>("TestMessage2"));
+		cmac1281.Update(CtnItemRgR<0, 12>("TestMessage2"));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac1282(CtnFullR(test128Key));
-		cmac1282.Update(CtnItemRangeR<0, 12>("TestMessage1"));
+		cmac1282.Update(CtnItemRgR<0, 12>("TestMessage1"));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -245,9 +245,9 @@ GTEST_TEST(TestCmac, CmacerCalc)
 	{
 		Cmacer<CipherType::AES, 128, CipherMode::ECB> cmac128(CtnFullR(test128Key));
 
-		auto cmac = cmac128.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
-								CtnItemRangeR<0, 12>("TestMessage2"),
-								CtnItemRangeR<0, 12>("TestMessage3"));
+		auto cmac = cmac128.Calc(CtnItemRgR<0, 12>("TestMessage1"),
+								CtnItemRgR<0, 12>("TestMessage2"),
+								CtnItemRgR<0, 12>("TestMessage3"));
 		auto cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "91f63489d8fe8b6182f3f77579d4e4e8");
@@ -255,9 +255,9 @@ GTEST_TEST(TestCmac, CmacerCalc)
 
 		Cmacer<CipherType::AES, 192, CipherMode::ECB> cmac192(CtnFullR(test192Key));
 
-		cmac = cmac192.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
-							CtnItemRangeR<0, 12>("TestMessage2"),
-							CtnItemRangeR<0, 12>("TestMessage3"));
+		cmac = cmac192.Calc(CtnItemRgR<0, 12>("TestMessage1"),
+							CtnItemRgR<0, 12>("TestMessage2"),
+							CtnItemRgR<0, 12>("TestMessage3"));
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "a824c002cc220dc2ee1e247048f0513d");
@@ -265,9 +265,9 @@ GTEST_TEST(TestCmac, CmacerCalc)
 
 		Cmacer<CipherType::AES, 256, CipherMode::ECB> cmac256(CtnFullR(test256Key));
 
-		cmac = cmac256.Calc(CtnItemRangeR<0, 12>("TestMessage1"),
-							CtnItemRangeR<0, 12>("TestMessage2"),
-							CtnItemRangeR<0, 12>("TestMessage3"));
+		cmac = cmac256.Calc(CtnItemRgR<0, 12>("TestMessage1"),
+							CtnItemRgR<0, 12>("TestMessage2"),
+							CtnItemRgR<0, 12>("TestMessage3"));
 		cmacHex = Internal::Bytes2HexLitEnd(CtnFullR(cmac));
 
 		EXPECT_EQ(cmacHex, "98ec5ae33826ee3d13fb3608206e50cc");
