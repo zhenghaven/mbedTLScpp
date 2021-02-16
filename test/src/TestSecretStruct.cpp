@@ -21,18 +21,23 @@ namespace mbedTLScpp_Test
 
 namespace
 {
-	struct TestStruct1
+	extern "C"
 	{
-		uint16_t a;
-		uint32_t b;
-	};
+#pragma pack(push, 1)
+		struct TestStruct1
+		{
+			uint16_t a;
+			uint32_t b;
+		};
 
-	struct TestStruct2
-	{
-		TestStruct1 a;
-		uint8_t     b[16];
-		uint64_t    c[32];
-	};
+		struct TestStruct2
+		{
+			TestStruct1 a;
+			uint8_t     b[16];
+			uint64_t    c[32];
+		};
+#pragma pack(pop)
+	}
 }
 
 GTEST_TEST(TestSecretStruct, CountTestFile)
@@ -48,6 +53,8 @@ GTEST_TEST(TestSecretStruct, ClassTest)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
+		static_assert(sizeof(TestStruct2) == 278, "Size doesn't match.");
+
 		SecretStruct<TestStruct2> s1{{{1, 2}, {3}, {4}}};
 #ifdef MBEDTLSCPP_MEMORY_TEST
 			gs_secretAllocationLeft += sizeof(TestStruct2);
