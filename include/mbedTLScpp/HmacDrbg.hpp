@@ -50,13 +50,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @brief Class for Hmac-DRBG
 	 *
 	 * @tparam _PredResist   Turns prediction resistance on or off
-	 *                       (default to \c true )
+	 *                       (default to \c false/off )
 	 * @tparam _HashType     The type of hash to use
 	 *                       (default to \c HashType::SHA256 )
 	 * @tparam _ReseedInterv The reseed interval
 	 *                       (default to \c MBEDTLS_HMAC_DRBG_RESEED_INTERVAL )
 	 */
-	template<bool    _PredResist = true,
+	template<bool    _PredResist = false,
 			HashType _HashType = HashType::SHA256,
 			int      _ReseedInterv = MBEDTLS_HMAC_DRBG_RESEED_INTERVAL>
 	class HmacDrbg : public ObjectBase<DefaultHmacDrbgTrait>, public RbgInterface

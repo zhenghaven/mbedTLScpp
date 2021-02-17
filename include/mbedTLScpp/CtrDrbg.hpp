@@ -49,13 +49,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @brief Class for Ctr-DRBG
 	 *
 	 * @tparam _PredResist   Turns prediction resistance on or off
-	 *                       (default to \c true )
+	 *                       (default to \c false/off )
 	 * @tparam _EntropyLen   The amount of entropy grabbed on each seed or reseed
 	 *                       (default to \c MBEDTLS_CTR_DRBG_ENTROPY_LEN )
 	 * @tparam _ReseedInterv The reseed interval
 	 *                       (default to \c MBEDTLS_CTR_DRBG_RESEED_INTERVAL )
 	 */
-	template<bool  _PredResist = true,
+	template<bool  _PredResist = false,
 			size_t _EntropyLen = MBEDTLS_CTR_DRBG_ENTROPY_LEN,
 			int    _ReseedInterv = MBEDTLS_CTR_DRBG_RESEED_INTERVAL>
 	class CtrDrbg : public ObjectBase<DefaultCtrDrbgTrait>, public RbgInterface
