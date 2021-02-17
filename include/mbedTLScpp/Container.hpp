@@ -1198,7 +1198,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			if(endOffset > CtnType<PureContainerType>::GetCtnSize(m_ctn))
 			{
-				throw std::out_of_range("The end if the range is outside of the container.");
+				throw std::out_of_range("The end of the range is outside of the container.");
 			}
 		}
 
@@ -1266,6 +1266,56 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			m_beginOffset(rhs.m_beginOffset),
 			m_endOffset(rhs.m_endOffset)
 		{}
+
+		/**
+		 * @brief Construct a new Contiguous Container Read Only Reference object
+		 *        by copying the reference from an existing instance, and reference
+		 *        a sub-range of that instance.
+		 *
+		 * @exception None No exception thrown
+		 * @param rhs         The existing instance.
+		 * @param beginOffset The offset (in Bytes, starts from the begining of
+		 *                    the given reference) for the begining of the memory region.
+		 * @param endOffset   The offset (in Bytes, starts from the begining of
+		 *                    the given reference) for the end of the memory region.
+		 */
+		ContCtnReadOnlyRef(const ContCtnReadOnlyRef& rhs,
+			size_t beginOffset, size_t endOffset,
+			NoSafeCheck) noexcept :
+			m_ctn(rhs.m_ctn),
+			m_beginOffset(rhs.m_beginOffset + beginOffset),
+			m_endOffset(rhs.m_beginOffset + endOffset)
+		{}
+		ContCtnReadOnlyRef(const ContCtnReadOnlyRef& rhs,
+			size_t beginOffset,
+			NoSafeCheck) noexcept :
+			m_ctn(rhs.m_ctn),
+			m_beginOffset(rhs.m_beginOffset + beginOffset),
+			m_endOffset(rhs.m_endOffset)
+		{}
+		ContCtnReadOnlyRef(const ContCtnReadOnlyRef& rhs,
+			size_t beginOffset, size_t endOffset) :
+			ContCtnReadOnlyRef(rhs, beginOffset, endOffset, gsk_noSafeCheck)
+		{
+			if(endOffset < beginOffset)
+			{
+				throw std::invalid_argument("The end of the range is smaller than the begining of the range.");
+			}
+
+			if(endOffset > rhs.GetRegionSize())
+			{
+				throw std::out_of_range("The end of the range is outside of the container.");
+			}
+		}
+		ContCtnReadOnlyRef(const ContCtnReadOnlyRef& rhs,
+			size_t beginOffset) :
+			ContCtnReadOnlyRef(rhs, beginOffset, gsk_noSafeCheck)
+		{
+			if(beginOffset > rhs.GetRegionSize())
+			{
+				throw std::out_of_range("The begining of the range is outside of the container.");
+			}
+		}
 
 		virtual ~ContCtnReadOnlyRef()
 		{}
@@ -1415,7 +1465,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			if(_Base::m_endOffset > CtnType<PureContainerType>::sk_ctnSize)
 			{
-				throw std::out_of_range("The end if the range is outside of the container.");
+				throw std::out_of_range("The end of the range is outside of the container.");
 			}
 		}
 
@@ -1461,6 +1511,32 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		ContCtnReadOnlyStRef(const ContCtnReadOnlyStRef& rhs) noexcept :
 			_Base::ContCtnReadOnlyRef(rhs)
+		{}
+
+		/**
+		 * @brief Construct a new Contiguous Container Read Only Static Reference object
+		 *        by copying the reference from an existing instance, and reference
+		 *        a sub-range of that instance.
+		 *
+		 * @exception None No exception thrown
+		 * @param rhs         The existing instance.
+		 * @param beginOffset The offset (in Bytes, starts from the begining of
+		 *                    the given reference) for the begining of the memory region.
+		 * @param endOffset   The offset (in Bytes, starts from the begining of
+		 *                    the given reference) for the end of the memory region.
+		 */
+		template<size_t _rhs_CtnSize>
+		ContCtnReadOnlyStRef(const ContCtnReadOnlyStRef<_ContainerType, _rhs_CtnSize>& rhs,
+			size_t beginOffset,
+			size_t endOffset,
+			NoSafeCheck) noexcept :
+			_Base::ContCtnReadOnlyRef(rhs, beginOffset, endOffset, gsk_noSafeCheck)
+		{}
+		template<size_t _rhs_CtnSize>
+		ContCtnReadOnlyStRef(const ContCtnReadOnlyStRef<_ContainerType, _rhs_CtnSize>& rhs,
+			size_t beginOffset,
+			NoSafeCheck) noexcept :
+			_Base::ContCtnReadOnlyRef(rhs, beginOffset, gsk_noSafeCheck)
 		{}
 
 		virtual ~ContCtnReadOnlyStRef()
@@ -1517,10 +1593,27 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyStRef<ContainerType, CtnType<ContainerType>::sk_ctnSize>(ctn);
 	}
 
+	template<// automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnFullR(const ContCtnReadOnlyRef<ContainerType>& ctn) noexcept
+	{
+		return ctn;
+	}
+
+	template<// automated parts:
+			 typename ContainerType,
+			 size_t ContainerSize>
+	inline ContCtnReadOnlyStRef<ContainerType, ContainerSize>
+		CtnFullR(const ContCtnReadOnlyStRef<ContainerType, ContainerSize>& ctn) noexcept
+	{
+		return ctn;
+	}
 
 
 
 
+	// CtnByteRgR<x, y>(sta)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1552,6 +1645,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t beginOffset, size_t endOffset,
+			 // automated parts:
+			 typename ContainerType,
+			 size_t CtnRegSize,
+			 size_t nRegStSize = endOffset - beginOffset>
+	inline ContCtnReadOnlyStRef<ContainerType, nRegStSize>
+		CtnByteRgR(const ContCtnReadOnlyStRef<ContainerType, CtnRegSize>& ctn) noexcept
+	{
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+		static_assert(endOffset <= CtnRegSize, "The end of the range is outside of the container.");
+
+		return ContCtnReadOnlyStRef<ContainerType, nRegStSize>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	// CtnByteRgR<x>(sta)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1581,6 +1689,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t beginOffset,
+			 // automated parts:
+			 typename ContainerType,
+			 size_t CtnRegSize,
+			 size_t nRegStSize = CtnRegSize - beginOffset>
+	inline ContCtnReadOnlyStRef<ContainerType, nRegStSize>
+		CtnByteRgR(const ContCtnReadOnlyStRef<ContainerType, CtnRegSize>& ctn) noexcept
+	{
+		static_assert(beginOffset <= CtnRegSize, "The begining of the range is outside of the container.");
+
+		return ContCtnReadOnlyStRef<ContainerType, nRegStSize>(ctn, beginOffset, gsk_noSafeCheck);
+	}
+
+	// CtnByteRgR<x, y>(dyn)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1614,6 +1736,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t beginOffset, size_t endOffset,
+			 // automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnByteRgR(const ContCtnReadOnlyRef<ContainerType>& ctn)
+	{
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+
+		if(endOffset > ctn.GetRegionSize())
+		{
+			throw std::out_of_range("The end of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	// CtnByteRgR<x>(dyn)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1646,6 +1785,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t beginOffset,
+			 // automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnByteRgR(const ContCtnReadOnlyRef<ContainerType>& ctn)
+	{
+		if(beginOffset > ctn.GetRegionSize())
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, gsk_noSafeCheck);
+	}
+
+	// CtnByteRgR(dyn, x, y)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1670,6 +1824,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 
+	template<// automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnByteRgR(const ContCtnReadOnlyRef<ContainerType>& ctn, size_t beginOffset, size_t endOffset)
+	{
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
+	}
+
+	// CtnByteRgR(dyn, x)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1699,10 +1862,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 
+	template<// automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnByteRgR(const ContCtnReadOnlyRef<ContainerType>& ctn, size_t beginOffset)
+	{
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset);
+	}
 
 
 
 
+	// CtnItemRgR<x, y>(sta)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1739,6 +1910,24 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t   beginCount, size_t endCount,
+			 // automated parts:
+			 typename ContainerType,
+			 size_t CtnRegSize,
+			 size_t nRegStSize = (endCount - beginCount) * CtnType<ContainerType>::sk_valSize>
+	inline ContCtnReadOnlyStRef<ContainerType, nRegStSize>
+		CtnItemRgR(const ContCtnReadOnlyStRef<ContainerType, CtnRegSize>& ctn) noexcept
+	{
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+		static_assert(endOffset <= CtnRegSize, "The end of the range is outside of the container.");
+
+		return ContCtnReadOnlyStRef<ContainerType, nRegStSize>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	// CtnItemRgR<x>(sta)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1772,6 +1961,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyStRef<ContainerType, regStSize>(ctn, beginOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t   beginCount,
+			 // automated parts:
+			 typename ContainerType,
+			 size_t CtnRegSize,
+			 size_t nRegStSize = CtnRegSize - (beginCount * CtnType<ContainerType>::sk_valSize)>
+	inline ContCtnReadOnlyStRef<ContainerType, nRegStSize>
+		CtnItemRgR(const ContCtnReadOnlyStRef<ContainerType, CtnRegSize>& ctn) noexcept
+	{
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+
+		static_assert(beginOffset <= CtnRegSize, "The begining of the range is outside of the container.");
+
+		return ContCtnReadOnlyStRef<ContainerType, nRegStSize>(ctn, beginOffset, gsk_noSafeCheck);
+	}
+
+	// CtnItemRgR<x, y>(dyn)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1809,6 +2014,26 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t   beginCount, size_t endCount,
+			 // automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnItemRgR(const ContCtnReadOnlyRef<ContainerType>& ctn)
+	{
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		constexpr size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		static_assert(beginOffset <= endOffset, "The begining of the range should be smaller than or equal to the end of the range.");
+
+		if(endOffset > ctn.GetRegionSize())
+		{
+			throw std::out_of_range("The end of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
+	}
+
+	// CtnItemRgR<x>(dyn)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1843,6 +2068,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset, gsk_noSafeCheck);
 	}
 
+	template<size_t   beginCount,
+			 // automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnItemRgR(const ContCtnReadOnlyRef<ContainerType>& ctn)
+	{
+		constexpr size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+
+		if(beginOffset > ctn.GetRegionSize())
+		{
+			throw std::out_of_range("The begining of the range is outside of the container.");
+		}
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, gsk_noSafeCheck);
+	}
+
+	// CtnItemRgR(dyn, x, y)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container
@@ -1870,6 +2112,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
 
+	template<// automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnItemRgR(const ContCtnReadOnlyRef<ContainerType>& ctn, size_t beginCount, size_t endCount)
+	{
+		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+		const size_t endOffset   = endCount *   CtnType<ContainerType>::sk_valSize;
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
+	}
+
+	// CtnItemRgR(dyn, x)
 	/**
 	 * @brief Helper function to construct the ContCtnReadOnlyRef struct easily for
 	 *        A) a specific range of the container, where the end of range is the end of container
@@ -1899,6 +2153,20 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset, endOffset);
 	}
+
+	template<// automated parts:
+			 typename ContainerType>
+	inline ContCtnReadOnlyRef<ContainerType>
+		CtnItemRgR(const ContCtnReadOnlyRef<ContainerType>& ctn, size_t beginCount)
+	{
+		const size_t beginOffset = beginCount * CtnType<ContainerType>::sk_valSize;
+
+		return ContCtnReadOnlyRef<ContainerType>(ctn, beginOffset);
+	}
+
+
+
+
 
 	/**
 	 * @brief Summarize a ContCtnReadOnlyRef<ContainerType> object into InDataListItem object.
