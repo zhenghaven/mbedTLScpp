@@ -2,8 +2,6 @@
 
 #include <mbedTLScpp/SecretVector.hpp>
 
-#include <vector>
-#include <string>
 #include <list>
 
 #include "MemoryTest.hpp"

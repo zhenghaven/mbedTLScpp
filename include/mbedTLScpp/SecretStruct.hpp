@@ -2,8 +2,6 @@
 
 #include <cstdint>
 
-#include <array>
-#include <utility>
 #ifdef MBEDTLSCPP_MEMORY_TEST
 #include <atomic> //atomic_int64_t
 #endif

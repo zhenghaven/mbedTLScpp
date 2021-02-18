@@ -3061,7 +3061,7 @@
  * Requires: MBEDTLS_CTR_DRBG_C, MBEDTLS_ENTROPY_C
  *
  */
-#define MBEDTLS_PSA_CRYPTO_C
+//#define MBEDTLS_PSA_CRYPTO_C
 
 /**
  * \def MBEDTLS_PSA_CRYPTO_SE_C
@@ -3090,7 +3090,7 @@
  *           either MBEDTLS_PSA_ITS_FILE_C or a native implementation of
  *           the PSA ITS interface
  */
-#define MBEDTLS_PSA_CRYPTO_STORAGE_C
+//#define MBEDTLS_PSA_CRYPTO_STORAGE_C
 
 /**
  * \def MBEDTLS_PSA_ITS_FILE_C
@@ -3442,7 +3442,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-static inline int empty_int_func(...) { return 0; }
+static inline int empty_int_func_cvoidp(const void* ptr, ...) { (void)ptr; return 0; }
 #ifdef __cplusplus
 }
 #endif
@@ -3515,11 +3515,11 @@ static inline int empty_int_func(...) { return 0; }
 //#define MBEDTLS_PLATFORM_EXIT_MACRO            exit /**< Default exit macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_TIME_MACRO            time /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
 //#define MBEDTLS_PLATFORM_TIME_TYPE_MACRO       time_t /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
-#define MBEDTLS_PLATFORM_FPRINTF_MACRO    empty_int_func /**< Default fprintf macro to use, can be undefined */
-#define MBEDTLS_PLATFORM_PRINTF_MACRO     empty_int_func /**< Default printf macro to use, can be undefined */
+#define MBEDTLS_PLATFORM_FPRINTF_MACRO    empty_int_func_cvoidp /**< Default fprintf macro to use, can be undefined */
+#define MBEDTLS_PLATFORM_PRINTF_MACRO     empty_int_func_cvoidp /**< Default printf macro to use, can be undefined */
 /* Note: your snprintf must correctly zero-terminate the buffer! */
-#define MBEDTLS_PLATFORM_SNPRINTF_MACRO   empty_int_func /**< Default snprintf macro to use, can be undefined */
-//#define MBEDTLS_PLATFORM_VSNPRINTF_MACRO    vsnprintf /**< Default vsnprintf macro to use, can be undefined */
+#define MBEDTLS_PLATFORM_SNPRINTF_MACRO   empty_int_func_cvoidp /**< Default snprintf macro to use, can be undefined */
+#define MBEDTLS_PLATFORM_VSNPRINTF_MACRO  empty_int_func_cvoidp /**< Default vsnprintf macro to use, can be undefined */
 //#define MBEDTLS_PLATFORM_NV_SEED_READ_MACRO   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
 //#define MBEDTLS_PLATFORM_NV_SEED_WRITE_MACRO  mbedtls_platform_std_nv_seed_write /**< Default nv_seed_write function to use, can be undefined */
 
