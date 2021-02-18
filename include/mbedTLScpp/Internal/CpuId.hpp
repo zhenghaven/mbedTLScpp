@@ -6,6 +6,8 @@
 #include <type_traits>
 
 #ifdef _WIN32
+#include <cstring>
+#include <intrin.h>
 #include <immintrin.h>
 #endif
 
@@ -39,10 +41,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			return std::make_tuple(eax, ebx, ecx, edx);
 #elif defined(_WIN32)
+			static_assert(sizeof(int) == sizeof(uint32_t), "Programming Error.");
+
 			uint32_t info[4] = { 0 };
 
-			__cpuidex(info, func, subfunc);
+			int infoWin[4] = { 0 };
+			int funcWin = 0;
+			int subfuncWin = 0;
+			std::memcpy(&funcWin, &func, sizeof(int));
+			std::memcpy(&subfuncWin, &subfunc, sizeof(int));
 
+			__cpuidex(infoWin, funcWin, subfuncWin);
+
+			std::memcpy(info, infoWin, sizeof(info));
 			return std::make_tuple(info[0], info[1], info[2], info[3]);
 #else
 #error "This platform is not supported."

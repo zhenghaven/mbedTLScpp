@@ -38,13 +38,15 @@ GTEST_TEST(TestIntelDrng, RdSeedTest)
 	// uint16_t
 	{
 		std::set<uint16_t> randSet;
-		size_t maxRetries = 10;
 
 		uint16_t tmp = 0;
 		for(size_t i = 0; i < 10; ++i)
 		{
 			bool insertRes = false;
-			Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			size_t maxRetries = Internal::PlatformIntel::gsk_rdSeedRcRetryPerStep;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			);
 			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
 			EXPECT_TRUE(insertRes);
 		}
@@ -55,13 +57,15 @@ GTEST_TEST(TestIntelDrng, RdSeedTest)
 	// uint32_t
 	{
 		std::set<uint32_t> randSet;
-		size_t maxRetries = 10;
 
 		uint32_t tmp = 0;
 		for(size_t i = 0; i < 100; ++i)
 		{
 			bool insertRes = false;
-			Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			size_t maxRetries = Internal::PlatformIntel::gsk_rdSeedRcRetryPerStep;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			);
 			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
 			EXPECT_TRUE(insertRes);
 		}
@@ -71,13 +75,15 @@ GTEST_TEST(TestIntelDrng, RdSeedTest)
 	// uint64_t
 	{
 		std::set<uint64_t> randSet;
-		size_t maxRetries = 10;
 
 		uint64_t tmp = 0;
 		for(size_t i = 0; i < 100; ++i)
 		{
 			bool insertRes = false;
-			Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			size_t maxRetries = Internal::PlatformIntel::gsk_rdSeedRcRetryPerStep;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
+			);
 			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
 			EXPECT_TRUE(insertRes);
 		}
@@ -94,11 +100,14 @@ GTEST_TEST(TestIntelDrng, SeedBytesTest)
 		constexpr size_t maxRetries = 10 * ((sizeof(uint64_t) * 10000) / sizeof(uint64_t));
 		size_t offset = 2;
 
-		size_t generated = Internal::PlatformIntel::Internal::rdseed_get_bytes(
-			(sizeof(uint64_t) * 10000),
-			((uint8_t*)randArr.data()) + offset,
-			0,
-			maxRetries
+		size_t generated = 0;
+		EXPECT_NO_THROW(
+			generated = Internal::PlatformIntel::Internal::rdseed_get_bytes(
+				(sizeof(uint64_t) * 10000),
+				((uint8_t*)randArr.data()) + offset,
+				0,
+				maxRetries
+			);
 		);
 		EXPECT_EQ(generated, sizeof(uint64_t) * 10000);
 
@@ -121,9 +130,12 @@ GTEST_TEST(TestIntelDrng, ReadSeedTest)
 	{
 		std::array<uint64_t, 10000> randArr;
 
-		size_t generated = Internal::PlatformIntel::ReadSeed(
-			((uint8_t*)randArr.data()),
-			(sizeof(uint64_t) * randArr.size())
+		size_t generated = 0;
+		EXPECT_NO_THROW(
+			generated = Internal::PlatformIntel::ReadSeed(
+				((uint8_t*)randArr.data()),
+				(sizeof(uint64_t) * randArr.size())
+			);
 		);
 		EXPECT_EQ(generated, sizeof(uint64_t) * randArr.size());
 
