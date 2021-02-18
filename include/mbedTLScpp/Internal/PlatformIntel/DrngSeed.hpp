@@ -43,10 +43,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			namespace Internal
 			{
 
-#ifdef MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST
+#if defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST)
 
 				inline uint8_t rdseed_step(uint16_t* x)
 				{
+#if defined(__GNUC__)
 					uint8_t err = 0;
 
 					asm volatile(".byte 0x66; .byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
@@ -55,10 +56,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					);
 
 					return err;
+#elif defined(_WIN32)
+					return static_cast<uint8_t>(_rdseed16_step(x));
+#else
+#error "This platform is not supported."
+#endif
 				}
 
 				inline uint8_t rdseed_step(uint32_t* x)
 				{
+#if defined(__GNUC__)
 					uint8_t err = 0;
 
 					asm volatile(".byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
@@ -67,11 +74,17 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					);
 
 					return err;
+#elif defined(_WIN32)
+					return static_cast<uint8_t>(_rdseed32_step(x));
+#else
+#error "This platform is not supported."
+#endif
 				}
 
 #ifndef MBEDTLSCPP_INTERNAL_INTEL_NO_UINT64
 				inline uint8_t rdseed_step(uint64_t* x)
 				{
+#if defined(__GNUC__)
 					uint8_t err = 0;
 
 					asm volatile(".byte 0x48; .byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
@@ -80,6 +93,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					);
 
 					return err;
+#elif defined(_WIN32)
+					return static_cast<uint8_t>(_rdseed64_step(x));
+#else
+#error "This platform is not supported."
+#endif
 				}
 #endif //MBEDTLSCPP_INTERNAL_INTEL_NO_UINT64
 
@@ -101,7 +119,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 					return err;
 				}
-#endif //MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST
+#endif //defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST)
 
 
 
@@ -191,7 +209,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					size_t residual;
 					size_t startlen;
 					size_t length;
-					int success;
+					size_t success;
 					size_t success_count = 0;
 					size_t buffsize = n;
 
