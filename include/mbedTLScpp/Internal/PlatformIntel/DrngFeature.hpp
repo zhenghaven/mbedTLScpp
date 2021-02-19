@@ -25,6 +25,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			 */
 			constexpr size_t gsk_rdSeedRcRetryPerStep = 20;
 
+			constexpr size_t gsk_rdRandRetryLimit = 10;
+
 #ifdef MBEDTLSCPP_INTERNAL_INTEL_NO_UINT64
 			using MaxIntType = uint32_t;
 #else

@@ -151,3 +151,113 @@ GTEST_TEST(TestIntelDrng, ReadSeedTest)
 		EXPECT_EQ(randSet.size(), randArr.size());
 	}
 }
+
+GTEST_TEST(TestIntelDrng, RdRandTest)
+{
+
+	// uint16_t
+	{
+		std::set<uint16_t> randSet;
+
+		uint16_t tmp = 0;
+		for(size_t i = 0; i < 10; ++i)
+		{
+			bool insertRes = false;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdrand(&tmp, true);
+			);
+			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
+			EXPECT_TRUE(insertRes);
+		}
+
+		EXPECT_EQ(randSet.size(), 10);
+	}
+
+	// uint32_t
+	{
+		std::set<uint32_t> randSet;
+
+		uint32_t tmp = 0;
+		for(size_t i = 0; i < 100; ++i)
+		{
+			bool insertRes = false;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdrand(&tmp, true);
+			);
+			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
+			EXPECT_TRUE(insertRes);
+		}
+
+		EXPECT_EQ(randSet.size(), 100);
+	}
+	// uint64_t
+	{
+		std::set<uint64_t> randSet;
+
+		uint64_t tmp = 0;
+		for(size_t i = 0; i < 100; ++i)
+		{
+			bool insertRes = false;
+			EXPECT_NO_THROW(
+				Internal::PlatformIntel::Internal::rdrand(&tmp, true);
+			);
+			std::tie(std::ignore, insertRes) = randSet.insert(tmp);
+			EXPECT_TRUE(insertRes);
+		}
+
+		EXPECT_EQ(randSet.size(), 100);
+	}
+}
+
+GTEST_TEST(TestIntelDrng, RandBytesTest)
+{
+	// uint64_t
+	{
+		std::array<uint64_t, 11000> randArr;
+		size_t offset = 2;
+
+		EXPECT_NO_THROW(
+			Internal::PlatformIntel::Internal::rdrand_get_bytes(
+				(sizeof(uint64_t) * 10000),
+				((uint8_t*)randArr.data()) + offset
+			);
+		);
+
+		std::set<uint64_t> randSet;
+
+		for (size_t i = 0; i < 10000; ++i)
+		{
+			bool insertRes = false;
+			std::tie(std::ignore, insertRes) = randSet.insert(randArr[i]);
+			EXPECT_TRUE(insertRes);
+		}
+
+		EXPECT_EQ(randSet.size(), 10000);
+	}
+}
+
+GTEST_TEST(TestIntelDrng, ReadRandTest)
+{
+	// uint64_t
+	{
+		std::array<uint64_t, 10000> randArr;
+
+		EXPECT_NO_THROW(
+			Internal::PlatformIntel::ReadRand(
+				((uint8_t*)randArr.data()),
+				(sizeof(uint64_t) * randArr.size())
+			);
+		);
+
+		std::set<uint64_t> randSet;
+
+		for (size_t i = 0; i < randArr.size(); ++i)
+		{
+			bool insertRes = false;
+			std::tie(std::ignore, insertRes) = randSet.insert(randArr[i]);
+			EXPECT_TRUE(insertRes);
+		}
+
+		EXPECT_EQ(randSet.size(), randArr.size());
+	}
+}

@@ -43,58 +43,58 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			namespace Internal
 			{
 
-#if defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST)
+#if defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDRAND_ASM_INST)
 
-				inline uint8_t rdseed_step(uint16_t* x)
+				inline uint8_t rdrand_step(uint16_t* x)
 				{
 #if defined(__GNUC__)
 					uint8_t err = 0;
 
-					asm volatile(".byte 0x66; .byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
+					asm volatile(".byte 0x66; .byte 0x0f; .byte 0xc7; .byte 0xf0; setc %1"
 								: "=a"  (*x),
 								  "=qm" (err)
 					);
 
 					return err;
 #elif defined(_WIN32)
-					return static_cast<uint8_t>(_rdseed16_step(x));
+					return static_cast<uint8_t>(_rdrand16_step(x));
 #else
 #error "This platform is not supported."
 #endif
 				}
 
-				inline uint8_t rdseed_step(uint32_t* x)
+				inline uint8_t rdrand_step(uint32_t* x)
 				{
 #if defined(__GNUC__)
 					uint8_t err = 0;
 
-					asm volatile(".byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
+					asm volatile(".byte 0x0f; .byte 0xc7; .byte 0xf0; setc %1"
 								: "=a"  (*x),
 								  "=qm" (err)
 					);
 
 					return err;
 #elif defined(_WIN32)
-					return static_cast<uint8_t>(_rdseed32_step(x));
+					return static_cast<uint8_t>(_rdrand32_step(x));
 #else
 #error "This platform is not supported."
 #endif
 				}
 
 #ifndef MBEDTLSCPP_INTERNAL_INTEL_NO_UINT64
-				inline uint8_t rdseed_step(uint64_t* x)
+				inline uint8_t rdrand_step(uint64_t* x)
 				{
 #if defined(__GNUC__)
 					uint8_t err = 0;
 
-					asm volatile(".byte 0x48; .byte 0x0f; .byte 0xc7; .byte 0xf8; setc %1"
+					asm volatile(".byte 0x48; .byte 0x0f; .byte 0xc7; .byte 0xf0; setc %1"
 								: "=a"  (*x),
 								  "=qm" (err)
 					);
 
 					return err;
 #elif defined(_WIN32)
-					return static_cast<uint8_t>(_rdseed64_step(x));
+					return static_cast<uint8_t>(_rdrand64_step(x));
 #else
 #error "This platform is not supported."
 #endif
@@ -108,18 +108,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 						|| std::is_same<T, uint32_t>::value
 						|| std::is_same<T, MaxIntType>::value
 					, int> = 0>
-				inline uint8_t rdseed_step(T* x)
+				inline uint8_t rdrand_step(T* x)
 				{
 					uint8_t err = 0;
 
-					asm volatile("rdseed %0; setc %1"
+					asm volatile("rdrand %0; setc %1"
 								: "=r"  (*x),
-								"=qm" (err)
+								  "=qm" (err)
 					);
 
 					return err;
 				}
-#endif //defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDSEED_ASM_INST)
+#endif //defined(_WIN32) || defined(MBEDTLSCPP_INTERNAL_INTEL_NO_RDRAND_ASM_INST)
 
 
 
@@ -131,26 +131,36 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 						|| std::is_same<T, uint32_t>::value
 						|| std::is_same<T, MaxIntType>::value
 					, int> = 0>
-				inline void rdseed(T* x, size_t& retry_count)
+				inline void rdrand(T* x, bool retry)
 				{
-					if (!IsRdSeedSupportedCached())
+					if (!IsRdRandSupportedCached())
 					{
 						throw FeatureUnsupportedException("mbedTLScpp::Internal::PlatformIntel::Internal - "
-							"RDSEED is not supported on this platform.");
+							"RDRAND is not supported on this platform.");
 					}
 
-					if (rdseed_step(x) == 0)
+					if (retry)
 					{
-						while (retry_count > 0)
+						for (size_t i = 0; i < gsk_rdRandRetryLimit; ++i)
 						{
-							retry_count--;
-							if (rdseed_step(x) != 0)
+							if (rdrand_step(x) != 0)
 							{
 								return;
 							}
 						}
+
 						throw PlatformBusyException("mbedTLScpp::Internal::PlatformIntel::Internal - "
-							"RDSEED no response; try again later.");
+							"RDRAND no response; try again later.");
+					}
+					else
+					{
+						if (rdrand_step(x) != 0)
+						{
+							return;
+						}
+
+						throw PlatformBusyException("mbedTLScpp::Internal::PlatformIntel::Internal - "
+							"RDRAND no response; try again later.");
 					}
 				}
 
@@ -164,65 +174,36 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 						|| std::is_same<T, uint32_t>::value
 						|| std::is_same<T, MaxIntType>::value
 					, int> = 0>
-				size_t rdseed_get_n(size_t n, T *dest, size_t skip, size_t& max_retries)
+				void rdrand_get_n(size_t n, T *dest)
 				{
-					size_t success_count = 0;
-
-					if (skip)
+					for (size_t i = 0; i < n; ++i)
 					{
-						n = n - skip;
-						dest = &(dest[skip]);
-						success_count = skip;
+						rdrand(dest, true);
+						dest= &(dest[1]);
 					}
-
-					for (size_t i = 0; i < n; i++)
-					{
-						try
-						{
-#if DEBUG
-							*dest = -1;
-#endif //DEBUG
-							rdseed(dest, max_retries);
-						}
-						catch(const PlatformBusyException&)
-						{
-							return success_count;
-						}
-
-						dest = &(dest[1]);
-						success_count++;
-					}
-					return success_count;
 				}
 
 
 
 
 
-				size_t rdseed_get_bytes(size_t n, uint8_t *dest, size_t skip, size_t max_retries)
+				void rdrand_get_bytes(size_t n, uint8_t *dest)
 				{
 					uint8_t *start;
 					uint8_t *residualstart;
 					MaxIntType *blockstart;
-					MaxIntType i, temprand;
+					MaxIntType temprand;
+					size_t i;
 					size_t count;
 					size_t residual;
 					size_t startlen;
 					size_t length;
-					size_t success;
-					size_t success_count = 0;
-					size_t buffsize = n;
 
-					if (skip)
-					{
-						n = n - skip;
-						dest = &(dest[skip]);
-						success_count = skip;
-					}
-
-					/* Compute the address of the first 32- or 64- bit aligned block in the destination buffer, depending on whether we are in 32- or 64-bit mode */
+					/* Compute the address of the first 32- or 64- bit aligned
+					block in the destination buffer, depending on whether we are
+					in 32- or 64-bit mode */
 					start = dest;
-					if (( (MaxIntType)start % (MaxIntType)sizeof(MaxIntType) ) == 0)
+					if ( ( (MaxIntType)start % (MaxIntType)sizeof(MaxIntType) ) == 0)
 					{
 						blockstart = (MaxIntType*)start;
 						count = n;
@@ -231,35 +212,31 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					else
 					{
 						blockstart = (MaxIntType*)(
-							( (MaxIntType)start & ~(MaxIntType)(sizeof(MaxIntType) - 1) ) + (MaxIntType)sizeof(MaxIntType)
+							( (MaxIntType)start & ~(MaxIntType)(sizeof(MaxIntType) - 1) ) +
+							(MaxIntType)sizeof(MaxIntType)
 						);
 						count = n - (
-							sizeof(MaxIntType) - (size_t)((MaxIntType)start % sizeof(MaxIntType))
+							sizeof(MaxIntType) - (size_t)( (MaxIntType)start % sizeof(MaxIntType) )
 						);
 						startlen = (size_t)(
 							(MaxIntType)blockstart - (MaxIntType)start
 						);
 					}
 
-					/* Compute the number of 32- or 64- bit blocks and the remaining number of bytes */
+					/* Compute the number of 32- or 64- bit blocks and the
+					remaining number of bytes */
 					residual = count % sizeof(MaxIntType);
 					length   = count / sizeof(MaxIntType);
 					if (residual != 0)
 					{
-						residualstart = (uint8_t *)(blockstart + length);
+						residualstart = (uint8_t*)(blockstart + length);
 					}
 
-					/* Get a temporary random number for use in the residuals. Failout if retry fails */
+					/* Get a temporary random number for use in the residuals.
+					Failout if retry fails */
 					if (startlen > 0)
 					{
-						try
-						{
-							rdseed(&temprand, max_retries);
-						}
-						catch(const PlatformBusyException&)
-						{
-							return success_count;
-						}
+						rdrand(&temprand, true);
 					}
 
 					/* populate the starting misaligned block */
@@ -267,39 +244,25 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					{
 						start[i] = (uint8_t)(temprand & 0xff);
 						temprand = temprand >> 8;
-						success_count++;
 					}
 
 					/* populate the central aligned block. Fail out if retry fails */
-					success = rdseed_get_n(length, blockstart, 0, max_retries);
-					success_count += success * sizeof(MaxIntType);
-					if (success < length)
-					{
-						return success_count;
-					}
+
+					rdrand_get_n(length, blockstart);
 
 					/* populate the final misaligned block */
 					if (residual > 0)
 					{
-						try
-						{
-							rdseed(&temprand, max_retries);
-						}
-						catch(const PlatformBusyException&)
-						{
-							return success_count;
-						}
+						rdrand(&temprand, true);
 
 						for (i = 0; i < residual; i++)
 						{
 							residualstart[i] = (uint8_t)(temprand & 0xff);
 							temprand = temprand >> 8;
-							success_count++;
 						}
 					}
-
-					return buffsize;
 				}
+
 			}
 		}
 	}
