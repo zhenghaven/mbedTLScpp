@@ -591,7 +591,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		size_type max_size() const noexcept
 		{
-			return std::numeric_limits<size_type>::max() - sk_extra_cap;
+			return (std::numeric_limits<size_type>::max)() - sk_extra_cap;
 		}
 
 		void push_back(const value_type& value)
@@ -1057,7 +1057,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			{
 				return ms;
 			}
-			return std::max<size_type>((2 * cap), new_size);
+			return (std::max<size_type>)((2 * cap), new_size);
 		}
 
 	private:

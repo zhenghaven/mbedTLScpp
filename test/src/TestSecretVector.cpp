@@ -46,7 +46,7 @@ GTEST_TEST(TestSecretVector, ConstructEmpty)
 
 		EXPECT_EQ(vec1.capacity(), 0);
 
-		EXPECT_EQ(vec1.max_size(), std::numeric_limits<size_t>::max());
+		EXPECT_EQ(vec1.max_size(), (std::numeric_limits<size_t>::max)());
 
 		EXPECT_TRUE(vec1.empty());
 

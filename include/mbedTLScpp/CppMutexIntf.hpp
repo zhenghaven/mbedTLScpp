@@ -1,12 +1,13 @@
 #pragma once
 
+#include <mbedtls/threading.h>
+
 #ifdef MBEDTLS_THREADING_ALT
 
 #include <mutex>
 #include <memory>
 
 #include <mbedtls/platform.h>
-#include <mbedtls/threading.h>
 
 #include "Internal/Memory.hpp"
 #include "Internal/make_unique.hpp"

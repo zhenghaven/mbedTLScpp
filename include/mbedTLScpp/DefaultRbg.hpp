@@ -10,13 +10,11 @@ namespace mbedTLScpp
 namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
-#ifndef MBEDTLSCPP_CUSTOMIZED_DEFAULT_RBG
 	using DefaultRbg = CtrDrbg<>;
-#endif
 }
 
-#else
+#else // !MBEDTLSCPP_CUSTOMIZED_DEFAULT_RBG
 
 #include MBEDTLSCPP_CUSTOMIZED_DEFAULT_RBG
 
-#endif
+#endif // !MBEDTLSCPP_CUSTOMIZED_DEFAULT_RBG

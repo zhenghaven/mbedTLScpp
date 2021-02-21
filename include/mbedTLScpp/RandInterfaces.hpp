@@ -122,14 +122,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using RbgType = _RbgType;
 
-		static constexpr ResultType max()
+		static constexpr ResultType (max)()
 		{
-			return std::numeric_limits<ResultType>::max();
+			return (std::numeric_limits<ResultType>::max)();
 		}
 
-		static constexpr ResultType min()
+		static constexpr ResultType (min)()
 		{
-			return std::numeric_limits<ResultType>::min();
+			return (std::numeric_limits<ResultType>::min)();
 		}
 
 	public:

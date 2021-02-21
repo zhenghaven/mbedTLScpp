@@ -591,7 +591,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			static constexpr int64_t divisor       = 1000000000000000000;
 			static constexpr size_t  divisorDigits = sizeof("1000000000000000000") - 1 - 1;
 
-			//static_assert(divisor <= std::numeric_limits<int32_t>::max(), "Programming Error.");
+			//static_assert(divisor <= (std::numeric_limits<int32_t>::max)(), "Programming Error.");
 			NullCheck();
 
 			std::string res;

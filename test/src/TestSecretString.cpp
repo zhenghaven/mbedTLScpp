@@ -43,7 +43,7 @@ GTEST_TEST(TestSecretString, ConstructEmpty)
 
 		EXPECT_EQ(str1.capacity(), 0);
 
-		EXPECT_EQ(str1.max_size(), std::numeric_limits<size_t>::max() - 1);
+		EXPECT_EQ(str1.max_size(), (std::numeric_limits<size_t>::max)() - 1);
 
 		EXPECT_TRUE(str1.empty());
 

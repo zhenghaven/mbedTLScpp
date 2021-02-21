@@ -270,8 +270,8 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_int_distribution<int64_t> distTri(
-			std::numeric_limits<int64_t>::min() / 3,
-			std::numeric_limits<int64_t>::max() / 3);
+			(std::numeric_limits<int64_t>::min)() / 3,
+			(std::numeric_limits<int64_t>::max)() / 3);
 
 		std::uniform_int_distribution<int64_t> distSqr(
 			-3037000499LL,
@@ -390,8 +390,8 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 			EXPECT_EQ((BigNum(a) <  b), (a <  b));
 		}
 
-		// a = std::numeric_limits<mbedtls_mpi_sint>::max();
-		// b = 7516188671; // 6442446847 //std::numeric_limits<uint32_t>::max() + 1000000000LL;
+		// a = (std::numeric_limits<mbedtls_mpi_sint>::max)();
+		// b = 7516188671; // 6442446847 //(std::numeric_limits<uint32_t>::max)() + 1000000000LL;
 		// std::cerr << "a: " << a << " b: " << b << std::endl;
 		// std::cerr << "a * a: " << (BigNum(a) * BigNum(a)).Dec() << std::endl;
 		// std::cerr << "a * a % b: " << (BigNum(a) * BigNum(a)).Mod(b) << std::endl;
