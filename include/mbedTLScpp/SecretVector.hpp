@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include <limits>
 #include <vector>
 #include <iterator>
 
