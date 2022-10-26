@@ -1,0 +1,48 @@
+--- include/mbedTLScpp/mbedtls-headers/mbedtls-config.h	2022-10-25 20:55:11.280259996 -0700
++++ include/mbedTLScpp/mbedtls-headers/normal/mbedtlscpp-config.h	2021-01-16 17:49:30.000000000 -0800
+@@ -1372,7 +1372,7 @@
+  *
+  * Enable the checkup functions (*_self_test).
+  */
+-#define MBEDTLS_SELF_TEST
++//#define MBEDTLS_SELF_TEST
+ 
+ /**
+  * \def MBEDTLS_SHA256_SMALLER
+@@ -1971,7 +1971,7 @@
+  *
+  * Uncomment this to allow your own alternate threading implementation.
+  */
+-//#define MBEDTLS_THREADING_ALT
++#define MBEDTLS_THREADING_ALT
+ 
+ /**
+  * \def MBEDTLS_THREADING_PTHREAD
+@@ -2494,7 +2494,7 @@
+  * Requires: MBEDTLS_AES_C or MBEDTLS_DES_C
+  *
+  */
+-//#define MBEDTLS_CMAC_C
++#define MBEDTLS_CMAC_C
+ 
+ /**
+  * \def MBEDTLS_CTR_DRBG_C
+@@ -2528,7 +2528,9 @@
+  *
+  * This module provides debugging functions.
+  */
++#ifndef NDEBUG
+ #define MBEDTLS_DEBUG_C
++#endif // !DEBUG
+ 
+ /**
+  * \def MBEDTLS_DES_C
+@@ -3286,7 +3288,7 @@
+  *
+  * Enable this layer to allow use of mutexes within mbed TLS
+  */
+-//#define MBEDTLS_THREADING_C
++#define MBEDTLS_THREADING_C
+ 
+ /**
+  * \def MBEDTLS_TIMING_C

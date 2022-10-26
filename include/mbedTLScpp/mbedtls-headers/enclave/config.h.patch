@@ -1,0 +1,182 @@
+--- include/mbedTLScpp/mbedtls-headers/mbedtls-config.h	2022-10-25 20:55:11.280259996 -0700
++++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp-config.h	2021-02-17 15:48:01.000000000 -0800
+@@ -130,7 +130,7 @@
+  *
+  * Comment if your system does not support time functions
+  */
+-#define MBEDTLS_HAVE_TIME
++//#define MBEDTLS_HAVE_TIME
+ 
+ /**
+  * \def MBEDTLS_HAVE_TIME_DATE
+@@ -151,7 +151,7 @@
+  * mbedtls_platform_gmtime_r() at compile-time by using the macro
+  * MBEDTLS_PLATFORM_GMTIME_R_ALT.
+  */
+-#define MBEDTLS_HAVE_TIME_DATE
++//#define MBEDTLS_HAVE_TIME_DATE
+ 
+ /**
+  * \def MBEDTLS_PLATFORM_MEMORY
+@@ -551,7 +551,7 @@
+  *
+  * Uncomment to use your own hardware entropy collector.
+  */
+-//#define MBEDTLS_ENTROPY_HARDWARE_ALT
++#define MBEDTLS_ENTROPY_HARDWARE_ALT
+ 
+ /**
+  * \def MBEDTLS_AES_ROM_TABLES
+@@ -1188,7 +1188,7 @@
+  *
+  * Enable functions that use the filesystem.
+  */
+-#define MBEDTLS_FS_IO
++//#define MBEDTLS_FS_IO
+ 
+ /**
+  * \def MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
+@@ -1212,7 +1212,7 @@
+  *
+  * Uncomment this macro to disable the built-in platform entropy functions.
+  */
+-//#define MBEDTLS_NO_PLATFORM_ENTROPY
++#define MBEDTLS_NO_PLATFORM_ENTROPY
+ 
+ /**
+  * \def MBEDTLS_ENTROPY_FORCE_SHA256
+@@ -1372,7 +1372,7 @@
+  *
+  * Enable the checkup functions (*_self_test).
+  */
+-#define MBEDTLS_SELF_TEST
++//#define MBEDTLS_SELF_TEST
+ 
+ /**
+  * \def MBEDTLS_SHA256_SMALLER
+@@ -1971,7 +1971,7 @@
+  *
+  * Uncomment this to allow your own alternate threading implementation.
+  */
+-//#define MBEDTLS_THREADING_ALT
++#define MBEDTLS_THREADING_ALT
+ 
+ /**
+  * \def MBEDTLS_THREADING_PTHREAD
+@@ -2147,7 +2147,7 @@
+  *
+  * This modules adds support for the AES-NI instructions on x86-64
+  */
+-#define MBEDTLS_AESNI_C
++//#define MBEDTLS_AESNI_C
+ 
+ /**
+  * \def MBEDTLS_AES_C
+@@ -2494,7 +2494,7 @@
+  * Requires: MBEDTLS_AES_C or MBEDTLS_DES_C
+  *
+  */
+-//#define MBEDTLS_CMAC_C
++#define MBEDTLS_CMAC_C
+ 
+ /**
+  * \def MBEDTLS_CTR_DRBG_C
+@@ -2528,7 +2528,7 @@
+  *
+  * This module provides debugging functions.
+  */
+-#define MBEDTLS_DEBUG_C
++//#define MBEDTLS_DEBUG_C
+ 
+ /**
+  * \def MBEDTLS_DES_C
+@@ -2852,7 +2852,7 @@
+  *
+  * This module provides networking routines.
+  */
+-#define MBEDTLS_NET_C
++//#define MBEDTLS_NET_C
+ 
+ /**
+  * \def MBEDTLS_OID_C
+@@ -3061,7 +3061,7 @@
+  * Requires: MBEDTLS_CTR_DRBG_C, MBEDTLS_ENTROPY_C
+  *
+  */
+-#define MBEDTLS_PSA_CRYPTO_C
++//#define MBEDTLS_PSA_CRYPTO_C
+ 
+ /**
+  * \def MBEDTLS_PSA_CRYPTO_SE_C
+@@ -3090,7 +3090,7 @@
+  *           either MBEDTLS_PSA_ITS_FILE_C or a native implementation of
+  *           the PSA ITS interface
+  */
+-#define MBEDTLS_PSA_CRYPTO_STORAGE_C
++//#define MBEDTLS_PSA_CRYPTO_STORAGE_C
+ 
+ /**
+  * \def MBEDTLS_PSA_ITS_FILE_C
+@@ -3102,7 +3102,7 @@
+  *
+  * Requires: MBEDTLS_FS_IO
+  */
+-#define MBEDTLS_PSA_ITS_FILE_C
++//#define MBEDTLS_PSA_ITS_FILE_C
+ 
+ /**
+  * \def MBEDTLS_RIPEMD160_C
+@@ -3286,7 +3286,7 @@
+  *
+  * Enable this layer to allow use of mutexes within mbed TLS
+  */
+-//#define MBEDTLS_THREADING_C
++#define MBEDTLS_THREADING_C
+ 
+ /**
+  * \def MBEDTLS_TIMING_C
+@@ -3309,7 +3309,7 @@
+  *
+  * This module is used by the HAVEGE random number generator.
+  */
+-#define MBEDTLS_TIMING_C
++//#define MBEDTLS_TIMING_C
+ 
+ /**
+  * \def MBEDTLS_VERSION_C
+@@ -3435,6 +3435,19 @@
+ /* \} name SECTION: mbed TLS modules */
+ 
+ /**
++ * \brief A empty function that take any number of parameters and returns 0.
++ *        It's used for replacing the printf related functions below.
++ *
++ */
++#ifdef __cplusplus
++extern "C" {
++#endif
++static inline int empty_int_func_cvoidp(const void* ptr, ...) { (void)ptr; return 0; }
++#ifdef __cplusplus
++}
++#endif
++
++/**
+  * \name SECTION: Module configuration options
+  *
+  * This section allows for the setting of module specific sizes and
+@@ -3502,11 +3515,11 @@
+ //#define MBEDTLS_PLATFORM_EXIT_MACRO            exit /**< Default exit macro to use, can be undefined */
+ //#define MBEDTLS_PLATFORM_TIME_MACRO            time /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
+ //#define MBEDTLS_PLATFORM_TIME_TYPE_MACRO       time_t /**< Default time macro to use, can be undefined. MBEDTLS_HAVE_TIME must be enabled */
+-//#define MBEDTLS_PLATFORM_FPRINTF_MACRO      fprintf /**< Default fprintf macro to use, can be undefined */
+-//#define MBEDTLS_PLATFORM_PRINTF_MACRO        printf /**< Default printf macro to use, can be undefined */
++#define MBEDTLS_PLATFORM_FPRINTF_MACRO    empty_int_func_cvoidp /**< Default fprintf macro to use, can be undefined */
++#define MBEDTLS_PLATFORM_PRINTF_MACRO     empty_int_func_cvoidp /**< Default printf macro to use, can be undefined */
+ /* Note: your snprintf must correctly zero-terminate the buffer! */
+-//#define MBEDTLS_PLATFORM_SNPRINTF_MACRO    snprintf /**< Default snprintf macro to use, can be undefined */
+-//#define MBEDTLS_PLATFORM_VSNPRINTF_MACRO    vsnprintf /**< Default vsnprintf macro to use, can be undefined */
++#define MBEDTLS_PLATFORM_SNPRINTF_MACRO   empty_int_func_cvoidp /**< Default snprintf macro to use, can be undefined */
++#define MBEDTLS_PLATFORM_VSNPRINTF_MACRO  empty_int_func_cvoidp /**< Default vsnprintf macro to use, can be undefined */
+ //#define MBEDTLS_PLATFORM_NV_SEED_READ_MACRO   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
+ //#define MBEDTLS_PLATFORM_NV_SEED_WRITE_MACRO  mbedtls_platform_std_nv_seed_write /**< Default nv_seed_write function to use, can be undefined */
+ 
