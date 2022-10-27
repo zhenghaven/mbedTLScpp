@@ -42,8 +42,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			m_memNEqual(Internal::ConstTimeMemNotEqual) // noexcept
 		{}
 
-		virtual ~StaticLoadedFunctions()
-		{}
+		// LCOV_EXCL_START
+		virtual ~StaticLoadedFunctions() = default;
+		// LCOV_EXCL_STOP
 
 		void SecureZeroize(void* ptr, size_t size) noexcept
 		{

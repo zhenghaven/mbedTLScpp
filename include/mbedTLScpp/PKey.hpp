@@ -346,8 +346,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		PKeyBase(const PKeyBase& rhs) = delete;
 
-		virtual ~PKeyBase()
-		{}
+		// LCOV_EXCL_START
+		virtual ~PKeyBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

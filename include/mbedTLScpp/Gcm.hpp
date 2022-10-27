@@ -89,8 +89,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		GcmBase(const GcmBase& rhs) = delete;
 
-		virtual ~GcmBase()
-		{}
+		// LCOV_EXCL_START
+		virtual ~GcmBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -225,8 +226,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		Gcm(const Gcm& rhs) = delete;
 
-		virtual ~Gcm()
-		{}
+		// LCOV_EXCL_START
+		virtual ~Gcm() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

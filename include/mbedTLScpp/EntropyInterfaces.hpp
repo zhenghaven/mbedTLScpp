@@ -56,8 +56,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		EntropyInterface() = default;
 
-		virtual ~EntropyInterface()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EntropyInterface() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Get the raw C pointer to the object which can uniquely

@@ -360,10 +360,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			other.m_capacity = 0;
 		}
 
+		// LCOV_EXCL_START
 		virtual ~SecretVector()
 		{
 			clear_and_deallocate();
 		}
+		// LCOV_EXCL_STOP
 
 		SecretVector& operator=( const SecretVector& other )
 		{

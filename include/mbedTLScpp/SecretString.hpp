@@ -111,8 +111,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::SecretVector(init_list.begin(), init_list.end(), alloc)
 		{}
 
-		virtual ~SecretBasicString()
-		{}
+		// LCOV_EXCL_START
+		virtual ~SecretBasicString() = default;
+		// LCOV_EXCL_STOP
 
 		SecretBasicString& operator=( const SecretBasicString& other )
 		{

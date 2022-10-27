@@ -88,12 +88,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		BigNumberBase(const BigNumberBase& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Big Number Base object
 		 *
 		 */
-		virtual ~BigNumberBase()
-		{}
+		virtual ~BigNumberBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -1076,12 +1077,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::BigNumberBase(std::forward<_Base>(rhs)) //noexcept
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Big Number Base object
 		 *
 		 */
-		virtual ~BigNumber()
-		{}
+		virtual ~BigNumber() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

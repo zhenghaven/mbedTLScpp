@@ -68,8 +68,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		TlsSession(const TlsSession& rhs) = delete;
 
-		virtual ~TlsSession()
-		{}
+		// LCOV_EXCL_START
+		virtual ~TlsSession() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

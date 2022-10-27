@@ -101,8 +101,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		TlsSessTktMgrIntf() = default;
 
-		virtual ~TlsSessTktMgrIntf()
-		{}
+		// LCOV_EXCL_START
+		virtual ~TlsSessTktMgrIntf() = default;
+		// LCOV_EXCL_STOP
 
 		virtual void Parse(mbedtls_ssl_session& session, uint8_t* buf, size_t len) = 0;
 

@@ -88,6 +88,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			m_data(other.m_data)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Secret Array object
 		 *
@@ -96,6 +97,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			Zeroize();
 		}
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Copy assignment

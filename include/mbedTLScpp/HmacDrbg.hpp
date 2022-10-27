@@ -103,9 +103,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		HmacDrbg(const HmacDrbg& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
-		virtual ~HmacDrbg()
-		{}
+		virtual ~HmacDrbg() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

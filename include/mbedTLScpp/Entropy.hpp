@@ -94,9 +94,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		Entropy(const Entropy& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
-		virtual ~Entropy()
-		{}
+		virtual ~Entropy() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

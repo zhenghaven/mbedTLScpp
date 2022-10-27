@@ -180,9 +180,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		MsgDigestBase(const MsgDigestBase& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
-		virtual ~MsgDigestBase()
-		{}
+		virtual ~MsgDigestBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

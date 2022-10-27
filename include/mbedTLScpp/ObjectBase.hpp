@@ -29,8 +29,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public:
 		ObjIntf() = default;
 
-		virtual ~ObjIntf()
-		{}
+		// LCOV_EXCL_START
+		virtual ~ObjIntf() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Function for getting the pointer to the mbed TLS's
@@ -264,11 +265,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			rhs.m_ptr = nullptr;
 		}
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
 		virtual ~ObjectBase()
 		{
 			FreeBaseObject();
 		}
+		// LCOV_EXCL_STOP
 
 		ObjectBase& operator=(const ObjectBase& other) = delete;
 

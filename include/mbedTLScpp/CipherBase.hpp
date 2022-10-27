@@ -232,12 +232,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		CipherBase(const CipherBase& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Cipher Base object
 		 *
 		 */
-		virtual ~CipherBase()
-		{}
+		virtual ~CipherBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

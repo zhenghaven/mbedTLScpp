@@ -56,12 +56,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			std::runtime_error(other)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Runtime Exception object
 		 *
 		 */
-		virtual ~RuntimeException()
-		{}
+		virtual ~RuntimeException() = default;
+		// LCOV_EXCL_STOP
 	};
 
 	/**
@@ -158,12 +159,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			m_errorCode(other.m_errorCode)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the mbed TLS Runtime Error object
 		 *
 		 */
-		virtual ~mbedTLSRuntimeError()
-		{}
+		virtual ~mbedTLSRuntimeError() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Get the error code
@@ -197,12 +199,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			RuntimeException(other)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Invalid Object Exception object
 		 *
 		 */
-		virtual ~InvalidObjectException()
-		{}
+		virtual ~InvalidObjectException() = default;
+		// LCOV_EXCL_STOP
 	};
 
 	/**
@@ -236,12 +239,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			RuntimeException(other)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Invalid Argument Exception object
 		 *
 		 */
-		virtual ~InvalidArgumentException()
-		{}
+		virtual ~InvalidArgumentException() = default;
+		// LCOV_EXCL_STOP
 	};
 
 	/**
@@ -277,12 +281,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			RuntimeException(other)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Unexpected Error Exception object
 		 *
 		 */
-		virtual ~UnexpectedErrorException()
-		{}
+		virtual ~UnexpectedErrorException() = default;
+		// LCOV_EXCL_STOP
 	};
 }
 

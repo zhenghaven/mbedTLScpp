@@ -103,9 +103,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		CtrDrbg(const CtrDrbg& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
-		virtual ~CtrDrbg()
-		{}
+		virtual ~CtrDrbg() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

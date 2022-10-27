@@ -213,8 +213,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		TlsConfig(const TlsConfig& rhs) = delete;
 
-		virtual ~TlsConfig()
-		{}
+		// LCOV_EXCL_START
+		virtual ~TlsConfig() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

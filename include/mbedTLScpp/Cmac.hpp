@@ -66,9 +66,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		CmacerBase(const CmacerBase& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief Destructor */
-		virtual ~CmacerBase()
-		{}
+		virtual ~CmacerBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -191,12 +192,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			CmacerBase(GetCipherInfo(_cipherType, _bitSize, _cipherMode), key)
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Cmacer object
 		 *
 		 */
-		virtual ~Cmacer()
-		{}
+		virtual ~Cmacer() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.

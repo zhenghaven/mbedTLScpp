@@ -86,8 +86,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		X509ReqWriter(const X509ReqWriter& rhs) = delete;
 
-		virtual ~X509ReqWriter()
-		{}
+		// LCOV_EXCL_START
+		virtual ~X509ReqWriter() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -267,8 +268,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		X509Req(const X509Req& rhs) = delete;
 
-		virtual ~X509Req()
-		{}
+		// LCOV_EXCL_START
+		virtual ~X509Req() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

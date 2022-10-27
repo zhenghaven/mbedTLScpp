@@ -255,8 +255,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ObjectBase(&other)
 		{}
 
-		virtual ~EcGroup()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EcGroup() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -482,8 +483,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			EcPublicKeyBase(rhs, (const void*)nullptr)
 		{}
 
-		virtual ~EcPublicKeyBase()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EcPublicKeyBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -972,8 +974,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				mbedtls_ecp_check_privkey, &(ecCtx.grp), &(ecCtx.d));
 		}
 
-		virtual ~EcKeyPairBase()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EcKeyPairBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief	Copy assignment operator
@@ -1386,8 +1389,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			EcPublicKey(rhs, (const void*)nullptr)
 		{}
 
-		virtual ~EcPublicKey()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EcPublicKey() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief	Copy assignment operator
@@ -1751,8 +1755,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			EcKeyPair(rhs, nullptr)
 		{}
 
-		virtual ~EcKeyPair()
-		{}
+		// LCOV_EXCL_START
+		virtual ~EcKeyPair() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief	Copy assignment operator

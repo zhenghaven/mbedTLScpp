@@ -154,8 +154,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		X509CertWriter(const X509CertWriter& rhs) = delete;
 
-		virtual ~X509CertWriter()
-		{}
+		// LCOV_EXCL_START
+		virtual ~X509CertWriter() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -427,8 +428,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		X509CertBase(const X509CertBase& rhs) = delete;
 
-		virtual ~X509CertBase()
-		{}
+		// LCOV_EXCL_START
+		virtual ~X509CertBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

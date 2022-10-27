@@ -88,8 +88,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		TlsSessTktMgr(const TlsSessTktMgr& rhs) = delete;
 
-		virtual ~TlsSessTktMgr()
-		{}
+		// LCOV_EXCL_START
+		virtual ~TlsSessTktMgr() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

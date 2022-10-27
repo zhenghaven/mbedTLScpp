@@ -58,8 +58,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public:
 		RbgInterface() = default;
 
-		virtual ~RbgInterface()
-		{}
+		// LCOV_EXCL_START
+		virtual ~RbgInterface() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief	Generate Random bits to fill the given buffer.
@@ -144,8 +145,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			m_rbg(std::move(rbg))
 		{}
 
-		virtual ~RbgCppWrap()
-		{}
+		// LCOV_EXCL_START
+		virtual ~RbgCppWrap() = default;
+		// LCOV_EXCL_STOP
 
 		ResultType operator()()
 		{

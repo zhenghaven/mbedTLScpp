@@ -1317,8 +1317,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			}
 		}
 
-		virtual ~ContCtnReadOnlyRef()
-		{}
+		// LCOV_EXCL_START
+		virtual ~ContCtnReadOnlyRef() = default;
+		// LCOV_EXCL_STOP
 
 		ContCtnReadOnlyRef& operator=(const ContCtnReadOnlyRef& rhs) = delete;
 
@@ -1539,8 +1540,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::ContCtnReadOnlyRef(rhs, beginOffset, gsk_noSafeCheck)
 		{}
 
-		virtual ~ContCtnReadOnlyStRef()
-		{}
+		// LCOV_EXCL_START
+		virtual ~ContCtnReadOnlyStRef() = default;
+		// LCOV_EXCL_STOP
 
 		ContCtnReadOnlyStRef& operator=(const ContCtnReadOnlyStRef& rhs) = delete;
 

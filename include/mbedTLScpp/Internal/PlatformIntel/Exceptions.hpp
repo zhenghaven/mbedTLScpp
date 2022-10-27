@@ -43,12 +43,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					RuntimeException(other)
 				{}
 
+				// LCOV_EXCL_START
 				/**
 				 * @brief Destroy the FeatureUnsupported Exception object
 				 *
 				 */
-				virtual ~FeatureUnsupportedException()
-				{}
+				virtual ~FeatureUnsupportedException() = default;
+				// LCOV_EXCL_STOP
 			};
 
 			/**
@@ -82,12 +83,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					RuntimeException(other)
 				{}
 
+				// LCOV_EXCL_START
 				/**
 				 * @brief Destroy the PlatformBusy Exception object
 				 *
 				 */
-				virtual ~PlatformBusyException()
-				{}
+				virtual ~PlatformBusyException() = default;
+				// LCOV_EXCL_STOP
 			};
 		}
 	}

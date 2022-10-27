@@ -106,8 +106,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		X509Crl(const X509Crl& rhs) = delete;
 
-		virtual ~X509Crl()
-		{}
+		// LCOV_EXCL_START
+		virtual ~X509Crl() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.

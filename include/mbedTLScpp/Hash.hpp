@@ -88,9 +88,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		HasherBase(const HasherBase& rhs) = delete;
 
+		// LCOV_EXCL_START
 		/** @brief	Destructor */
-		virtual ~HasherBase()
-		{}
+		virtual ~HasherBase() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
@@ -209,12 +210,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			HasherBase(GetMdInfo(_HashTypeValue))
 		{}
 
+		// LCOV_EXCL_START
 		/**
 		 * @brief Destroy the Hasher object
 		 *
 		 */
-		virtual ~Hasher()
-		{}
+		virtual ~Hasher() = default;
+		// LCOV_EXCL_STOP
 
 		/**
 		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
