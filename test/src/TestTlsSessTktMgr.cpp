@@ -33,19 +33,22 @@ GTEST_TEST(TestTlsSessTktMgr, CountTestFile)
 
 GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 {
+	using TestingTktMgtType =
+		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM, 86400>;
+
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSess1;
+		TestingTktMgtType tlsSess1;
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSess2;
+		TestingTktMgtType tlsSess2;
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
@@ -64,7 +67,7 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		// Moved to initialize new one, allocation should remain the same.
-		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSess3(std::move(tlsSess1));
+		TestingTktMgtType tlsSess3(std::move(tlsSess1));
 
 		// This should success.
 		tlsSess3.NullCheck();
@@ -81,24 +84,33 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 
 GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrFunc)
 {
+	using TestingTktMgtType =
+		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM, 86400>;
+
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> tlsSessMgr;
+		TestingTktMgtType tlsSessMgr;
 		TlsSession tlsSess;
 
-		tlsSess.Get()->id_len = 32;
+		tlsSess.Get()->MBEDTLS_PRIVATE(tls_version) =
+			mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_2;
+		tlsSess.Get()->MBEDTLS_PRIVATE(id_len) = 32;
 		uint8_t id[32] = {
 			0,1,2,3,4,5,6,7,
 			0,1,2,3,4,5,6,7,
 			0,1,2,3,4,5,6,7,
 			0,1,2,3,4,5,6,7,
 		};
-		std::copy(std::begin(id), std::begin(id), std::begin(tlsSess.Get()->id));
-		tlsSess.Get()->start = mbedtls_time(NULL);
+		std::copy(
+			std::begin(id),
+			std::begin(id),
+			std::begin(tlsSess.Get()->MBEDTLS_PRIVATE(id))
+		);
+		tlsSess.Get()->MBEDTLS_PRIVATE(start) = mbedtls_time(NULL);
 
 		std::vector<uint8_t> buf(2048);
 		size_t   len = 0;

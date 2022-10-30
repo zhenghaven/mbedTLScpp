@@ -42,15 +42,40 @@ GTEST_TEST(TestTlsPrf, TlsPrfCalc)
 	std::string testRand  = "Test_Rand";
 
 	{
-		SKey<256> resKey1 = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel, CtnFullR(testRand));
+		SKey<256> resKey1 =
+			TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+				CtnFullR(skey256),
+				testLabel,
+				CtnFullR(testRand)
+			);
 
-		SKey<256> resKey2 = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel, CtnFullR(testRand));
+		SKey<256> resKey2 =
+			TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+				CtnFullR(skey256),
+				testLabel,
+				CtnFullR(testRand)
+			);
 
-		SKey<256> resKey3 = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel + "x", CtnFullR(testRand));
+		SKey<256> resKey3 =
+			TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+				CtnFullR(skey256),
+				testLabel + "x",
+				CtnFullR(testRand)
+			);
 
-		SKey<256> resKey4 = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel, CtnFullR(testRand + "x"));
+		SKey<256> resKey4 =
+			TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+				CtnFullR(skey256),
+				testLabel,
+				CtnFullR(testRand + "x")
+			);
 
-		SKey<256> resKey5 = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel + "x", CtnFullR(testRand + "x"));
+		SKey<256> resKey5 =
+			TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+				CtnFullR(skey256),
+				testLabel + "x",
+				CtnFullR(testRand + "x")
+			);
 
 		EXPECT_EQ(resKey1, resKey2);
 
@@ -63,19 +88,23 @@ GTEST_TEST(TestTlsPrf, TlsPrfCalc)
 		EXPECT_NO_THROW((
 			[skey256, testLabel, testRand]()
 			{
-				auto key = TlsPrf<TlsPrfType::TLS1  , 128>(CtnFullR(skey256), testLabel, CtnFullR(testRand));
+				auto key =
+					TlsPrf<TlsPrfType::TlsPrfSha256, 256>(
+						CtnFullR(skey256),
+						testLabel,
+						CtnFullR(testRand)
+					);
 			}()
 		));
 		EXPECT_NO_THROW((
 			[skey256, testLabel, testRand]()
 			{
-				auto key = TlsPrf<TlsPrfType::SHA256, 256>(CtnFullR(skey256), testLabel, CtnFullR(testRand));
-			}()
-		));
-		EXPECT_NO_THROW((
-			[skey256, testLabel, testRand]()
-			{
-				auto key = TlsPrf<TlsPrfType::SHA384, 512>(CtnFullR(skey256), testLabel, CtnFullR(testRand));
+				auto key =
+					TlsPrf<TlsPrfType::TlsPrfSha384, 512>(
+						CtnFullR(skey256),
+						testLabel,
+						CtnFullR(testRand)
+					);
 			}()
 		));
 	}

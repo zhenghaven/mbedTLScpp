@@ -116,7 +116,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			NullCheck();
 
-			const size_t size = mbedtls_md_get_size(Get()->md_info);
+			const mbedtls_md_info_t* mdInfo = mbedtls_md_info_from_ctx(Get());
+			const size_t size = mbedtls_md_get_size(mdInfo);
 			if (size == 0)
 			{
 				throw UnexpectedErrorException("HMACerBase is not null, but mbedtls_md_get_size returns zero.");

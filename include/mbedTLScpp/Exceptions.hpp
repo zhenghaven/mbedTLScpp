@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <utility>
 #include <memory>
+#include <new>
 
 #include <mbedtls/error.h>
 #include <mbedtls/platform.h>
@@ -297,7 +298,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
  *
  */
 #define MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(ERROR_CODE, CALLER, CALLEE) { \
-	if (ERROR_CODE != MBEDTLS_EXIT_SUCCESS) { \
+	if ((ERROR_CODE) != MBEDTLS_EXIT_SUCCESS) { \
 		std::unique_ptr<std::string> errorStrPtr; \
 		try	{ \
 			errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
@@ -315,7 +316,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
  *
  */
 #define MBEDTLSCPP_C_FUNC_CALL(CALLER, CALLEE, CALL_STATEMENT) { \
-	int retVal = CALL_STATEMENT; \
+	int retVal = (CALL_STATEMENT); \
 	MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(retVal, CALLER, CALLEE); \
 }
 
@@ -327,4 +328,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
  */
 #define MBEDTLSCPP_MAKE_C_FUNC_CALL(CALLER, CALLEE, ...) { \
 	MBEDTLSCPP_C_FUNC_CALL(CALLER, CALLEE, CALLEE(__VA_ARGS__)); \
+}
+
+#define MBEDTLSCPP_MEMALLOC_NULLPTR_CHECK(PTR) { \
+	if ((PTR) == nullptr) { \
+		throw std::bad_alloc(); \
+	} \
 }
