@@ -1,4 +1,42 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #pragma once
+
+
+#include <array>
+
+
+namespace mbedTLScpp_Test
+{
+
+template<size_t _StrLen>
+inline std::array<char, _StrLen> BuildAndRetStrVal(
+	const char (&str)[_StrLen]
+)
+{
+	std::array<char, _StrLen> ret;
+	std::copy(std::begin(str), std::end(str), ret.begin());
+	return ret;
+}
+
+inline const std::array<char, 227>& GetTestEcPrivKeyPem()
+{
+	static constexpr char const sk_testEcPrivKeyPem[] =
+"-----BEGIN EC PRIVATE KEY-----\n\
+MHcCAQEEII9EZBewDxmA897ermQ6CpJCOBHCCeuaXq84lKOvtdsioAoGCCqGSM49\n\
+AwEHoUQDQgAEC9Q2XVZB4d72yiB/niSHfDus6eyi0u+dkh7pehMIj9qAF3v7Gui1\n\
+vw97xFXyvab2u/JOD6cTcgLYwqMCwC05hg==\n\
+-----END EC PRIVATE KEY-----";
+
+	static const auto testEcPrvKeyPem = BuildAndRetStrVal(sk_testEcPrivKeyPem);
+
+	return testEcPrvKeyPem;
+}
+
+} // namespace mbedTLScpp_Test
 
 constexpr char const gsk_testRsaPrvKeyPem[] =
 "-----BEGIN RSA PRIVATE KEY-----\n\

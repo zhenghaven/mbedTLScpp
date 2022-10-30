@@ -3,7 +3,21 @@
 #include <set>
 #include <array>
 
+// This architecture checks derived from:
+// https://stackoverflow.com/questions/152016/detecting-cpu-architecture-compile-time
+#if defined(__x86_64__) || defined(_M_X64)
+#	define MBEDTLSCPPTEST_ARCH_X86_64
+#elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+#	define MBEDTLSCPPTEST_ARCH_X86_32
+#endif
+
+#if defined(MBEDTLSCPPTEST_ARCH_X86_64) || defined(MBEDTLSCPPTEST_ARCH_X86_32)
+#	define MBEDTLSCPPTEST_ARCH_X86
+#endif
+
+#ifdef MBEDTLSCPPTEST_ARCH_X86
 #include <mbedTLScpp/Internal/PlatformIntel/Drng.hpp>
+#endif
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -20,19 +34,30 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
-GTEST_TEST(TestIntelDrng, CountTestFile)
+GTEST_TEST(TestInternalPlatformIntel, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestIntelDrng, AvailabilityTest)
+GTEST_TEST(TestInternalPlatformIntel, AvailabilityTest)
 {
+#ifdef MBEDTLSCPPTEST_ARCH_X86
 	EXPECT_TRUE(Internal::PlatformIntel::IsIntelProcessor());
 	EXPECT_TRUE(Internal::PlatformIntel::IsRdSeedSupportedCached());
 	EXPECT_TRUE(Internal::PlatformIntel::IsRdRandSupportedCached());
+	std::cout<< "Intel CPU detected, " <<
+		"RdSeed and RdRand are expected to be supported." << std::endl;
+#else
+	EXPECT_FALSE(Internal::PlatformIntel::IsIntelProcessor());
+	EXPECT_FALSE(Internal::PlatformIntel::IsRdSeedSupportedCached());
+	EXPECT_FALSE(Internal::PlatformIntel::IsRdRandSupportedCached());
+	std::cout<< "Non-Intel CPU detected, " <<
+		"RdSeed and RdRand tests are disabled." << std::endl;
+#endif
 }
 
-GTEST_TEST(TestIntelDrng, RdSeedTest)
+#ifdef MBEDTLSCPPTEST_ARCH_X86
+GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 {
 
 	// uint16_t
@@ -92,7 +117,7 @@ GTEST_TEST(TestIntelDrng, RdSeedTest)
 	}
 }
 
-GTEST_TEST(TestIntelDrng, SeedBytesTest)
+GTEST_TEST(TestInternalPlatformIntel, SeedBytesTest)
 {
 	// uint64_t
 	{
@@ -124,7 +149,7 @@ GTEST_TEST(TestIntelDrng, SeedBytesTest)
 	}
 }
 
-GTEST_TEST(TestIntelDrng, ReadSeedTest)
+GTEST_TEST(TestInternalPlatformIntel, ReadSeedTest)
 {
 	// uint64_t
 	{
@@ -152,7 +177,7 @@ GTEST_TEST(TestIntelDrng, ReadSeedTest)
 	}
 }
 
-GTEST_TEST(TestIntelDrng, RdRandTest)
+GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 {
 
 	// uint16_t
@@ -209,7 +234,7 @@ GTEST_TEST(TestIntelDrng, RdRandTest)
 	}
 }
 
-GTEST_TEST(TestIntelDrng, RandBytesTest)
+GTEST_TEST(TestInternalPlatformIntel, RandBytesTest)
 {
 	// uint64_t
 	{
@@ -236,7 +261,7 @@ GTEST_TEST(TestIntelDrng, RandBytesTest)
 	}
 }
 
-GTEST_TEST(TestIntelDrng, ReadRandTest)
+GTEST_TEST(TestInternalPlatformIntel, ReadRandTest)
 {
 	// uint64_t
 	{
@@ -261,3 +286,4 @@ GTEST_TEST(TestIntelDrng, ReadRandTest)
 		EXPECT_EQ(randSet.size(), randArr.size());
 	}
 }
+#endif // MBEDTLSCPPTEST_ARCH_X86

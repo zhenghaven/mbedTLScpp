@@ -35,12 +35,17 @@ int main(int argc, char** argv)
 	std::cout << "===== mbed TLS cpp test program =====" << std::endl;
 	std::cout << std::endl;
 
+	std::cout << "      EXPECTED_NUM_OF_TEST_FILE = " <<
+		EXPECTED_NUM_OF_TEST_FILE << std::endl;
+
+	std::cout << "      __cplusplus = " << __cplusplus << std::endl;
+
 	std::cout << "      mbed TLS Ver: " MBEDTLS_VERSION_STRING_FULL "." << std::endl;
 
 #ifdef MBEDTLS_CONFIG_FILE
 	std::cout << "      mbed TLS Cfg: " MBEDTLS_CONFIG_FILE "." << std::endl;
 #else
-	std::cout << "      mbed TLS Cfg: default - config.h." << std::endl;
+	std::cout << "      mbed TLS Cfg: (the default one)." << std::endl;
 #endif
 
 #ifdef MBEDTLS_THREADING_C

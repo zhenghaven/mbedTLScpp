@@ -17,17 +17,12 @@ namespace mbedTLScpp_Test
 	extern size_t g_numOfTestFile;
 }
 
-GTEST_TEST(TestGeneral, CountTestFile)
+GTEST_TEST(TestInternalCodec, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestGeneral, TestGTest)
-{
-	EXPECT_EQ(0, 0);
-}
-
-GTEST_TEST(TestGeneral, TestBytes2Hex)
+GTEST_TEST(TestInternalCodec, TestBytes2Hex)
 {
 	const uint8_t bytes[] = { 0xAB, 0xC9, 0x95, 0x34, 0x1F, 0x3A, 0x26, 0x00, 0x1D, 0x7E };
 	EXPECT_EQ(Internal::Bytes2HEXBigEnd(CtnFullR(bytes)), "7E1D00263A1F3495C9AB");
@@ -36,7 +31,7 @@ GTEST_TEST(TestGeneral, TestBytes2Hex)
 	EXPECT_EQ(Internal::Bytes2HexLitEnd(CtnFullR(bytes)), "abc995341f3a26001d7e");
 }
 
-GTEST_TEST(TestGeneral, TestBytes2Bin)
+GTEST_TEST(TestInternalCodec, TestBytes2Bin)
 {
 	const uint64_t a = 0b00001101010101010001010101010101011111001001001010011011001;
 	const uint64_t b = 0b00000001001101010111010100101010101110101010100010111010101;
