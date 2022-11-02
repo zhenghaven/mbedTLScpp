@@ -5,6 +5,13 @@
 
 #include "MemoryTest.hpp"
 
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
 #endif
@@ -15,19 +22,22 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-namespace mbedTLScpp_Test
-{
-	extern size_t g_numOfTestFile;
-}
+using namespace mbedTLScpp_Test;
+
 
 GTEST_TEST(TestX509ReqWrt, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestX509ReqWrt, X509ReqWrtClass)
+
+GTEST_TEST(TestX509ReqWrt, X509ReqWrtConstructAndMove)
 {
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	EcKeyPair<EcType::SECP256R1> testKey =
+		EcKeyPair<EcType::SECP256R1>::Generate(*rand);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -35,13 +45,21 @@ GTEST_TEST(TestX509ReqWrt, X509ReqWrtClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509ReqWriter writer1 = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
+		X509ReqWriter writer1(
+			HashType::SHA256,
+			testKey,
+			"C=UK,O=ARM,CN=mbed TLS Server 1"
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		X509ReqWriter writer2 = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 2");
+		X509ReqWriter writer2(
+			HashType::SHA256,
+			testKey,
+			"C=UK,O=ARM,CN=mbed TLS Server 2"
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -75,10 +93,14 @@ GTEST_TEST(TestX509ReqWrt, X509ReqWrtClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestX509Req, X509ReqClass)
+
+GTEST_TEST(TestX509ReqWrt, X509ReqWrtGetDerAndPem)
 {
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
-	X509ReqWriter writer = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	EcKeyPair<EcType::SECP256R1> testKey =
+		EcKeyPair<EcType::SECP256R1>::Generate(*rand);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -86,13 +108,56 @@ GTEST_TEST(TestX509Req, X509ReqClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509Req req1 = X509Req::FromDER(CtnFullR(writer.GetDer()));
+		X509ReqWriter writer(
+			HashType::SHA256,
+			testKey,
+			"C=UK,O=ARM,CN=mbed TLS Server 1"
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		X509Req req2 = X509Req::FromDER(CtnFullR(writer.GetDer()));
+
+		EXPECT_NO_THROW(
+			writer.GetDer(*rand);
+			writer.GetPem(*rand);
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509Req, X509ReqConstructAndMove)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+	X509ReqWriter writer(
+		HashType::SHA256,
+		testKey,
+		"C=UK,O=ARM,CN=mbed TLS Server 1"
+	);
+	auto csrDer = writer.GetDer(*rand);
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509Req req1 = X509Req::FromDER(CtnFullR(csrDer));
+
+		// after successful initialization, we should have its allocation remains.
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		X509Req req2 = X509Req::FromDER(CtnFullR(csrDer));
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -126,10 +191,20 @@ GTEST_TEST(TestX509Req, X509ReqClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestX509ReqWrt, X509ReqWrtExport)
+
+GTEST_TEST(TestX509Req, X509ReqParseCheckAndVerify_PEM)
 {
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
-	X509ReqWriter writer = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+	X509ReqWriter writer(
+		HashType::SHA256,
+		testKey,
+		"C=UK,O=ARM,CN=mbed TLS Server 1"
+	);
+	auto csrPem = writer.GetPem(*rand);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -137,8 +212,34 @@ GTEST_TEST(TestX509ReqWrt, X509ReqWrtExport)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509Req req1 = X509Req::FromDER(CtnFullR(writer.GetDer()));
-		X509Req req2 = X509Req::FromPEM(writer.GetPem());
+		X509Req req1 = X509Req::FromPEM(csrPem);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		// Check public keys are match
+		EXPECT_NO_THROW(
+			EXPECT_EQ(
+				req1.BorrowPublicKey().GetPublicDer(),
+				testKey.GetPublicDer()
+			);
+		);
+
+		auto pubKey = req1.GetPublicKey<EcPublicKey<EcType::SECP256R1> >();
+		EXPECT_NO_THROW(
+			EXPECT_EQ(
+				pubKey.GetPublicDer(),
+				testKey.GetPublicDer()
+			);
+		);
+
+		// Check hash type
+		EXPECT_EQ(req1.GetSignHashType(), HashType::SHA256);
+
+		// verify signature
+		EXPECT_NO_THROW(
+			req1.VerifySignature();
+		);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -146,11 +247,20 @@ GTEST_TEST(TestX509ReqWrt, X509ReqWrtExport)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestX509Req, X509ReqExport)
+
+GTEST_TEST(TestX509Req, X509ReqParseCheckAndVerify_DER)
 {
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
-	X509ReqWriter writer = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
-	X509Req req = X509Req::FromDER(CtnFullR(writer.GetDer()));
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+	X509ReqWriter writer(
+		HashType::SHA256,
+		testKey,
+		"C=UK,O=ARM,CN=mbed TLS Server 1"
+	);
+	auto csrDer = writer.GetDer(*rand);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -158,57 +268,34 @@ GTEST_TEST(TestX509Req, X509ReqExport)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509Req req1 = X509Req::FromDER(CtnFullR(req.GetDer()));
-		X509Req req2 = X509Req::FromPEM(req.GetPem());
-	}
+		X509Req req1 = X509Req::FromDER(CtnFullR(csrDer));
 
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-}
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-GTEST_TEST(TestX509Req, X509ReqGetKey)
-{
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
-	X509ReqWriter writer = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
-	X509Req req = X509Req::FromDER(CtnFullR(writer.GetDer()));
+		// Check public keys are match
+		EXPECT_NO_THROW(
+			EXPECT_EQ(
+				req1.BorrowPublicKey().GetPublicDer(),
+				testKey.GetPublicDer()
+			);
+		);
 
-	int64_t initCount = 0;
-	int64_t initSecCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+		auto pubKey = req1.GetPublicKey<EcPublicKey<EcType::SECP256R1> >();
+		EXPECT_NO_THROW(
+			EXPECT_EQ(
+				pubKey.GetPublicDer(),
+				testKey.GetPublicDer()
+			);
+		);
 
-	{
-		EXPECT_NO_THROW(auto pkey = req.GetPublicKey<EcPublicKey<EcType::SECP256R1> >(););
-		EXPECT_NO_THROW(auto pkey = req.GetPublicKey<EcPublicKeyBase<> >(););
-		EXPECT_NO_THROW(auto pkey = req.GetPublicKey<PKeyBase<> >(););
-		//EXPECT_NO_THROW(auto pkey = req.GetPublicKey<X509Req>(););
+		// Check hash type
+		EXPECT_EQ(req1.GetSignHashType(), HashType::SHA256);
 
-		EXPECT_ANY_THROW(auto pkey = req.GetPublicKey<EcPublicKey<EcType::SECP256K1> >(););
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-}
-
-GTEST_TEST(TestX509Req, X509ReqGetters)
-{
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
-	X509ReqWriter writer = X509ReqWriter(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
-	X509Req req = X509Req::FromDER(CtnFullR(writer.GetDer()));
-
-	int64_t initCount = 0;
-	int64_t initSecCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
-
-	{
-		EXPECT_NO_THROW(auto borrowKey = req.BorrowPublicKey(););
-		EXPECT_NO_THROW(std::vector<uint8_t> borrowKeyDer = req.BorrowPublicKey().GetPublicDer(););
-
-		EXPECT_EQ(req.GetHashType(), HashType::SHA256);
-		EXPECT_NO_THROW(req.VerifySignature());
+		// verify signature
+		EXPECT_NO_THROW(
+			req1.VerifySignature();
+		);
 	}
 
 	// Finally, all allocation should be cleaned after exit.

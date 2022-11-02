@@ -41,7 +41,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 28U : 27U
->
+>&
 GetPemHeaderPubKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----BEGIN PUBLIC KEY-----\n";
@@ -58,7 +58,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 26U : 25U
->
+>&
 GetPemFooterPubKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----END PUBLIC KEY-----\n";
@@ -75,7 +75,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 32U : 31U
->
+>&
 GetPemHeaderEcPrivKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----BEGIN EC PRIVATE KEY-----\n";
@@ -92,7 +92,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 30U : 29U
->
+>&
 GetPemFooterEcPrivKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----END EC PRIVATE KEY-----\n";
@@ -109,7 +109,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 33U : 32U
->
+>&
 GetPemHeaderRsaPrivKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----BEGIN RSA PRIVATE KEY-----\n";
@@ -126,7 +126,7 @@ inline
 const std::array<
 	char,
 	_IncludeNull ? 31U : 30U
->
+>&
 GetPemFooterRsaPrivKey() noexcept
 {
 	static constexpr char const sk_charStr[] = "-----END RSA PRIVATE KEY-----\n";
