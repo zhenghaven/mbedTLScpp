@@ -290,7 +290,45 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		virtual ~UnexpectedErrorException() = default;
 		// LCOV_EXCL_STOP
 	};
+
+} // namespace mbedTLScpp
+
+
+
+
+
+/** ============================================================================
+ *   Helper functions
+ *  ============================================================================
+ */
+
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+namespace mbedTLScpp
+#else
+namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+#endif
+{
+
+inline void CheckMbedTlsLenRetVal(
+	int lenVal,
+	const char* callerName,
+	const char* calleeName
+)
+{
+	if (lenVal < 0)
+	{
+		throw mbedTLSRuntimeError(lenVal,
+			mbedTLSRuntimeError::ConstructWhatMsg(
+				lenVal,
+				callerName,
+				calleeName
+			)
+		);
+	}
 }
+
+} // namespace mbedTLScpp
 
 /**
  * @brief Check if the error code given is MBEDTLS_EXIT_SUCCESS or not.

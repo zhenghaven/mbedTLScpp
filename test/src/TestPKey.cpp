@@ -1,19 +1,18 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #include <gtest/gtest.h>
 
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/PKey.hpp>
 
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
 
-#ifdef MBEDTLSCPPTEST_TEST_STD_NS
-using namespace std;
-#endif
+#include "SharedVars.hpp"
 
-#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-using namespace mbedTLScpp;
-#else
-using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
-#endif
 
 namespace mbedTLScpp_Test
 {
@@ -26,12 +25,26 @@ namespace mbedTLScpp_Test
 	static constexpr bool gsk_threadEnabled = false;
 #endif
 
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+using namespace mbedTLScpp;
+#else
+using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
+#endif
+
+using namespace mbedTLScpp_Test;
+
+
 GTEST_TEST(TestPKey, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestPKey, PKeyBaseClass)
+GTEST_TEST(TestPKey, PKeyBaseConstructAndMove)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -39,39 +52,25 @@ GTEST_TEST(TestPKey, PKeyBaseClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
+		// Default
+		PKeyBase<> pkey;
+		EXPECT_NE(pkey.Get(), nullptr);
 
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		mbedtls_pk_context* pkeyPtr = pkey.Get();
 
-		PKeyBase<> rsaPrvPem2 = SecretString(gsk_testRsaPrvKeyPem);
+		// Move
+		PKeyBase<> pkey2(std::move(pkey));
+		EXPECT_EQ(pkey.Get(), nullptr);
+		EXPECT_EQ(pkey2.Get(), pkeyPtr);
 
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		// Move assignment
+		PKeyBase<> pkey3;
+		EXPECT_NE(pkey3.Get(), nullptr);
+		EXPECT_NE(pkey3.Get(), pkeyPtr);
 
-		rsaPrvPem1 = std::move(rsaPrvPem1);
-
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		rsaPrvPem1 = std::move(rsaPrvPem2);
-
-		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		// Moved to initialize new one, allocation should remain the same.
-		PKeyBase<> rsaPrvPem3(std::move(rsaPrvPem1));
-
-		// This should success.
-		rsaPrvPem3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(rsaPrvPem1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(rsaPrvPem2.NullCheck(), InvalidObjectException);
+		pkey3 = std::move(pkey2);
+		EXPECT_EQ(pkey2.Get(), nullptr);
+		EXPECT_EQ(pkey3.Get(), pkeyPtr);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -79,267 +78,272 @@ GTEST_TEST(TestPKey, PKeyBaseClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestPKey, PemParse)
+GTEST_TEST(TestPKey, PemParseAndKeyTypes)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
+	// RSA Private Key
 	{
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			SecretString(
+				GetTestRsaPrivKeyPem().data(), GetTestRsaPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		EXPECT_EQ(rsaPrvPem1.GetAlgmCat(), PKeyAlgmCat::RSA);
-		EXPECT_EQ(rsaPrvPem1.GetKeyType(), PKeyType::Private);
-		EXPECT_TRUE(rsaPrvPem1.HasPrvKey());
-		EXPECT_TRUE(rsaPrvPem1.HasPubKey());
-
+		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(pkey.GetAlgorithmCat(), PKeyAlgmCat::RSA);
+		EXPECT_EQ(pkey.GetKeyType(),      PKeyType::Private);
+		EXPECT_TRUE(pkey.HasPubKey());
+
+		// Private PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPrivatePem();
+			std::string oriPem(GetTestRsaPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		// Public PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPublicPem();
+			EXPECT_GT(pem.size(), 0);
+		);
 	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// RSA Public Key
 	{
-		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			std::string(
+				GetTestRsaPubKeyPem().data(), GetTestRsaPubKeyPem().size()
+			)
+		);
 
-		EXPECT_EQ(rsaPubPem1.GetAlgmCat(), PKeyAlgmCat::RSA);
-		EXPECT_EQ(rsaPubPem1.GetKeyType(), PKeyType::Public);
-		EXPECT_FALSE(rsaPubPem1.HasPrvKey());
-		EXPECT_TRUE(rsaPubPem1.HasPubKey());
-
+		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
 
-	{
-		PKeyBase<> ecPrvPem1 = SecretString(gsk_testEcPrvKeyPem);
+		EXPECT_EQ(pkey.GetAlgorithmCat(), PKeyAlgmCat::RSA);
+		EXPECT_EQ(pkey.GetKeyType(),      PKeyType::Public);
+		EXPECT_TRUE(pkey.HasPubKey());
 
-		EXPECT_EQ(ecPrvPem1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ecPrvPem1.GetKeyType(), PKeyType::Private);
-		EXPECT_TRUE(ecPrvPem1.HasPrvKey());
-		EXPECT_TRUE(ecPrvPem1.HasPubKey());
+		// Private PEM
+		EXPECT_THROW(
+			auto pem = pkey.GetPrivatePem();,
+			mbedTLSRuntimeError
+		);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
-
-	{
-		PKeyBase<> ecPubPem1 = std::string(gsk_testEcPubKeyPem);
-
-		EXPECT_EQ(ecPubPem1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ecPubPem1.GetKeyType(), PKeyType::Public);
-		EXPECT_FALSE(ecPubPem1.HasPrvKey());
-		EXPECT_TRUE(ecPubPem1.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		// Public PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPublicPem();
+			std::string oriPem(GetTestRsaPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// EC Private Key
+	{
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
+
+		// after successful initialization, we should have its allocation remains.
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(pkey.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(pkey.GetKeyType(),      PKeyType::Private);
+		EXPECT_TRUE(pkey.HasPubKey());
+
+		// Private PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPrivatePem();
+			std::string oriPem(GetTestEcPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		// Public PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPublicPem();
+			EXPECT_GT(pem.size(), 0);
+		);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// EC Public Key
+	{
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
+
+		// after successful initialization, we should have its allocation remains.
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(pkey.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(pkey.GetKeyType(),      PKeyType::Public);
+		EXPECT_TRUE(pkey.HasPubKey());
+
+		// // Private PEM
+		// EXPECT_THROW(
+		// 	auto pem = pkey.GetPrivatePem();,
+		// 	mbedTLSRuntimeError
+		// );
+
+		// Public PEM
+		EXPECT_NO_THROW(
+			auto pem = pkey.GetPublicPem();
+			std::string oriPem(GetTestEcPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestPKey, DerGeneration)
+
+GTEST_TEST(TestPKey, DerParseAndKeyTypes)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
+	// RSA Private Key
 	{
-		PKeyBase<> rsaPrv1 = SecretString(gsk_testRsaPrvKeyPem);
-		PKeyBase<> rsaPrv2 = CtnFullR(rsaPrv1.GetPrivateDer());
+		PKeyBase<> pkey1 = PKeyBase<>::FromPEM(
+			SecretString(
+				GetTestRsaPrivKeyPem().data(), GetTestRsaPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		EXPECT_EQ(rsaPrv1.GetAlgmCat(), rsaPrv2.GetAlgmCat());
-		EXPECT_EQ(rsaPrv1.GetKeyType(), rsaPrv2.GetKeyType());
-		EXPECT_EQ(rsaPrv1.HasPrvKey(),  rsaPrv2.HasPrvKey());
-		EXPECT_EQ(rsaPrv1.HasPubKey(),  rsaPrv2.HasPubKey());
+		auto der = pkey1.GetPrivateDer();
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		PKeyBase<> pkey2 = PKeyBase<>::FromDER(
+			CtnFullR(der),
+			*rand
+		);
 
-		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
-		PKeyBase<> rsaPub2 = CtnFullR(rsaPub1.GetPublicDer());
-		EXPECT_THROW(rsaPub1.GetPrivateDer();, mbedTLSRuntimeError);
-
-		EXPECT_EQ(rsaPub1.GetAlgmCat(), rsaPub2.GetAlgmCat());
-		EXPECT_EQ(rsaPub1.GetKeyType(), rsaPub2.GetKeyType());
-		EXPECT_EQ(rsaPub1.HasPrvKey(),  rsaPub2.HasPrvKey());
-		EXPECT_EQ(rsaPub1.HasPubKey(),  rsaPub2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> ecPrv2 = CtnFullR(ecPrv1.GetPrivateDer());
-
-		EXPECT_EQ(ecPrv1.GetAlgmCat(), ecPrv2.GetAlgmCat());
-		EXPECT_EQ(ecPrv1.GetKeyType(), ecPrv2.GetKeyType());
-		EXPECT_EQ(ecPrv1.HasPrvKey(),  ecPrv2.HasPrvKey());
-		EXPECT_EQ(ecPrv1.HasPubKey(),  ecPrv2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 6 + (gsk_threadEnabled ? 4 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> ecPub2 = CtnFullR(ecPub1.GetPublicDer());
-		EXPECT_THROW(ecPub1.GetPrivateDer();, mbedTLSRuntimeError);
-
-		EXPECT_EQ(ecPub1.GetAlgmCat(), ecPub2.GetAlgmCat());
-		EXPECT_EQ(ecPub1.GetKeyType(), ecPub2.GetKeyType());
-		EXPECT_EQ(ecPub1.HasPrvKey(),  ecPub2.HasPrvKey());
-		EXPECT_EQ(ecPub1.HasPubKey(),  ecPub2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 8 + (gsk_threadEnabled ? 4 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		EXPECT_EQ(pkey2.GetAlgorithmCat(), PKeyAlgmCat::RSA);
+		EXPECT_EQ(pkey2.GetKeyType(),      PKeyType::Private);
+		EXPECT_TRUE(pkey2.HasPubKey());
 	}
 
+	// EC Public Key
+	{
+		PKeyBase<> pkey1 = PKeyBase<>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
+
+		auto der = pkey1.GetPublicDer();
+
+		PKeyBase<> pkey2 = PKeyBase<>::FromDER(
+			CtnFullR(der)
+		);
+
+		EXPECT_EQ(pkey2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(pkey2.GetKeyType(),      PKeyType::Public);
+		EXPECT_TRUE(pkey2.HasPubKey());
+	}
+
+	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestPKey, PemGeneration)
-{
-	int64_t initCount = 0;
-	int64_t initSecCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
-
-	{
-		PKeyBase<> rsaPrv1 = SecretString(gsk_testRsaPrvKeyPem);
-		PKeyBase<> rsaPrv2 = rsaPrv1.GetPrivatePem();
-
-		EXPECT_EQ(rsaPrv1.GetAlgmCat(), rsaPrv2.GetAlgmCat());
-		EXPECT_EQ(rsaPrv1.GetKeyType(), rsaPrv2.GetKeyType());
-		EXPECT_EQ(rsaPrv1.HasPrvKey(),  rsaPrv2.HasPrvKey());
-		EXPECT_EQ(rsaPrv1.HasPubKey(),  rsaPrv2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-	{
-		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
-		PKeyBase<> rsaPub2 = rsaPub1.GetPublicPem();
-		EXPECT_THROW(rsaPub1.GetPrivatePem();, mbedTLSRuntimeError);
-
-		EXPECT_EQ(rsaPub1.GetAlgmCat(), rsaPub2.GetAlgmCat());
-		EXPECT_EQ(rsaPub1.GetKeyType(), rsaPub2.GetKeyType());
-		EXPECT_EQ(rsaPub1.HasPrvKey(),  rsaPub2.HasPrvKey());
-		EXPECT_EQ(rsaPub1.HasPubKey(),  rsaPub2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-	{
-		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> ecPrv2 = ecPrv1.GetPrivatePem();
-
-		EXPECT_EQ(ecPrv1.GetAlgmCat(), ecPrv2.GetAlgmCat());
-		EXPECT_EQ(ecPrv1.GetKeyType(), ecPrv2.GetKeyType());
-		EXPECT_EQ(ecPrv1.HasPrvKey(),  ecPrv2.HasPrvKey());
-		EXPECT_EQ(ecPrv1.HasPubKey(),  ecPrv2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-	{
-		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> ecPub2 = ecPub1.GetPublicPem();
-		EXPECT_THROW(ecPub1.GetPrivatePem();, mbedTLSRuntimeError);
-
-		EXPECT_EQ(ecPub1.GetAlgmCat(), ecPub2.GetAlgmCat());
-		EXPECT_EQ(ecPub1.GetKeyType(), ecPub2.GetKeyType());
-		EXPECT_EQ(ecPub1.HasPrvKey(),  ecPub2.HasPrvKey());
-		EXPECT_EQ(ecPub1.HasPubKey(),  ecPub2.HasPubKey());
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-}
 
 GTEST_TEST(TestPKey, SignAndVerifySign)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
 
-	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
-	std::vector<uint8_t> sign1;
-	std::vector<uint8_t> sign2;
+	Hash<HashType::SHA256> testHash1 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+	Hash<HashType::SHA256> testHash2 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("XTestStringX"));
 
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
+
+	// RSA Private Key
 	{
-		PKeyBase<> rsaPrv1 = SecretString(gsk_testRsaPrvKeyPem);
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			SecretString(
+				GetTestRsaPrivKeyPem().data(), GetTestRsaPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		auto sign = pkey.DerSign<HashType::SHA256>(testHash1, *rand);
 
-		sign1 = rsaPrv1.DerSign<HashType::SHA256>(testHash);
-		sign2 = rsaPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
-		rsaPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
-		rsaPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
+		EXPECT_NO_THROW(
+			pkey.VerifyDerSign(testHash1, CtnFullR(sign));
+		);
+		EXPECT_THROW(
+			pkey.VerifyDerSign(testHash2, CtnFullR(sign));,
+			mbedTLSRuntimeError
+		);
 	}
 
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
+	// EC Private Key
 	{
-		PKeyBase<> rsaPub1 = std::string(gsk_testRsaPubKeyPem);
+		PKeyBase<> pkey = PKeyBase<>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1 + (gsk_threadEnabled ? 1 : 0));
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		auto sign = pkey.DerSign<HashType::SHA256>(testHash1, *rand);
 
-		EXPECT_THROW(rsaPub1.DerSign<HashType::SHA256>(testHash);, mbedTLSRuntimeError);
-		EXPECT_THROW(rsaPub1.DerSign(HashType::SHA256, CtnFullR(testHash));, mbedTLSRuntimeError);
-		rsaPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
-		rsaPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
+		EXPECT_NO_THROW(
+			pkey.VerifyDerSign(testHash1, CtnFullR(sign));
+		);
+		EXPECT_THROW(
+			pkey.VerifyDerSign(testHash2, CtnFullR(sign));,
+			mbedTLSRuntimeError
+		);
 	}
 
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-	{
-		PKeyBase<> ecPrv1 = SecretString(gsk_testEcPrvKeyPem);
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		sign1 = ecPrv1.DerSign<HashType::SHA256>(testHash);
-		sign2 = ecPrv1.DerSign(HashType::SHA256, CtnFullR(testHash));
-		ecPrv1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
-		ecPrv1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-	{
-		PKeyBase<> ecPub1 = std::string(gsk_testEcPubKeyPem);
-
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		EXPECT_THROW(ecPub1.DerSign<HashType::SHA256>(testHash);, mbedTLSRuntimeError);
-		EXPECT_THROW(ecPub1.DerSign(HashType::SHA256, CtnFullR(testHash));, mbedTLSRuntimeError);
-		ecPub1.VerifyDerSign<HashType::SHA256>(testHash, CtnFullR(sign1));
-		ecPub1.VerifyDerSign(HashType::SHA256, CtnFullR(testHash), CtnFullR(sign2));
-	}
-
+	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }

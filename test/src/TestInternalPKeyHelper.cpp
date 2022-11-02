@@ -10,21 +10,27 @@
 #include <mbedTLScpp/Internal/PKeyHelper.hpp>
 #include <mbedTLScpp/DefaultRbg.hpp>
 
+#include "SharedVars.hpp"
 
-#ifdef MBEDTLSCPPTEST_TEST_STD_NS
-using namespace std;
-#endif
-
-#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-using namespace mbedTLScpp;
-#else
-using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
-#endif
 
 namespace mbedTLScpp_Test
 {
 	extern size_t g_numOfTestFile;
 }
+
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif // MBEDTLSCPPTEST_TEST_STD_NS
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+using namespace mbedTLScpp;
+#else
+using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
+#endif // !MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+
+using namespace mbedTLScpp_Test;
+
 
 GTEST_TEST(TestInternalPKeyHelper, CountTestFile)
 {
@@ -394,4 +400,132 @@ GTEST_TEST(TestInternalPKeyHelper, pk_write_sign_der_est_size)
 		mbedtls_pk_free(&pk);
 	}
 
+}
+
+GTEST_TEST(TestInternalPKeyHelper, GetKeyType_RSAPrivate)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+	{
+		// Key
+		mbedtls_pk_context pk;
+		mbedtls_pk_init(&pk);
+
+		int mbedtlsRet = mbedtls_pk_parse_key(
+			&pk,
+			reinterpret_cast<const unsigned char*>(
+				GetTestRsaPrivKeyPem().data()
+			),
+			GetTestRsaPrivKeyPem().size(),
+			nullptr,
+			0,
+			RbgInterface::CallBack,
+			rand.get()
+		);
+		EXPECT_EQ(mbedtlsRet, 0);
+
+		// ===== Test =====
+		EXPECT_NO_THROW(
+			EXPECT_EQ(GetAlgmCat(pk), PKeyAlgmCat::RSA)
+		);
+		EXPECT_NO_THROW(
+			EXPECT_EQ(Internal::GetKeyType(pk), PKeyType::Private)
+		);
+
+		// clean up
+		mbedtls_pk_free(&pk);
+	}
+}
+
+GTEST_TEST(TestInternalPKeyHelper, GetKeyType_RSAPublic)
+{
+	{
+		// Key
+		mbedtls_pk_context pk;
+		mbedtls_pk_init(&pk);
+
+		int mbedtlsRet = mbedtls_pk_parse_public_key(
+			&pk,
+			reinterpret_cast<const unsigned char*>(
+				GetTestRsaPubKeyPem().data()
+			),
+			GetTestRsaPubKeyPem().size()
+		);
+		EXPECT_EQ(mbedtlsRet, 0);
+
+		// ===== Test =====
+		EXPECT_NO_THROW(
+			EXPECT_EQ(GetAlgmCat(pk), PKeyAlgmCat::RSA)
+		);
+		EXPECT_NO_THROW(
+			EXPECT_EQ(Internal::GetKeyType(pk), PKeyType::Public)
+		);
+
+		// clean up
+		mbedtls_pk_free(&pk);
+	}
+}
+
+GTEST_TEST(TestInternalPKeyHelper, GetKeyType_EcPrivate)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+	{
+		// Key
+		mbedtls_pk_context pk;
+		mbedtls_pk_init(&pk);
+
+		int mbedtlsRet = mbedtls_pk_parse_key(
+			&pk,
+			reinterpret_cast<const unsigned char*>(
+				GetTestEcPrivKeyPem().data()
+			),
+			GetTestEcPrivKeyPem().size(),
+			nullptr,
+			0,
+			RbgInterface::CallBack,
+			rand.get()
+		);
+		EXPECT_EQ(mbedtlsRet, 0);
+
+		// ===== Test =====
+		EXPECT_NO_THROW(
+			EXPECT_EQ(GetAlgmCat(pk), PKeyAlgmCat::EC)
+		);
+		EXPECT_NO_THROW(
+			EXPECT_EQ(Internal::GetKeyType(pk), PKeyType::Private)
+		);
+
+		// clean up
+		mbedtls_pk_free(&pk);
+	}
+}
+
+GTEST_TEST(TestInternalPKeyHelper, GetKeyType_EcPublic)
+{
+	{
+		// Key
+		mbedtls_pk_context pk;
+		mbedtls_pk_init(&pk);
+
+		int mbedtlsRet = mbedtls_pk_parse_public_key(
+			&pk,
+			reinterpret_cast<const unsigned char*>(
+				GetTestEcPubKeyPem().data()
+			),
+			GetTestEcPubKeyPem().size()
+		);
+		EXPECT_EQ(mbedtlsRet, 0);
+
+		// ===== Test =====
+		EXPECT_NO_THROW(
+			EXPECT_EQ(GetAlgmCat(pk), PKeyAlgmCat::EC)
+		);
+		EXPECT_NO_THROW(
+			EXPECT_EQ(Internal::GetKeyType(pk), PKeyType::Public)
+		);
+
+		// clean up
+		mbedtls_pk_free(&pk);
+	}
 }

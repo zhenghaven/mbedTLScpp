@@ -11,9 +11,11 @@
 #include <mbedtls/rsa.h>
 #include <mbedtls/ecp.h>
 
-#include "Asn1Helper.hpp"
-
 #include "../Exceptions.hpp"
+#include "../PKeyEnum.hpp"
+
+#include "Asn1Helper.hpp"
+#include "ConstexprUtils.hpp"
 
 
 
@@ -34,23 +36,107 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace Internal
 {
 
-// constexpr char const PEM_BEGIN_PUBLIC_KEY[] = "-----BEGIN PUBLIC KEY-----\n";
-// constexpr char const PEM_END_PUBLIC_KEY[]   = "-----END PUBLIC KEY-----\n";
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 28U : 27U
+>
+GetPemHeaderPubKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----BEGIN PUBLIC KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
 
-// constexpr size_t PEM_PUBLIC_HEADER_SIZE = sizeof(PEM_BEGIN_PUBLIC_KEY) - 1;
-// constexpr size_t PEM_PUBLIC_FOOTER_SIZE = sizeof(PEM_END_PUBLIC_KEY) - 1;
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
 
-// constexpr char const PEM_BEGIN_PRIVATE_KEY_EC[] = "-----BEGIN EC PRIVATE KEY-----\n";
-// constexpr char const PEM_END_PRIVATE_KEY_EC[]   = "-----END EC PRIVATE KEY-----\n";
+	return sk_arr;
+}
 
-// constexpr size_t PEM_EC_PRIVATE_HEADER_SIZE = sizeof(PEM_BEGIN_PRIVATE_KEY_EC) - 1;
-// constexpr size_t PEM_EC_PRIVATE_FOOTER_SIZE = sizeof(PEM_END_PRIVATE_KEY_EC) - 1;
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 26U : 25U
+>
+GetPemFooterPubKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----END PUBLIC KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
 
-// constexpr char const PEM_BEGIN_PRIVATE_KEY_RSA[] = "-----BEGIN RSA PRIVATE KEY-----\n";
-// constexpr char const PEM_END_PRIVATE_KEY_RSA[]   = "-----END RSA PRIVATE KEY-----\n";
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
 
-// constexpr size_t PEM_RSA_PRIVATE_HEADER_SIZE = sizeof(PEM_BEGIN_PRIVATE_KEY_RSA) - 1;
-// constexpr size_t PEM_RSA_PRIVATE_FOOTER_SIZE = sizeof(PEM_END_PRIVATE_KEY_RSA) - 1;
+	return sk_arr;
+}
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 32U : 31U
+>
+GetPemHeaderEcPrivKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----BEGIN EC PRIVATE KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 30U : 29U
+>
+GetPemFooterEcPrivKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----END EC PRIVATE KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 33U : 32U
+>
+GetPemHeaderRsaPrivKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----BEGIN RSA PRIVATE KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 31U : 30U
+>
+GetPemFooterRsaPrivKey() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----END RSA PRIVATE KEY-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
 
 } // namespace Internal
 } // namespace mbedTLScpp
@@ -511,6 +597,202 @@ inline size_t pk_write_sign_der_est_size(
 			" - The given key type is not supported."
 		);
 	}
+}
+
+} // namespace Internal
+} // namespace mbedTLScpp
+
+
+
+
+
+/** ============================================================================
+ *   Key Context
+ *  ============================================================================
+ */
+
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+namespace mbedTLScpp
+#else
+namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+#endif
+{
+namespace Internal
+{
+
+inline const mbedtls_ecp_group& GetGroupFromEcPair(
+	const mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(grp);
+}
+
+
+inline const mbedtls_ecp_point& GetQFromEcPair(
+	const mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(Q);
+}
+
+
+inline const mbedtls_mpi& GetDFromEcPair(
+	const mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(d);
+}
+
+
+struct HasPubKeyImpl
+{
+	bool operator()(const mbedtls_ecp_keypair & ctx)
+	{
+		const mbedtls_ecp_group& grp = GetGroupFromEcPair(ctx);
+		const mbedtls_ecp_point& q   = GetQFromEcPair(ctx);
+
+		const int retVal = mbedtls_ecp_check_pubkey(&grp, &q);
+		return
+			(retVal == MBEDTLS_EXIT_SUCCESS) ?
+				true :
+				(
+					(retVal == MBEDTLS_ERR_ECP_INVALID_KEY) ?
+						false :
+						throw mbedTLSRuntimeError(
+							retVal,
+							mbedTLSRuntimeError::ConstructWhatMsg(
+								retVal,
+								"Internal::HasPubKeyImpl::operator()",
+								"mbedtls_ecp_check_pubkey"
+							)
+						)
+				);
+	}
+
+	bool operator()(const mbedtls_rsa_context & ctx)
+	{
+		return mbedtls_rsa_check_pubkey(&ctx) == MBEDTLS_EXIT_SUCCESS;
+	}
+
+}; // struct HasPubKeyImpl
+
+
+struct HasPrivKeyImpl
+{
+	bool operator()(const mbedtls_ecp_keypair & ctx)
+	{
+		const mbedtls_ecp_group& grp = GetGroupFromEcPair(ctx);
+		const mbedtls_mpi& d         = GetDFromEcPair(ctx);
+
+		const int retVal = mbedtls_ecp_check_privkey(&grp, &d);
+		return
+			(retVal == MBEDTLS_EXIT_SUCCESS) ?
+				true :
+				(
+					(retVal == MBEDTLS_ERR_ECP_INVALID_KEY) ?
+						false :
+						throw mbedTLSRuntimeError(
+							retVal,
+							mbedTLSRuntimeError::ConstructWhatMsg(
+								retVal,
+								"Internal::HasPrivKeyImpl::operator()",
+								"mbedtls_ecp_check_privkey"
+							)
+						)
+				);
+	}
+
+	bool operator()(const mbedtls_rsa_context & ctx)
+	{
+		return mbedtls_rsa_check_privkey(&ctx) == MBEDTLS_EXIT_SUCCESS;
+	}
+
+}; // struct HasPrivKeyImpl
+
+
+struct GetKeyTypeImpl
+{
+	PKeyType operator()(const mbedtls_ecp_keypair & ctx)
+	{
+		return Impl(ctx);
+	}
+
+	PKeyType operator()(const mbedtls_rsa_context & ctx)
+	{
+		return Impl(ctx);
+	}
+
+private:
+
+	template<typename _MbedTlsCtxType>
+	PKeyType Impl(const _MbedTlsCtxType& ctx)
+	{
+		if (HasPrivKeyImpl()(ctx))
+		{
+			return PKeyType::Private;
+		}
+		else if(HasPubKeyImpl()(ctx))
+		{
+			return PKeyType::Public;
+		}
+		throw InvalidArgumentException(
+			"Internal::GetKeyTypeImpl::Impl"
+			" - The given PKey context has neither public nor private key"
+		);
+	}
+}; // struct GetKeyTypeImpl
+
+
+template<typename _RetType, typename _Func, typename... _Args>
+inline _RetType CallFuncBasedOnAlgCat(
+	const mbedtls_pk_context & ctx,
+	_Func func,
+	_Args&&... args
+)
+{
+	PKeyAlgmCat algCat = GetAlgmCat(ctx);
+
+	switch (algCat)
+	{
+	case PKeyAlgmCat::EC:
+	{
+		const mbedtls_ecp_keypair* subCtx = mbedtls_pk_ec(ctx);
+		if (subCtx == nullptr)
+		{
+			throw InvalidArgumentException(
+				"Internal::CallFuncBasedOnAlgCat"
+				" - The given PKey context is NULL"
+			);
+		}
+		return func(*subCtx, std::forward<_Args>(args)...);
+	}
+	case PKeyAlgmCat::RSA:
+	{
+		const mbedtls_rsa_context* subCtx = mbedtls_pk_rsa(ctx);
+		if (subCtx == nullptr)
+		{
+			throw InvalidArgumentException(
+				"Internal::CallFuncBasedOnAlgCat"
+				" - The given PKey context is NULL"
+			);
+		}
+		return func(*subCtx, std::forward<_Args>(args)...);
+	}
+	default:
+		throw UnexpectedErrorException(
+			"Internal::CallFuncBasedOnAlgCat"
+			" - GetAlgmCat returned invalid result."
+		);
+	}
+}
+
+inline PKeyType GetKeyType(const mbedtls_pk_context & ctx)
+{
+	return CallFuncBasedOnAlgCat<PKeyType>(
+		ctx,
+		GetKeyTypeImpl()
+	);
 }
 
 } // namespace Internal
