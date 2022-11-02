@@ -9,10 +9,11 @@
 #include <mbedtls/x509_csr.h>
 #include <mbedtls/x509_crt.h>
 
-#include "Asn1Helper.hpp"
-#include "PKeyHelper.hpp"
-
 #include "../Exceptions.hpp"
+
+#include "Asn1Helper.hpp"
+#include "ConstexprUtils.hpp"
+#include "PKeyHelper.hpp"
 
 
 /** ============================================================================
@@ -31,17 +32,45 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace Internal
 {
 
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 26U : 25U
+>
+GetPemHeaderCRL() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----BEGIN X509 CRL-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 24U : 23U
+>
+GetPemFooterCRL() noexcept
+{
+	static constexpr char const sk_charStr[] = "-----END X509 CRL-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
 // static constexpr char const PEM_BEGIN_CSR[] = "-----BEGIN CERTIFICATE REQUEST-----\n";
 // static constexpr char const PEM_END_CSR[]   = "-----END CERTIFICATE REQUEST-----\n";
 
 // static constexpr size_t PEM_CSR_HEADER_SIZE = sizeof(PEM_BEGIN_CSR) - 1;
 // static constexpr size_t PEM_CSR_FOOTER_SIZE = sizeof(PEM_END_CSR) - 1;
-
-// static constexpr char const PEM_BEGIN_CRL[] = "-----BEGIN X509 CRL-----\n";
-// static constexpr char const PEM_END_CRL[]   = "-----END X509 CRL-----\n";
-
-// static constexpr size_t PEM_CRL_HEADER_SIZE = sizeof(PEM_BEGIN_CRL) - 1;
-// static constexpr size_t PEM_CRL_FOOTER_SIZE = sizeof(PEM_END_CRL) - 1;
 
 // static constexpr char const PEM_BEGIN_CRT[] = "-----BEGIN CERTIFICATE-----\n";
 // static constexpr char const PEM_END_CRT[]   = "-----END CERTIFICATE-----\n";

@@ -205,8 +205,10 @@ public:
 	 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
 	 *                        the constructor is not available for borrowers.
 	 */
-	template<typename _dummy_PKTrait = PKObjTrait,
-		enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0>
+	template<
+		typename _dummy_PKTrait = PKObjTrait,
+		enable_if_t<!_dummy_PKTrait::sk_isBorrower, int> = 0
+	>
 	PKeyBase() :
 		_Base::ObjectBase()
 	{}
@@ -360,7 +362,7 @@ public:
 		std::vector<uint8_t> der = GetPublicDer();
 
 		return Internal::DerToPem<std::string>(
-			der,
+			CtnFullR(der),
 			Internal::GetPemHeaderPubKey(),
 			Internal::GetPemFooterPubKey()
 		);
@@ -374,7 +376,7 @@ public:
 		if (mbedtls_pk_get_type(Get()) == MBEDTLS_PK_RSA)
 		{
 			return Internal::DerToPem<SecretString>(
-				der,
+				CtnFullR(der),
 				Internal::GetPemHeaderRsaPrivKey(),
 				Internal::GetPemFooterRsaPrivKey()
 			);
@@ -385,7 +387,7 @@ public:
 		if (mbedtls_pk_get_type(Get()) == MBEDTLS_PK_ECKEY)
 		{
 			return Internal::DerToPem<SecretString>(
-				der,
+				CtnFullR(der),
 				Internal::GetPemHeaderEcPrivKey(),
 				Internal::GetPemFooterEcPrivKey()
 			);
@@ -401,7 +403,7 @@ public:
 
 
 	template<HashType _HashTypeVal>
-	std::vector<uint8_t> DerSign(
+	std::vector<uint8_t> SignInDer(
 		const Hash<_HashTypeVal>& hash,
 		RbgInterface& rand
 	) const
@@ -412,7 +414,7 @@ public:
 
 		size_t olen = 0;
 		MBEDTLSCPP_MAKE_C_FUNC_CALL(
-			PKeyBase::DerSign,
+			PKeyBase::SignInDer,
 			mbedtls_pk_sign,
 			_Base::MutableGet(),
 			GetMbedTlsMdType(_HashTypeVal),

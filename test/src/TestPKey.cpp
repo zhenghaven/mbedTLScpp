@@ -311,7 +311,7 @@ GTEST_TEST(TestPKey, SignAndVerifySign)
 			*rand
 		);
 
-		auto sign = pkey.DerSign<HashType::SHA256>(testHash1, *rand);
+		auto sign = pkey.SignInDer<HashType::SHA256>(testHash1, *rand);
 
 		EXPECT_NO_THROW(
 			pkey.VerifyDerSign(testHash1, CtnFullR(sign));
@@ -331,7 +331,7 @@ GTEST_TEST(TestPKey, SignAndVerifySign)
 			*rand
 		);
 
-		auto sign = pkey.DerSign<HashType::SHA256>(testHash1, *rand);
+		auto sign = pkey.SignInDer<HashType::SHA256>(testHash1, *rand);
 
 		EXPECT_NO_THROW(
 			pkey.VerifyDerSign(testHash1, CtnFullR(sign));

@@ -11,6 +11,8 @@
 
 #include <mbedtls/pem.h>
 
+#include "../Container.hpp"
+
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 namespace mbedTLScpp
@@ -91,18 +93,19 @@ inline constexpr size_t CalcPemBytes(size_t derSize, size_t headerSize, size_t f
 
 template<
 	typename _PemContainerType,
-	typename _DerContainerType,
+	typename _DerCtnType,
+	bool _DerCtnSecrecy,
 	typename _HeaderContainerType,
 	typename _FooterContainerType
 >
 inline _PemContainerType DerToPem(
-	const _DerContainerType& der,
+	const ContCtnReadOnlyRef<_DerCtnType, _DerCtnSecrecy>& der,
 	const _HeaderContainerType& header,
 	const _FooterContainerType& footer
 )
 {
 	size_t pemLen = Internal::CalcPemBytes(
-		der.size(),
+		der.GetRegionSize(),
 		header.size() - 1,
 		footer.size() - 1
 	);
@@ -115,8 +118,8 @@ inline _PemContainerType DerToPem(
 		mbedtls_pem_write_buffer,
 		header.data(),
 		footer.data(),
-		der.data(),
-		der.size(),
+		der.BeginBytePtr(),
+		der.GetRegionSize(),
 		reinterpret_cast<unsigned char*>(&pem[0]),
 		pem.size(),
 		&olen
