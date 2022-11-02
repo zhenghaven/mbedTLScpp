@@ -5,6 +5,13 @@
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
 
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
 #endif
@@ -15,17 +22,15 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-namespace mbedTLScpp_Test
-{
-	extern size_t g_numOfTestFile;
-}
+using namespace mbedTLScpp_Test;
+
 
 GTEST_TEST(TestEcKey, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestEcKey, EcGroupClass)
+GTEST_TEST(TestEcKey, EcGroupConstructAndMove)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -35,37 +40,46 @@ GTEST_TEST(TestEcKey, EcGroupClass)
 	{
 		EcGroup<> ecGrp1(EcType::SECP256R1);
 
-		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcGroup<> ecGrp2(EcType::CURVE25519);
+		const mbedtls_ecp_group* grp1Ptr = ecGrp1.Get();
+		EXPECT_EQ(ecGrp1.Get()->id, MBEDTLS_ECP_DP_SECP256R1);
 
-		// after successful initialization, we should have its allocation remains.
+
+		// Move
+		EcGroup<> ecGrp2(std::move(ecGrp1));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ecGrp1.Get(), nullptr);
+		EXPECT_EQ(ecGrp2.Get(), grp1Ptr);
+		EXPECT_EQ(ecGrp2.Get()->id, MBEDTLS_ECP_DP_SECP256R1);
+
+
+		// Copy
+		EcGroup<> ecGrp3 = EcGroup<>::FromDeepCopy(ecGrp2);
+
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		ecGrp1 = std::move(ecGrp1);
+		EXPECT_EQ(ecGrp2.Get(), grp1Ptr);
+		EXPECT_NE(ecGrp3.Get(), nullptr);
+		EXPECT_NE(ecGrp3.Get(), grp1Ptr);
+		EXPECT_EQ(ecGrp3.Get()->id, MBEDTLS_ECP_DP_SECP256R1);
 
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
+		// Move assignment
 		ecGrp1 = std::move(ecGrp2);
 
-		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		// Moved to initialize new one, allocation should remain the same.
-		EcGroup<> ecGrp3(std::move(ecGrp1));
+		EXPECT_EQ(ecGrp2.Get(), nullptr);
+		EXPECT_EQ(ecGrp1.Get(), grp1Ptr);
+		EXPECT_EQ(ecGrp1.Get()->id, MBEDTLS_ECP_DP_SECP256R1);
 
-		// This should success.
-		ecGrp3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(ecGrp1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(ecGrp2.NullCheck(), InvalidObjectException);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -73,7 +87,7 @@ GTEST_TEST(TestEcKey, EcGroupClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPublicBaseClass)
+GTEST_TEST(TestEcKey, EcGroupLoad)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -81,39 +95,17 @@ GTEST_TEST(TestEcKey, EcPublicBaseClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		EcPublicKeyBase<> ec1 = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
+		EcGroup<> grp1(EcType::SECP256R1);
 
-		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcPublicKeyBase<> ec2 = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
+		const mbedtls_ecp_group* grp1Ptr = grp1.Get();
+		EXPECT_EQ(grp1.Get()->id, MBEDTLS_ECP_DP_SECP256R1);
 
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		ec1 = std::move(ec1);
-
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		ec1 = std::move(ec2);
-
-		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		// Moved to initialize new one, allocation should remain the same.
-		EcPublicKeyBase<> ec3(std::move(ec1));
-
-		// This should success.
-		ec3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(ec1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(ec2.NullCheck(), InvalidObjectException);
+		grp1.Load(EcType::CURVE25519);
+		EXPECT_EQ(grp1.Get(), grp1Ptr);
+		EXPECT_EQ(grp1.Get()->id, MBEDTLS_ECP_DP_CURVE25519);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -121,140 +113,7 @@ GTEST_TEST(TestEcKey, EcPublicBaseClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPublicBaseConstructor)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	std::vector<uint8_t> testEcDer;
-	std::vector<uint8_t> testRsaDer;
-
-	{
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
-
-		testEcDer  = ecPubPem1.GetPublicDer();
-		testRsaDer = rsaPubPem1.GetPublicDer();
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-
-	{
-		BigNum xBN;
-		BigNum yBN;
-		BigNum zBN;
-		std::vector<uint8_t> xVec;
-		std::vector<uint8_t> yVec;
-		std::array<uint8_t, 32> x;
-		std::array<uint8_t, 32> y;
-
-		// PEM, success & fail
-		EcPublicKeyBase<> ec1 = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
-		EXPECT_EQ(ec1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec1.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec1.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcPublicKeyBase<>::FromPEM(gsk_testRsaPubKeyPem);, InvalidArgumentException);
-
-		// DER, success & fail
-		EcPublicKeyBase<> ec2 = EcPublicKeyBase<>::FromDER(CtnFullR(testEcDer));
-		EXPECT_EQ(ec2.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec2.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec2.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcPublicKeyBase<>::FromDER(CtnFullR(testRsaDer));, InvalidArgumentException);
-
-		xBN = BigNum(ec2.GetEcContext().Q.X);
-		yBN = BigNum(ec2.GetEcContext().Q.Y);
-		zBN = BigNum(ec2.GetEcContext().Q.Z);
-		EXPECT_EQ(zBN, 1);
-
-		xVec = xBN.Bytes();
-		yVec = yBN.Bytes();
-		std::copy(xVec.begin(), xVec.end(), x.begin());
-		std::copy(yVec.begin(), yVec.end(), y.begin());
-
-		// x,y,z BigNum
-		EcPublicKeyBase<> ec3(EcType::SECP256R1, xBN, yBN);
-		EXPECT_EQ(ec3.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec3.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec3.GetEcType() , EcType::SECP256R1);
-
-		EcPublicKeyBase<> ec4(EcType::SECP256R1, std::move(xBN), std::move(yBN));
-		EXPECT_EQ(ec4.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec4.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec4.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_TRUE(xBN.IsNull());
-		EXPECT_TRUE(yBN.IsNull());
-
-		// x,y,z Bytes
-		EcPublicKeyBase<> ec5(EcType::SECP256R1, ConstBigNumber(CtnFullR(x)), ConstBigNumber(CtnFullR(y)));
-		EXPECT_EQ(ec5.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec5.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec5.GetEcType() , EcType::SECP256R1);
-
-		// From PKeyBase
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
-
-		EcPublicKeyBase<> ec6 = EcPublicKeyBase<>::Convert(std::move(ecPubPem1));
-		EXPECT_TRUE(ecPubPem1.IsNull());
-
-		EXPECT_THROW(EcPublicKeyBase<> ecErr = EcPublicKeyBase<>::Convert(std::move(rsaPubPem1));, InvalidArgumentException);
-		EXPECT_FALSE(rsaPubPem1.IsNull());
-
-		// Borrow
-		EcPublicKeyBase<BorrowedPKeyTrait> ec7 = ec6.Get();
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.Y));
-
-		EXPECT_THROW(EcPublicKeyBase<BorrowedPKeyTrait> ecErr(rsaPubPem1.Get());, InvalidArgumentException);
-
-		// Copy
-		EcPublicKeyBase<> ec8 = ec6;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec8.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec8.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.Y));
-
-		EcPublicKeyBase<> ec9 = ec7;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.Y));
-
-		// Copy Assignment
-		const void* tmpPtr = nullptr;
-
-		tmpPtr = ec9.Get();
-		ec9 = ec1;
-
-		tmpPtr = ec9.Get();
-		ec9 = ec7;
-
-		//ec7 = ec7;
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPublicBaseExports)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	{
-		EcPublicKeyBase<> ec1 = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
-
-		EXPECT_NO_THROW(ec1.GetPublicDer(););
-		EXPECT_NO_THROW(ec1.GetPublicPem(););
-		//EXPECT_ANY_THROW(ec1.GetPrivateDer(););
-		//EXPECT_ANY_THROW(ec1.GetPrivatePem(););
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPrivateBaseClass)
+GTEST_TEST(TestEcKey, EcPublicKeyBaseConstructAndMove)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -262,39 +121,36 @@ GTEST_TEST(TestEcKey, EcPrivateBaseClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
+		EcPublicKeyBase<> ec1(EcType::SECP256R1);
 
-		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
+		const mbedtls_pk_context* ec1Ptr = ec1.Get();
+		EXPECT_NE(ec1.Get(), nullptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
 
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+
+		// Move
+		EcPublicKeyBase<> ec2(std::move(ec1));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		ec1 = std::move(ec1);
+		EXPECT_EQ(ec1.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), ec1Ptr);
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
 
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
+		// Move Assignment
 		ec1 = std::move(ec2);
 
-		// Moved, allocation should reduce.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		// Moved to initialize new one, allocation should remain the same.
-		EcKeyPairBase<> ec3(std::move(ec1));
-
-		// This should success.
-		ec3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(ec1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(ec2.NullCheck(), InvalidObjectException);
+		EXPECT_EQ(ec2.Get(), nullptr);
+		EXPECT_EQ(ec1.Get(), ec1Ptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -302,268 +158,75 @@ GTEST_TEST(TestEcKey, EcPrivateBaseClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPrivateBaseConstructor)
+GTEST_TEST(TestEcKey, EcPublicKeyBasePEMAndDER)
 {
 	int64_t initCount = 0;
+	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
-	SecretVector<uint8_t> testEcDer;
-	SecretVector<uint8_t> testEcPubDer;
-	SecretVector<uint8_t> testRsaDer;
-
+	// EC Public Key
 	{
-		PKeyBase<> ecPrvPem1  = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
+		EcPublicKeyBase<> ec = EcPublicKeyBase<>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
 
-		testEcDer     = ecPrvPem1.GetPrivateDer();
-		auto tmpVec   = ecPrvPem1.GetPublicDer();
-		testRsaDer    = rsaPrvPem1.GetPrivateDer();
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		testEcPubDer.assign(tmpVec.begin(), tmpVec.end());
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec.GetPublicPem();
+			std::string oriPem(GetTestEcPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		auto der = ec.GetPublicDer();
+
+		EcPublicKeyBase<> ec2 = EcPublicKeyBase<>::FromDER(CtnFullR(der));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec2.GetPublicPem();
+			std::string oriPem(GetTestEcPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
 	}
 
+	// Failed - RSA
 	{
-		BigNum rBN;
-		BigNum xBN;
-		BigNum yBN;
-		BigNum zBN;
-		SecretVector<uint8_t> rVec;
-		std::vector<uint8_t> xVec;
-		std::vector<uint8_t> yVec;
-		SecretArray<uint8_t, 32> r;
-		std::array<uint8_t, 32> x;
-		std::array<uint8_t, 32> y;
+		using _TestType = EcPublicKeyBase<>;
 
-		// Generate
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::Generate(EcType::SECP256R1);
-		EXPECT_EQ(ec1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec1.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec1.GetEcType() , EcType::SECP256R1);
-
-		// PEM, success & fail
-		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
-		EXPECT_EQ(ec2.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec2.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec2.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPairBase<>::FromPEM(gsk_testEcPubKeyPem);, mbedTLSRuntimeError);
-		EXPECT_THROW(EcKeyPairBase<>::FromPEM(gsk_testRsaPrvKeyPem);, InvalidArgumentException);
-
-		// DER, success & fail
-		EcKeyPairBase<> ec3 = EcKeyPairBase<>::FromDER(CtnFullR(testEcDer));
-		EXPECT_EQ(ec3.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec3.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec3.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPairBase<>::FromDER(CtnFullR(testEcPubDer));, mbedTLSRuntimeError);
-		EXPECT_THROW(EcKeyPairBase<>::FromDER(CtnFullR(testRsaDer));, InvalidArgumentException);
-
-		rBN = BigNum(ec2.GetEcContext().d);
-		xBN = BigNum(ec2.GetEcContext().Q.X);
-		yBN = BigNum(ec2.GetEcContext().Q.Y);
-		zBN = BigNum(ec2.GetEcContext().Q.Z);
-		EXPECT_EQ(zBN, 1);
-
-		rVec = rBN.SecretBytes();
-		xVec = xBN.Bytes();
-		yVec = yBN.Bytes();
-		std::copy(rVec.begin(), rVec.end(), r.Get().begin());
-		std::copy(xVec.begin(), xVec.end(), x.begin());
-		std::copy(yVec.begin(), yVec.end(), y.begin());
-
-		// r BigNum
-		EcKeyPairBase<> ec4(EcType::SECP256R1, rBN);
-		EXPECT_EQ(ec4.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec4.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec4.GetEcType() , EcType::SECP256R1);
-
-		// r Bytes
-		EcKeyPairBase<> ec5(EcType::SECP256R1, ConstBigNumber(CtnFullR(r)));
-		EXPECT_EQ(ec5.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec5.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec5.GetEcType() , EcType::SECP256R1);
-
-		// r, x,y,z BigNum
-		EcKeyPairBase<> ec6(EcType::SECP256R1, rBN, xBN, yBN);
-		EXPECT_EQ(ec6.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec6.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec6.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPairBase<> ec7(EcType::SECP256R1, std::move(rBN), std::move(xBN), std::move(yBN));
-		EXPECT_EQ(ec7.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec7.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec7.GetEcType() , EcType::SECP256R1);
-		EXPECT_TRUE(rBN.IsNull());
-		EXPECT_TRUE(xBN.IsNull());
-		EXPECT_TRUE(yBN.IsNull());
-
-		// r, x,y,z Bytes
-		EcKeyPairBase<> ec8(EcType::SECP256R1, ConstBigNumber(CtnFullR(r)), ConstBigNumber(CtnFullR(x)), ConstBigNumber(CtnFullR(y)));
-		EXPECT_EQ(ec8.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec8.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec8.GetEcType() , EcType::SECP256R1);
-
-		// From PKeyBase
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> ecPrvPem1  = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
-
-		EcKeyPairBase<> ec9 = EcKeyPairBase<>::Convert(std::move(ecPrvPem1));
-		EXPECT_TRUE(ecPrvPem1.IsNull());
-		EXPECT_EQ(ec9.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec9.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec9.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPairBase<> ecErr = EcKeyPairBase<>::Convert(std::move(ecPubPem1));, InvalidArgumentException);
-		EXPECT_FALSE(ecPubPem1.IsNull());
-		EXPECT_THROW(EcKeyPairBase<> ecErr = EcKeyPairBase<>::Convert(std::move(rsaPrvPem1));, InvalidArgumentException);
-		EXPECT_FALSE(rsaPrvPem1.IsNull());
-
-		// Borrow
-		EcKeyPairBase<BorrowedPKeyTrait> ec10 = ec9.Get();
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y));
-
-		EXPECT_THROW(EcKeyPairBase<BorrowedPKeyTrait> ecErr(ecPubPem1.Get());, InvalidArgumentException);
-		EXPECT_THROW(EcKeyPairBase<BorrowedPKeyTrait> ecErr(rsaPrvPem1.Get());, InvalidArgumentException);
-
-		// Copy
-		EcKeyPairBase<> ec11 = ec9;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y));
-
-		EcKeyPairBase<> ec12 = ec10;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.Y));
-
-		// Copy Assignment
-		const void* tmpPtr = nullptr;
-
-		tmpPtr = ec12.Get();
-		ec12 = ec1;
-
-		tmpPtr = ec12.Get();
-		ec12 = ec10;
-
-		//ec10 = ec10;
+		EXPECT_THROW(
+			_TestType::FromPEM(
+				std::string(
+					GetTestRsaPubKeyPem().data(), GetTestRsaPubKeyPem().size()
+				)
+			);,
+			InvalidArgumentException
+		);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPrivateBaseExports)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 
-	{
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
-
-		EXPECT_NO_THROW(ec1.GetPublicDer(););
-		EXPECT_NO_THROW(ec1.GetPublicPem(););
-		EXPECT_NO_THROW(ec1.GetPrivateDer(););
-		EXPECT_NO_THROW(ec1.GetPrivatePem(););
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPrivateBaseDeriveShared)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	{
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::Generate(EcType::SECP256R1);
-		EcKeyPairBase<> ec2 = EcKeyPairBase<>::Generate(EcType::SECP256R1);
-		EcPublicKeyBase<> ec3 = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
-
-		// BigNum
-		BigNum skBN;
-		EXPECT_NO_THROW(skBN = ec1.DeriveSharedKeyInBigNum(ec2););
-		EXPECT_TRUE(0UL < skBN.GetSize() && skBN.GetSize() <= 32UL);
-		EXPECT_NO_THROW(skBN = ec1.DeriveSharedKeyInBigNum(ec3););
-		EXPECT_TRUE(0UL < skBN.GetSize() && skBN.GetSize() <= 32UL);
-
-		// Bytes
-		SecretVector<uint8_t> sk;
-		EXPECT_NO_THROW(sk = ec1.DeriveSharedKey(ec2););
-		EXPECT_TRUE(0UL < sk.size() && sk.size() <= 32UL);
-		EXPECT_NO_THROW(sk = ec1.DeriveSharedKey(ec3););
-		EXPECT_TRUE(0UL < sk.size() && sk.size() <= 32UL);
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPrivateBaseSign)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
-
-	{
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::Generate(EcType::SECP256R1);
-		// BigNum
-		BigNum rBN;
-		BigNum sBN;
-		EXPECT_TRUE(rBN.GetSize() <= 0UL);
-		EXPECT_TRUE(sBN.GetSize() <= 0UL);
-		std::tie(rBN, sBN) = ec1.SignInBigNum(HashType::SHA256, CtnFullR(testHash));
-		EXPECT_TRUE(0UL < rBN.GetSize() && rBN.GetSize() <= 32UL);
-		EXPECT_TRUE(0UL < sBN.GetSize() && sBN.GetSize() <= 32UL);
-
-		// Bytes
-		std::vector<uint8_t> rVec;
-		std::vector<uint8_t> sVec;
-		EXPECT_TRUE(rVec.size() <= 0UL);
-		EXPECT_TRUE(sVec.size() <= 0UL);
-		std::tie(rVec, sVec) = ec1.Sign(HashType::SHA256, CtnFullR(testHash));
-		EXPECT_TRUE(0UL < rVec.size() && rVec.size() <= 32UL);
-		EXPECT_TRUE(0UL < sVec.size() && sVec.size() <= 32UL);
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPublicBaseVerifySign)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
-
-	{
-		EcKeyPairBase<> ecPrv   = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
-		EcPublicKeyBase<> ecPub = EcPublicKeyBase<>::FromPEM(gsk_testEcPubKeyPem);
-
-		// BigNum
-		BigNum rBN;
-		BigNum sBN;
-		std::tie(rBN, sBN) = ecPrv.SignInBigNum(HashType::SHA256, CtnFullR(testHash));
-
-		// Bytes
-		std::vector<uint8_t> rVec;
-		std::vector<uint8_t> sVec;
-		std::tie(rVec, sVec) = ecPrv.Sign(HashType::SHA256, CtnFullR(testHash));
-
-		EXPECT_NO_THROW(ecPub.VerifySign(CtnFullR(testHash), rBN, sBN));
-		EXPECT_NO_THROW(ecPub.VerifySign(CtnFullR(testHash), CtnFullR(rVec), CtnFullR(sVec)));
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPublicClass)
+GTEST_TEST(TestEcKey, EcPublicKeyBaseCopy)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -571,187 +234,64 @@ GTEST_TEST(TestEcKey, EcPublicClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		EcPublicKey<EcType::SECP256R1> ec1 = EcPublicKey<EcType::SECP256R1>::FromPEM(gsk_testEcPubKeyPem);
+		EcPublicKeyBase<> ec = EcPublicKeyBase<>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
 
-		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcPublicKey<EcType::SECP256R1> ec2 = EcPublicKey<EcType::SECP256R1>::FromPEM(gsk_testEcPubKeyPem);
 
-		// after successful initialization, we should have its allocation remains.
+		EcPublicKeyBase<> ec2 = EcPublicKeyBase<>::FromDeepCopy(ec);
+
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		ec1 = std::move(ec1);
+		EXPECT_NO_THROW(
+			EXPECT_EQ(ec.GetPublicDer(), ec2.GetPublicDer());
+		);
 
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		ec1 = std::move(ec2);
+		// Copy Empty Obj
+		ec = std::move(ec2);
+		EcPublicKeyBase<> ec3 = EcPublicKeyBase<>::FromDeepCopy(ec2);
 
-		// Moved, allocation should reduce.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		// Moved to initialize new one, allocation should remain the same.
-		EcPublicKey<EcType::SECP256R1> ec3(std::move(ec1));
-
-		// This should success.
-		ec3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(ec1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(ec2.NullCheck(), InvalidObjectException);
+		EXPECT_EQ(ec3.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), nullptr);
 	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// Copy Empty PK
+	{
+		EcPublicKeyBase<> ec;
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EcPublicKeyBase<> ec2 = EcPublicKeyBase<>::FromDeepCopy(ec);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(mbedtls_pk_ec(*(ec.Get())), nullptr);
+		EXPECT_EQ(mbedtls_pk_ec(*(ec2.Get())), nullptr);
+	}
+
 
 	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPublicConstructor)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 
-	std::vector<uint8_t> testEcDer;
-	std::vector<uint8_t> testRsaDer;
-
-	{
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
-
-		testEcDer  = ecPubPem1.GetPublicDer();
-		testRsaDer = rsaPubPem1.GetPublicDer();
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-
-	{
-		BigNum xBN;
-		BigNum yBN;
-		BigNum zBN;
-		std::vector<uint8_t> xVec;
-		std::vector<uint8_t> yVec;
-		std::array<uint8_t, 32> xArr;
-		std::array<uint8_t, 32> yArr;
-		uint8_t x[32];
-		uint8_t y[32];
-
-		// PEM, success & fail
-		EcPublicKey<EcType::SECP256R1> ec1 = EcPublicKey<EcType::SECP256R1>::FromPEM(gsk_testEcPubKeyPem);
-		EXPECT_EQ(ec1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec1.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec1.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW({EcPublicKey<EcType::SECP256R1>::FromPEM(gsk_testRsaPubKeyPem);}, InvalidArgumentException);
-		EXPECT_THROW({EcPublicKey<EcType::SECP521R1>::FromPEM(gsk_testEcPubKeyPem); }, InvalidArgumentException);
-
-		// DER, success & fail
-		EcPublicKey<EcType::SECP256R1> ec2 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(testEcDer));
-		EXPECT_EQ(ec2.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec2.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec2.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW({EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(testRsaDer));}, InvalidArgumentException);
-		EXPECT_THROW({EcPublicKey<EcType::SECP521R1>::FromDER(CtnFullR(testEcDer)); }, InvalidArgumentException);
-
-		xBN = BigNum(ec2.GetEcContext().Q.X);
-		yBN = BigNum(ec2.GetEcContext().Q.Y);
-		zBN = BigNum(ec2.GetEcContext().Q.Z);
-		EXPECT_EQ(zBN, 1);
-
-		xVec = xBN.Bytes();
-		yVec = yBN.Bytes();
-		std::copy(xVec.begin(), xVec.end(), xArr.begin());
-		std::copy(yVec.begin(), yVec.end(), yArr.begin());
-		std::copy(xVec.begin(), xVec.end(), std::begin(x));
-		std::copy(yVec.begin(), yVec.end(), std::begin(y));
-
-		// x,y,z BigNum
-		EcPublicKey<EcType::SECP256R1> ec3 = EcPublicKey<EcType::SECP256R1>::FromBigNums(xBN, yBN);
-		EXPECT_EQ(ec3.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec3.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec3.GetEcType() , EcType::SECP256R1);
-
-		EcPublicKey<EcType::SECP256R1> ec4 = EcPublicKey<EcType::SECP256R1>::FromBigNums(std::move(xBN), std::move(yBN));
-		EXPECT_EQ(ec4.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec4.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec4.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_TRUE(xBN.IsNull());
-		EXPECT_TRUE(yBN.IsNull());
-
-		// x,y,z Bytes
-		EcPublicKey<EcType::SECP256R1> ec5 = EcPublicKey<EcType::SECP256R1>::FromBigNums(ConstBigNumber(CtnFullR(xArr)), ConstBigNumber(CtnFullR(yArr)));
-		EXPECT_EQ(ec5.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec5.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec5.GetEcType() , EcType::SECP256R1);
-
-		EcPublicKey<EcType::SECP256R1> ec105 = EcPublicKey<EcType::SECP256R1>::FromBytes(CtnFullR(xVec), CtnFullR(yVec));
-		EXPECT_EQ(ec105.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec105.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec105.GetEcType() , EcType::SECP256R1);
-
-		EcPublicKey<EcType::SECP256R1> ec106 = EcPublicKey<EcType::SECP256R1>::FromBytes(xArr, yArr);
-		EXPECT_EQ(ec106.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec106.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec106.GetEcType() , EcType::SECP256R1);
-
-		EcPublicKey<EcType::SECP256R1> ec107 = EcPublicKey<EcType::SECP256R1>::FromBytes(x, y);
-		EXPECT_EQ(ec106.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec106.GetKeyType(), PKeyType::Public);
-		EXPECT_EQ(ec106.GetEcType() , EcType::SECP256R1);
-
-		// From PKeyBase
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> rsaPubPem1 = std::string(gsk_testRsaPubKeyPem);
-
-		EXPECT_THROW({EcPublicKey<EcType::SECP256R1> ecErr = EcPublicKey<EcType::SECP256R1>::Convert(std::move(rsaPubPem1));}, InvalidArgumentException);
-		EXPECT_FALSE(rsaPubPem1.IsNull());
-
-		EXPECT_THROW({EcPublicKey<EcType::SECP521R1> ecErr = EcPublicKey<EcType::SECP521R1>::Convert(std::move(ecPubPem1)); }, InvalidArgumentException);
-		EXPECT_FALSE(rsaPubPem1.IsNull());
-
-		EcPublicKey<EcType::SECP256R1> ec6 = EcPublicKey<EcType::SECP256R1>::Convert(std::move(ecPubPem1));
-		EXPECT_TRUE(ecPubPem1.IsNull());
-
-		// Borrow
-		EcPublicKey<EcType::SECP256R1, BorrowedPKeyTrait> ec7 = ec6.Get();
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.Y));
-
-		EXPECT_THROW((EcPublicKey<EcType::SECP256R1, BorrowedPKeyTrait>(rsaPubPem1.Get())), InvalidArgumentException);
-		EXPECT_THROW((EcPublicKey<EcType::SECP521R1, BorrowedPKeyTrait>(ecPubPem1.Get()) ), InvalidArgumentException);
-
-		// Copy
-		EcPublicKey<EcType::SECP256R1> ec8 = ec6;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec8.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec8.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec6.GetEcContext().Q.Y));
-
-		EcPublicKey<EcType::SECP256R1> ec9 = ec7;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec7.GetEcContext().Q.Y));
-
-		// Copy Assignment
-		const void* tmpPtr = nullptr;
-
-		tmpPtr = ec9.Get();
-		ec9 = ec1;
-
-		tmpPtr = ec9.Get();
-		ec9 = ec7;
-
-		//ec7 = ec7;
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestEcKey, EcPrivateClass)
+GTEST_TEST(TestEcKey, EcPublicKeyBaseBorrow)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -759,39 +299,26 @@ GTEST_TEST(TestEcKey, EcPrivateClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		EcKeyPair<EcType::SECP256R1> ec1 = EcKeyPair<EcType::SECP256R1>::FromPEM(gsk_testEcPrvKeyPem);
+		EcPublicKeyBase<> ec = EcPublicKeyBase<>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
 
-		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcKeyPair<EcType::SECP256R1> ec2 = EcKeyPair<EcType::SECP256R1>::FromPEM(gsk_testEcPrvKeyPem);
 
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+		auto ec2 = EcPublicKeyBase<BorrowedPKeyTrait>::Borrow(ec.Get());
 
-		ec1 = std::move(ec1);
-
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-
-		ec1 = std::move(ec2);
-
-		// Moved, allocation should reduce.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		// Moved to initialize new one, allocation should remain the same.
-		EcKeyPair<EcType::SECP256R1> ec3(std::move(ec1));
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
 
-		// This should success.
-		ec3.NullCheck();
-
-		//mdBase1.NullCheck();
-		EXPECT_THROW(ec1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(ec2.NullCheck(), InvalidObjectException);
+		EXPECT_EQ(ec2.Get(), ec.Get());
 	}
 
 	// Finally, all allocation should be cleaned after exit.
@@ -799,318 +326,858 @@ GTEST_TEST(TestEcKey, EcPrivateClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPublicAPI)
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseConstructAndMove)
 {
 	int64_t initCount = 0;
+	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	std::array<uint8_t, 32> r;
-	std::array<uint8_t, 32> s;
-	std::vector<uint8_t> rVec;
-	std::vector<uint8_t> sVec;
-
-	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		EcKeyPairBase<> ec1 = EcKeyPairBase<>::FromPEM(gsk_testEcPrvKeyPem);
+		EcKeyPairBase<> ec1(EcType::SECP256R1);
 
-		std::tie(rVec, sVec) = ec1.Sign(HashType::SHA256, CtnFullR(testHash));
-		std::copy(rVec.begin(), rVec.end(), r.begin());
-		std::copy(sVec.begin(), sVec.end(), s.begin());
-	}
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-	{
-		EcPublicKey<EcType::SECP256R1> ec1 = EcPublicKey<EcType::SECP256R1>::FromPEM(gsk_testEcPubKeyPem);
+		const mbedtls_pk_context* ec1Ptr = ec1.Get();
+		EXPECT_NE(ec1.Get(), nullptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
 
-		EXPECT_NO_THROW(ec1.GetPublicPem());
-		EXPECT_NO_THROW(ec1.GetPublicDer());
-		EXPECT_NO_THROW(ec1.VerifySign(testHash, r, s));
+
+		// Move
+		EcKeyPairBase<> ec2(std::move(ec1));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec1.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), ec1Ptr);
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+
+
+		// Move Assignment
+		ec1 = std::move(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.Get(), nullptr);
+		EXPECT_EQ(ec1.Get(), ec1Ptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPrivateConstructor)
+
+GTEST_TEST(TestEcKey, EcKeyPairBasePEMAndDER)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
+	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
-	SecretVector<uint8_t> testEcDer;
-	SecretVector<uint8_t> testEcPubDer;
-	SecretVector<uint8_t> testRsaDer;
-
+	// EC Public Key
 	{
-		PKeyBase<> ecPrvPem1  = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
+		EcKeyPairBase<> ec = EcKeyPairBase<>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		testEcDer     = ecPrvPem1.GetPrivateDer();
-		auto tmpVec   = ecPrvPem1.GetPublicDer();
-		testRsaDer    = rsaPrvPem1.GetPrivateDer();
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		testEcPubDer.assign(tmpVec.begin(), tmpVec.end());
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec.GetPrivatePem();
+			std::string oriPem(GetTestEcPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		auto der = ec.GetPrivateDer();
+
+		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromDER(CtnFullR(der), *rand);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, der.capacity());
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec2.GetPrivatePem();
+			std::string oriPem(GetTestEcPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
 	}
 
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// Failed - EC Public Key
 	{
-		BigNum rBN;
-		BigNum xBN;
-		BigNum yBN;
-		BigNum zBN;
-		SecretVector<uint8_t> rVec;
-		std::vector<uint8_t> xVec;
-		std::vector<uint8_t> yVec;
-		SecretArray<uint8_t, 32> rArr;
-		std::array<uint8_t, 32> xArr;
-		std::array<uint8_t, 32> yArr;
+		using _TestType = EcKeyPairBase<>;
 
-		// Generate
-		EcKeyPair<EcType::SECP256R1> ec1 = EcKeyPair<EcType::SECP256R1>::Generate();
-		EXPECT_EQ(ec1.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec1.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec1.GetEcType() , EcType::SECP256R1);
-
-		// PEM, success & fail
-		EcKeyPair<EcType::SECP256R1> ec2 = EcKeyPair<EcType::SECP256R1>::FromPEM(gsk_testEcPrvKeyPem);
-		EXPECT_EQ(ec2.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec2.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec2.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1>::FromPEM(gsk_testEcPubKeyPem);, mbedTLSRuntimeError);
-		EXPECT_THROW(EcKeyPair<EcType::SECP521R1>::FromPEM(gsk_testEcPrvKeyPem); , InvalidArgumentException);
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1>::FromPEM(gsk_testRsaPrvKeyPem);, InvalidArgumentException);
-
-		// DER, success & fail
-		EcKeyPair<EcType::SECP256R1> ec3 = EcKeyPair<EcType::SECP256R1>::FromDER(CtnFullR(testEcDer));
-		EXPECT_EQ(ec3.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec3.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec3.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1>::FromDER(CtnFullR(testEcPubDer));, mbedTLSRuntimeError);
-		EXPECT_THROW(EcKeyPair<EcType::SECP521R1>::FromDER(CtnFullR(testEcDer)); , InvalidArgumentException);
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1>::FromDER(CtnFullR(testRsaDer));, InvalidArgumentException);
-
-		rBN = BigNum(ec2.GetEcContext().d);
-		xBN = BigNum(ec2.GetEcContext().Q.X);
-		yBN = BigNum(ec2.GetEcContext().Q.Y);
-		zBN = BigNum(ec2.GetEcContext().Q.Z);
-		EXPECT_EQ(zBN, 1);
-
-		rVec = rBN.SecretBytes();
-		xVec = xBN.Bytes();
-		yVec = yBN.Bytes();
-		std::copy(rVec.begin(), rVec.end(), rArr.Get().begin());
-		std::copy(xVec.begin(), xVec.end(), xArr.begin());
-		std::copy(yVec.begin(), yVec.end(), yArr.begin());
-
-		// r BigNum
-		EcKeyPair<EcType::SECP256R1> ec4 = EcKeyPair<EcType::SECP256R1>::FromBigNums(rBN);
-		EXPECT_EQ(ec4.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec4.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec4.GetEcType() , EcType::SECP256R1);
-
-		// r Bytes
-		EcKeyPair<EcType::SECP256R1> ec5 = EcKeyPair<EcType::SECP256R1>::FromBigNums(ConstBigNumber(CtnFullR(rArr)));
-		EXPECT_EQ(ec5.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec5.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec5.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPair<EcType::SECP256R1> ec101 = EcKeyPair<EcType::SECP256R1>::FromBytes(CtnFullR(rArr));
-		EXPECT_EQ(ec101.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec101.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec101.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPair<EcType::SECP256R1> ec102 = EcKeyPair<EcType::SECP256R1>::FromBytes(rArr);
-		EXPECT_EQ(ec102.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec102.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec102.GetEcType() , EcType::SECP256R1);
-
-		// r, x,y,z BigNum
-		EcKeyPair<EcType::SECP256R1> ec6 = EcKeyPair<EcType::SECP256R1>::FromBigNums(rBN, xBN, yBN);
-		EXPECT_EQ(ec6.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec6.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec6.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPair<EcType::SECP256R1> ec7 = EcKeyPair<EcType::SECP256R1>::FromBigNums(std::move(rBN), std::move(xBN), std::move(yBN));
-		EXPECT_EQ(ec7.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec7.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec7.GetEcType() , EcType::SECP256R1);
-		EXPECT_TRUE(rBN.IsNull());
-		EXPECT_TRUE(xBN.IsNull());
-		EXPECT_TRUE(yBN.IsNull());
-
-		// r, x,y,z Bytes
-		EcKeyPair<EcType::SECP256R1> ec8 = EcKeyPair<EcType::SECP256R1>::FromBigNums(ConstBigNumber(CtnFullR(rArr)), ConstBigNumber(CtnFullR(xArr)), ConstBigNumber(CtnFullR(yArr)));
-		EXPECT_EQ(ec8.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec8.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec8.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPair<EcType::SECP256R1> ec103 = EcKeyPair<EcType::SECP256R1>::FromBytes(CtnFullR(rArr), CtnFullR(xArr), CtnFullR(yArr));
-		EXPECT_EQ(ec103.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec103.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec103.GetEcType() , EcType::SECP256R1);
-
-		EcKeyPair<EcType::SECP256R1> ec104 = EcKeyPair<EcType::SECP256R1>::FromBytes(rArr, xArr, yArr);
-		EXPECT_EQ(ec104.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec104.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec104.GetEcType() , EcType::SECP256R1);
-
-		// From PKeyBase
-		PKeyBase<> ecPubPem1  = std::string(gsk_testEcPubKeyPem);
-		PKeyBase<> ecPrvPem1  = SecretString(gsk_testEcPrvKeyPem);
-		PKeyBase<> rsaPrvPem1 = SecretString(gsk_testRsaPrvKeyPem);
-
-		EXPECT_THROW(EcKeyPair<EcType::SECP521R1> ecErr = EcKeyPair<EcType::SECP521R1>::Convert(std::move(ecPrvPem1));, InvalidArgumentException);
-		EXPECT_FALSE(ecPrvPem1.IsNull());
-
-		EcKeyPair<EcType::SECP256R1> ec9 = EcKeyPair<EcType::SECP256R1>::Convert(std::move(ecPrvPem1));
-		EXPECT_TRUE(ecPrvPem1.IsNull());
-		EXPECT_EQ(ec9.GetAlgmCat(), PKeyAlgmCat::EC);
-		EXPECT_EQ(ec9.GetKeyType(), PKeyType::Private);
-		EXPECT_EQ(ec9.GetEcType() , EcType::SECP256R1);
-
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1> ecErr = EcKeyPair<EcType::SECP256R1>::Convert(std::move(ecPubPem1));, InvalidArgumentException);
-		EXPECT_FALSE(ecPubPem1.IsNull());
-		EXPECT_THROW(EcKeyPair<EcType::SECP256R1> ecErr = EcKeyPair<EcType::SECP256R1>::Convert(std::move(rsaPrvPem1));, InvalidArgumentException);
-		EXPECT_FALSE(rsaPrvPem1.IsNull());
-
-		// Borrow
-		ecPrvPem1  = SecretString(gsk_testEcPrvKeyPem);
-
-		EcKeyPair<EcType::SECP256R1, BorrowedPKeyTrait> ec10 = ec9.Get();
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y));
-
-		EXPECT_THROW((EcKeyPair<EcType::SECP256R1, BorrowedPKeyTrait>(ecPubPem1.Get()) );, InvalidArgumentException);
-		EXPECT_THROW((EcKeyPair<EcType::SECP521R1, BorrowedPKeyTrait>(ecPrvPem1.Get()) );, InvalidArgumentException);
-		EXPECT_THROW((EcKeyPair<EcType::SECP256R1, BorrowedPKeyTrait>(rsaPrvPem1.Get()));, InvalidArgumentException);
-
-		// Copy
-		EcKeyPair<EcType::SECP256R1> ec11 = ec9;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec11.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec9.GetEcContext().Q.Y));
-
-		EcKeyPair<EcType::SECP256R1> ec12 = ec10;
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().d), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().d));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().Q.X), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.X));
-		EXPECT_EQ(BigNumber<BorrowerBigNumTrait>(&ec12.GetEcContext().Q.Y), BigNumber<BorrowerBigNumTrait>(&ec10.GetEcContext().Q.Y));
-
-		// Copy Assignment
-		const void* tmpPtr = nullptr;
-
-		tmpPtr = ec12.Get();
-		ec12 = ec1;
-
-		tmpPtr = ec12.Get();
-		ec12 = ec10;
-
-		//ec10 = ec10;
+		EXPECT_THROW(
+			_TestType::FromPEM(
+				SecretString(
+					GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+				),
+				*rand
+			);,
+			mbedTLSRuntimeError
+		);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestEcKey, EcPrivateAPI)
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseCopy)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
+	int64_t initSecCount = 0;
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
-	Hash<HashType::SHA256> testHash = Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
-
-	// SECP256R1
 	{
-		EcKeyPair<EcType::SECP256R1>   ecPrv1 = EcKeyPair<EcType::SECP256R1>::Generate();
-		EcPublicKey<EcType::SECP256R1> ecPub1 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(ecPrv1.GetPublicDer()));
+		EcKeyPairBase<> ec = EcKeyPairBase<>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
 
-		EcKeyPair<EcType::SECP256R1>   ecPrv2 = EcKeyPair<EcType::SECP256R1>::Generate();
-		EcPublicKey<EcType::SECP256R1> ecPub2 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(ecPrv2.GetPublicDer()));
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		EcKeyPair<EcType::SECP256R1>::KArray rArr;
-		EcKeyPair<EcType::SECP256R1>::KArray sArr;
-		uint8_t r[EcKeyPair<EcType::SECP256R1>::sk_kSize];
-		uint8_t s[EcKeyPair<EcType::SECP256R1>::sk_kSize];
+
+		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromDeepCopy(ec);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_NO_THROW(
+			EXPECT_EQ(ec.GetPublicDer(), ec2.GetPublicDer());
+		);
+
+
+		// Copy Empty Obj
+		ec = std::move(ec2);
+		EcKeyPairBase<> ec3 = EcKeyPairBase<>::FromDeepCopy(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec3.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), nullptr);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// Copy Empty PK
+	{
+		EcKeyPairBase<> ec;
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromDeepCopy(ec);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(mbedtls_pk_ec(*(ec.Get())), nullptr);
+		EXPECT_EQ(mbedtls_pk_ec(*(ec2.Get())), nullptr);
+	}
+
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseBorrow)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcKeyPairBase<> ec = EcKeyPairBase<>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		auto ec2 = EcKeyPairBase<BorrowedPKeyTrait>::Borrow(ec.Get());
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_EQ(ec2.Get(), ec.Get());
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseGenerate)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcKeyPairBase<> ec =
+			EcKeyPairBase<>::Generate(EcType::SECP256R1, *rand);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseSignAndVerify)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+
+	Hash<HashType::SHA256> testHash1 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+	Hash<HashType::SHA256> testHash2 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("XTestStringX"));
+
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcKeyPairBase<> priv = EcKeyPairBase<>::Generate(
+			EcType::SECP256R1, *rand
+		);
+		EcPublicKeyBase<> pub = EcPublicKeyBase<>::FromDER(
+			CtnFullR(priv.GetPublicDer())
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
 
 		// Sign
-		std::tie(rArr, sArr) = ecPrv1.Sign(testHash);
-		ToCArray(r, rArr);
-		ToCArray(s, sArr);
+		BigNum r;
+		BigNum s;
+		std::tie(r, s) = priv.SignInBigNum(testHash1, *rand);
 
-		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, rArr, sArr));
-		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, ToArray(r), ToArray(s)));
-
-		// Share Secect
-		EcKeyPair<EcType::SECP256R1>::KSecArray sk1 = ecPrv1.DeriveSharedKey(ecPub2);
-		EcKeyPair<EcType::SECP256R1>::KSecArray sk2 = ecPrv2.DeriveSharedKey(ecPub1);
-		EXPECT_EQ(sk1, sk2);
-
-		// Export & Import
-		EcKeyPair<EcType::SECP256R1>::KSecArray dArr;
-		EcKeyPair<EcType::SECP256R1>::KArray xArr;
-		EcKeyPair<EcType::SECP256R1>::KArray yArr;
-
-		uint8_t d[EcKeyPair<EcType::SECP256R1>::sk_kSize];
-		uint8_t x[EcKeyPair<EcType::SECP256R1>::sk_kSize];
-		uint8_t y[EcKeyPair<EcType::SECP256R1>::sk_kSize];
-
-		std::tie(xArr, yArr, std::ignore) = ecPub1.GetPublicBytes();
-		std::tie(xArr, yArr, std::ignore) = ecPrv1.GetPublicBytes();
-		dArr = ecPrv1.GetPrivateBytes();
-
-		Declassify(d, dArr);
-		ToCArray(x, xArr);
-		ToCArray(y, yArr);
-
-		EcKeyPair<EcType::SECP256R1> ecPrv3 = EcKeyPair<EcType::SECP256R1>::FromBytes(d, ToArray(x), ToArray(y));
-
-		EXPECT_NO_THROW(ecPrv3.VerifySign(testHash, rArr, sArr));
-		std::tie(rArr, sArr) = ecPrv3.Sign(testHash);
-		EXPECT_NO_THROW(ecPub1.VerifySign(testHash, rArr, sArr));
-	}
-
-	// CURVE25519
-	{
-		EcKeyPair<EcType::CURVE25519>::KSecArray dArr;
-		EcKeyPair<EcType::CURVE25519>::KArray xArr;
-		EcKeyPair<EcType::CURVE25519>::KArray yArr;
-		EcKeyPair<EcType::CURVE25519>::KArray zArr;
-
-		uint8_t d[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-		uint8_t x[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-		uint8_t y[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-		uint8_t z[EcKeyPair<EcType::CURVE25519>::sk_kSize];
-
-		EcKeyPair<EcType::CURVE25519>   ecPrv1 = EcKeyPair<EcType::CURVE25519>::Generate();
-		dArr = ecPrv1.GetPrivateBytes();
-		std::tie(xArr, yArr, zArr) = ecPrv1.GetPublicBytes();
-		Declassify(d, dArr);
-		ToCArray(x, xArr);
-		ToCArray(y, yArr);
-		ToCArray(z, zArr);
-		EcPublicKey<EcType::CURVE25519> ecPub1 = EcPublicKey<EcType::CURVE25519>::FromBytes(ToArray(x), ToArray(y), ToArray(z));
-		EcKeyPair<EcType::CURVE25519>   ecPrv3 = EcKeyPair<EcType::CURVE25519>::FromBytes(d, ToArray(x), ToArray(y), ToArray(z));
-
-		EcKeyPair<EcType::CURVE25519>   ecPrv2 = EcKeyPair<EcType::CURVE25519>::Generate();
-		dArr = ecPrv2.GetPrivateBytes();
-		std::tie(xArr, yArr, zArr) = ecPrv2.GetPublicBytes();
-		Declassify(d, dArr);
-		ToCArray(x, xArr);
-		ToCArray(y, yArr);
-		ToCArray(z, zArr);
-		EcPublicKey<EcType::CURVE25519> ecPub2 = EcPublicKey<EcType::CURVE25519>::FromBytes(ToArray(x), ToArray(y), ToArray(z));
-		EcKeyPair<EcType::CURVE25519>   ecPrv4 = EcKeyPair<EcType::CURVE25519>::FromBytes(d, ToArray(x), ToArray(y), ToArray(z));
-
-		// Share Secect
-		EcKeyPair<EcType::CURVE25519>::KSecArray sk1 = ecPrv1.DeriveSharedKey(ecPub2);
-		EcKeyPair<EcType::CURVE25519>::KSecArray sk2 = ecPrv2.DeriveSharedKey(ecPub1);
-		EXPECT_EQ(sk1, sk2);
-
-		sk1 = ecPrv3.DeriveSharedKey(ecPub2);
-		sk2 = ecPrv4.DeriveSharedKey(ecPub1);
-		EXPECT_EQ(sk1, sk2);
+		// Verify
+		EXPECT_NO_THROW(
+			pub.VerifySign(CtnFullR(testHash1), r, s);
+		);
+		EXPECT_THROW(
+			pub.VerifySign(CtnFullR(testHash2), r, s);,
+			mbedTLSRuntimeError
+		);
 	}
 
 	// Finally, all allocation should be cleaned after exit.
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
+
+
+GTEST_TEST(TestEcKey, EcKeyPairBaseDeriveSharedKey)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcKeyPairBase<> priv1 = EcKeyPairBase<>::Generate(
+			EcType::SECP256R1, *rand
+		);
+		EcKeyPairBase<> priv2 = EcKeyPairBase<>::Generate(
+			EcType::SECP256R1, *rand
+		);
+		EcKeyPairBase<> priv3 = EcKeyPairBase<>::Generate(
+			EcType::SECP256R1, *rand
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 3);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		BigNum s1 = priv1.DeriveSharedKeyInBigNum(priv2, *rand);
+		BigNum s2 = priv2.DeriveSharedKeyInBigNum(priv1, *rand);
+		BigNum s3 = priv1.DeriveSharedKeyInBigNum(priv3, *rand);
+
+		EXPECT_EQ(s1, s2);
+		EXPECT_NE(s1, s3);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcPublicKeyConstructAndMove)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcPublicKey<EcType::SECP256R1> ec1(EcType::SECP256R1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		const mbedtls_pk_context* ec1Ptr = ec1.Get();
+		EXPECT_NE(ec1.Get(), nullptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec1.GetEcType(),       EcType::SECP256R1);
+
+
+		// Move
+		EcPublicKey<EcType::SECP256R1> ec2(std::move(ec1));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec1.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), ec1Ptr);
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+
+		// Move Assignment
+		ec1 = std::move(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.Get(), nullptr);
+		EXPECT_EQ(ec1.Get(), ec1Ptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec1.GetEcType(),       EcType::SECP256R1);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcPublicKeyPEMAndDER)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	// EC Public Key
+	{
+		auto ec = EcPublicKey<EcType::SECP256R1>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec.GetPublicPem();
+			std::string oriPem(GetTestEcPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		auto der = ec.GetPublicDer();
+
+		auto ec2 = EcPublicKey<EcType::SECP256R1>::FromDER(CtnFullR(der));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec2.GetPublicPem();
+			std::string oriPem(GetTestEcPubKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcPublicKeyCopy)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto ec = EcPublicKey<EcType::SECP256R1>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		auto ec2 = EcPublicKey<EcType::SECP256R1>::FromDeepCopy(ec);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_NO_THROW(
+			EXPECT_EQ(ec.GetPublicDer(), ec2.GetPublicDer());
+		);
+
+
+		// Copy Empty Obj
+		ec = std::move(ec2);
+		auto ec3 = EcPublicKey<EcType::SECP256R1>::FromDeepCopy(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec3.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), nullptr);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcPublicKeyBorrow)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto ec = EcPublicKey<EcType::SECP256R1>::FromPEM(
+			std::string(
+				GetTestEcPubKeyPem().data(), GetTestEcPubKeyPem().size()
+			)
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		auto ec2 =
+			EcPublicKey<EcType::SECP256R1, BorrowedPKeyTrait>::Borrow(ec.Get());
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Public);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_EQ(ec2.Get(), ec.Get());
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairConstructAndMove)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		EcKeyPair<EcType::SECP256R1> ec1(EcType::SECP256R1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		const mbedtls_pk_context* ec1Ptr = ec1.Get();
+		EXPECT_NE(ec1.Get(), nullptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec1.GetEcType(),       EcType::SECP256R1);
+
+
+		// Move
+		EcKeyPair<EcType::SECP256R1> ec2(std::move(ec1));
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec1.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), ec1Ptr);
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+
+		// Move Assignment
+		ec1 = std::move(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.Get(), nullptr);
+		EXPECT_EQ(ec1.Get(), ec1Ptr);
+		EXPECT_EQ(ec1.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec1.GetEcType(),       EcType::SECP256R1);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairPEMAndDER)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	// EC Public Key
+	{
+		auto ec = EcKeyPair<EcType::SECP256R1>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec.GetPrivatePem();
+			std::string oriPem(GetTestEcPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+
+		auto der = ec.GetPrivateDer();
+
+		auto ec2 = EcKeyPair<EcType::SECP256R1>::FromDER(CtnFullR(der), *rand);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, der.capacity());
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_NO_THROW(
+			auto pem = ec2.GetPrivatePem();
+			std::string oriPem(GetTestEcPrivKeyPem().data());
+			std::string generatedPem(pem.data(), pem.size());
+			EXPECT_EQ(generatedPem, oriPem);
+		);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+	// Failed - Other Curve Type
+	{
+		using _TestType = EcKeyPair<EcType::SECP256R1>;
+
+		EXPECT_THROW(
+			_TestType::FromPEM(
+				SecretString(
+					GetTestEc521PrivKeyPem().data(),
+					GetTestEc521PrivKeyPem().size()
+				),
+				*rand
+			);,
+			InvalidArgumentException
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairCopy)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto ec = EcKeyPair<EcType::SECP256R1>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		auto ec2 = EcKeyPair<EcType::SECP256R1>::FromDeepCopy(ec);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_NO_THROW(
+			EXPECT_EQ(ec.GetPublicDer(), ec2.GetPublicDer());
+		);
+
+
+		// Copy Empty Obj
+		ec = std::move(ec2);
+		auto ec3 = EcKeyPair<EcType::SECP256R1>::FromDeepCopy(ec2);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec3.Get(), nullptr);
+		EXPECT_EQ(ec2.Get(), nullptr);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairBorrow)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto ec = EcKeyPair<EcType::SECP256R1>::FromPEM(
+			SecretString(
+				GetTestEcPrivKeyPem().data(), GetTestEcPrivKeyPem().size()
+			),
+			*rand
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		auto ec2 =
+			EcKeyPair<EcType::SECP256R1, BorrowedPKeyTrait>::Borrow(ec.Get());
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec2.GetEcType(),       EcType::SECP256R1);
+
+		EXPECT_EQ(ec2.Get(), ec.Get());
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairGenerate)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto ec = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_EQ(ec.GetAlgorithmCat(), PKeyAlgmCat::EC);
+		EXPECT_EQ(ec.GetKeyType(),      PKeyType::Private);
+		EXPECT_EQ(ec.GetEcType(),       EcType::SECP256R1);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairSignAndVerify)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+
+	Hash<HashType::SHA256> testHash1 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("TestString"));
+	Hash<HashType::SHA256> testHash2 =
+		Hasher<HashType::SHA256>().Calc(CtnFullR("XTestStringX"));
+
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto priv = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+		auto pub = EcPublicKey<EcType::SECP256R1>::FromDER(
+			CtnFullR(priv.GetPublicDer())
+		);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+
+		// Sign
+		BigNum r;
+		BigNum s;
+		std::tie(r, s) = priv.SignInBigNum(testHash1, *rand);
+
+		// Verify
+		EXPECT_NO_THROW(
+			pub.VerifySign(CtnFullR(testHash1), r, s);
+		);
+		EXPECT_THROW(
+			pub.VerifySign(CtnFullR(testHash2), r, s);,
+			mbedTLSRuntimeError
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestEcKey, EcKeyPairDeriveSharedKey)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		auto priv1 = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+		auto priv2 = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+		auto priv3 = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 3);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		BigNum s1 = priv1.DeriveSharedKeyInBigNum(priv2, *rand);
+		BigNum s2 = priv2.DeriveSharedKeyInBigNum(priv1, *rand);
+		BigNum s3 = priv1.DeriveSharedKeyInBigNum(priv3, *rand);
+
+		EXPECT_EQ(s1, s2);
+		EXPECT_NE(s1, s3);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+

@@ -102,6 +102,41 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEC9Q2XVZB4d72yiB/niSHfDus6eyi\n\
 	return keyPem;
 }
 
+inline const std::array<char, 366U>& GetTestEc521PrivKeyPem()
+{
+	using namespace mbedTLScpp::Internal;
+
+	static constexpr char const sk_keyPem[] =
+"-----BEGIN EC PRIVATE KEY-----\n\
+MIHcAgEBBEIAbbt7BjOdH1/3w7ag1Cgo7EvnArA4xp8KYubzV/ANxkrKWaRnev1L\n\
+/s4RLqVm0Ll86ydyhiaDqOZhwiMFsnPuPGegBwYFK4EEACOhgYkDgYYABACFgmOD\n\
+aYn/TC24H5V8/8N5yuBIxPEEijSoxySQGbXJVnllYtSoB+OLdlScF6T4VCxAGSXl\n\
+s9JR0OoOE2VymSxmhQFxYze9d+VBTw3EC1jdA8jiuO2RCyXcgOEjy+S6125k+f7Z\n\
+M38uY9bEHz2NElUJ196r3LQfQuR9+LEzzDaz+DavQQ==\n\
+-----END EC PRIVATE KEY-----\n";
+
+	static const auto keyPem = BuildAndRetStrArray(sk_keyPem);
+
+	return keyPem;
+}
+
+inline const std::array<char, 269U>& GetTestEc521PubKeyPem()
+{
+	using namespace mbedTLScpp::Internal;
+
+	static constexpr char const sk_keyPem[] =
+"-----BEGIN PUBLIC KEY-----\n\
+MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQAhYJjg2mJ/0wtuB+VfP/DecrgSMTx\n\
+BIo0qMckkBm1yVZ5ZWLUqAfji3ZUnBek+FQsQBkl5bPSUdDqDhNlcpksZoUBcWM3\n\
+vXflQU8NxAtY3QPI4rjtkQsl3IDhI8vkutduZPn+2TN/LmPWxB89jRJVCdfeq9y0\n\
+H0LkffixM8w2s/g2r0E=\n\
+-----END PUBLIC KEY-----\n";
+
+	static const auto keyPem = BuildAndRetStrArray(sk_keyPem);
+
+	return keyPem;
+}
+
 
 } // namespace mbedTLScpp_Test
 

@@ -627,6 +627,12 @@ inline const mbedtls_ecp_group& GetGroupFromEcPair(
 {
 	return ec.MBEDTLS_PRIVATE(grp);
 }
+inline mbedtls_ecp_group& GetGroupFromEcPair(
+	mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(grp);
+}
 
 
 inline const mbedtls_ecp_point& GetQFromEcPair(
@@ -635,10 +641,22 @@ inline const mbedtls_ecp_point& GetQFromEcPair(
 {
 	return ec.MBEDTLS_PRIVATE(Q);
 }
+inline mbedtls_ecp_point& GetQFromEcPair(
+	mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(Q);
+}
 
 
 inline const mbedtls_mpi& GetDFromEcPair(
 	const mbedtls_ecp_keypair& ec
+)
+{
+	return ec.MBEDTLS_PRIVATE(d);
+}
+inline mbedtls_mpi& GetDFromEcPair(
+	mbedtls_ecp_keypair& ec
 )
 {
 	return ec.MBEDTLS_PRIVATE(d);
