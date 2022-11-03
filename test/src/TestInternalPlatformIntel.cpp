@@ -43,14 +43,18 @@ GTEST_TEST(TestInternalPlatformIntel, AvailabilityTest)
 {
 #ifdef MBEDTLSCPPTEST_ARCH_X86
 	EXPECT_TRUE(Internal::PlatformIntel::IsIntelProcessor());
-	EXPECT_TRUE(Internal::PlatformIntel::IsRdSeedSupportedCached());
-	EXPECT_TRUE(Internal::PlatformIntel::IsRdRandSupportedCached());
+	// These two tests are not valid, since even Intel CPU may not support
+	// RdSeed and RdRand
+	// EXPECT_TRUE(Internal::PlatformIntel::IsRdSeedSupportedCached());
+	// EXPECT_TRUE(Internal::PlatformIntel::IsRdRandSupportedCached());
 	std::cout<< "Intel CPU detected, " <<
 		"RdSeed and RdRand are expected to be supported." << std::endl;
 #else
 	EXPECT_FALSE(Internal::PlatformIntel::IsIntelProcessor());
-	EXPECT_FALSE(Internal::PlatformIntel::IsRdSeedSupportedCached());
-	EXPECT_FALSE(Internal::PlatformIntel::IsRdRandSupportedCached());
+	// These two tests are not valid, since even Intel CPU may not support
+	// RdSeed and RdRand
+	// EXPECT_FALSE(Internal::PlatformIntel::IsRdSeedSupportedCached());
+	// EXPECT_FALSE(Internal::PlatformIntel::IsRdRandSupportedCached());
 	std::cout<< "Non-Intel CPU detected, " <<
 		"RdSeed and RdRand tests are disabled." << std::endl;
 #endif
