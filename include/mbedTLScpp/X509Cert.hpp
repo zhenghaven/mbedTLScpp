@@ -1104,7 +1104,6 @@ public:
 					// This is the first one on chain.
 
 					SetPtr(curr->next);
-					m_certStack[0] = curr->next;
 					curr->next = nullptr;
 
 					// Set the current to the next one, so the search can continue.
@@ -1120,6 +1119,9 @@ public:
 				}
 
 				mbedtls_x509_crt_free(toBeFree);
+				// Assuming this is allocated on heap, since it's true for both
+				// mbedtls implementation and this mbedTLScpp implementation
+				mbedtls_free(toBeFree);
 				found = false;
 			}
 			else
