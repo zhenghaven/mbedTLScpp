@@ -1,10 +1,24 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
+
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/EcKey.hpp>
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/X509Cert.hpp>
 
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
+
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -16,19 +30,20 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-namespace mbedTLScpp_Test
-{
-	extern size_t g_numOfTestFile;
-}
+using namespace mbedTLScpp_Test;
+
 
 GTEST_TEST(TestX509CertWrt, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
-GTEST_TEST(TestX509CertWrt, X509CertWrtClass)
+GTEST_TEST(TestX509CertWrt, X509CertWrtConstructionAndMove)
 {
-	EcKeyPair<EcType::SECP256R1> testKey = EcKeyPair<EcType::SECP256R1>::Generate();
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -36,13 +51,23 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509CertWriter writer1 = X509CertWriter::SelfSign(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
+		X509CertWriter writer1 =
+			X509CertWriter::SelfSign(
+				HashType::SHA256,
+				testKey,
+				"C=UK,O=ARM,CN=mbed TLS Server 1"
+			);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		X509CertWriter writer2 = X509CertWriter::SelfSign(HashType::SHA256, testKey, "C=UK,O=ARM,CN=mbed TLS Server 2");
+		X509CertWriter writer2 =
+			X509CertWriter::SelfSign(
+				HashType::SHA256,
+				testKey,
+				"C=UK,O=ARM,CN=mbed TLS Server 2"
+			);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -76,7 +101,59 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestX509Cert, X509CertClass)
+
+GTEST_TEST(TestX509CertWrt, X509CertWrtSettersAndPEM)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509CertWriter writer1 =
+			X509CertWriter::SelfSign(
+				HashType::SHA256,
+				testKey,
+				"C=UK,O=ARM,CN=mbed TLS Server 1"
+			);
+
+		// after successful initialization, we should have its allocation remains.
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		EXPECT_NO_THROW(
+			writer1.SetSerialNum(
+				BigNum::Rand(32, *rand)
+			).SetValidationTime(
+				"20210101000000", "29991231235959"
+			).SetBasicConstraints(
+				true, 0
+			).SetKeyUsage(
+				MBEDTLS_X509_KU_DIGITAL_SIGNATURE
+			).SetNsType(
+				MBEDTLS_X509_NS_CERT_TYPE_SSL_CA
+			).SetV3Extension(
+				"1.2.3.4.5.6.7.1", false, CtnFullR("TestData1")
+			);
+		);
+
+		EXPECT_NO_THROW(
+			writer1.GetPem(*rand);
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509Cert, X509CertConstructionAndMove)
 {
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -84,13 +161,23 @@ GTEST_TEST(TestX509Cert, X509CertClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509Cert cert1 = X509Cert::FromPEM(gsk_testX509CertPem);
+		X509Cert cert1 = X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		X509Cert cert2 =  X509Cert::FromDER(CtnFullR(cert1.GetDer()));
+		X509Cert cert2 =  X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -124,12 +211,170 @@ GTEST_TEST(TestX509Cert, X509CertClass)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
-GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
-{
-	EcKeyPair<EcType::SECP256R1> testCaKey  = EcKeyPair<EcType::SECP256R1>::Generate();
-	EcKeyPair<EcType::SECP256R1> testSubKey = EcKeyPair<EcType::SECP256R1>::Generate();
 
-	std::string largeExtData = std::string(gsk_testRsaPubKeyPem) + std::string(gsk_testRsaPubKeyPem);
+GTEST_TEST(TestX509Cert, X509CertDERAndPEM)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509Cert cert1 = X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
+
+		EXPECT_EQ(
+			cert1.GetPem(),
+			std::string(GetTestX509CertPem().data())
+		);
+
+
+		X509Cert cert2 = X509Cert::FromDER(CtnFullR(cert1.GetDer()));
+
+		EXPECT_EQ(
+			cert2.GetPem(),
+			std::string(GetTestX509CertPem().data())
+		);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509Cert, X509CertGetters)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509Cert cert1 = X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
+
+		const auto& kCert1 = cert1;
+
+		// Borrow Public key
+		EXPECT_EQ(
+			cert1.BorrowPublicKey().GetPublicDer(),
+			kCert1.BorrowPublicKey().GetPublicDer()
+		);
+
+		// Get a copy of public key
+		auto ecPubKey = cert1.GetPublicKey<EcPublicKey<EcType::SECP256R1> >();
+		EXPECT_EQ(
+			ecPubKey.GetPublicDer(),
+			kCert1.BorrowPublicKey().GetPublicDer()
+		);
+
+		// Signature hash type
+		EXPECT_EQ(cert1.GetSignHashType(), HashType::SHA256);
+
+		// Common Name
+		EXPECT_EQ(cert1.GetCommonName(), "mbed TLS Server 1");
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509Cert, X509CertV3Extensions)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509Cert cert1 = X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
+
+		bool isCritical = false;
+		std::string extData;
+
+		auto testProc1 = [&](){
+			std::tie(isCritical, extData) = cert1.FindV3Extension<std::string>(
+				CtnFullR(std::string("1.2.3.4.5.6.7.1"))
+			);
+		};
+		EXPECT_NO_THROW(testProc1());
+		EXPECT_EQ(isCritical, false);
+		EXPECT_EQ(extData, "TestData1");
+
+		auto testProc2 = [&](){
+			std::tie(isCritical, extData) = cert1.FindV3Extension<std::string>(
+				CtnFullR(std::string("1.2.3.4.5.6.7.2"))
+			);
+		};
+		EXPECT_NO_THROW(testProc2());
+		EXPECT_EQ(isCritical, false);
+		EXPECT_EQ(extData, "TestData2");
+
+		auto testProc3 = [&](){
+			std::tie(isCritical, extData) = cert1.FindV3Extension<std::string>(
+				CtnFullR(std::string("9.9.9.9.9.9.9.9"))
+			);
+		};
+		EXPECT_THROW(testProc3(), RuntimeException);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509Cert, X509CertVerifySignature)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		X509Cert cert1 = X509Cert::FromPEM(
+			std::string(
+				GetTestX509CertPem().data(),
+				GetTestX509CertPem().size()
+			)
+		);
+
+		cert1.VerifySignature();
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
+GTEST_TEST(TestX509CertWrt, X509CertChain)
+{
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
+	auto testCaKey  = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+	auto testSubKey = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
+
+	std::string largeExtData =
+		std::string(GetTestRsaPubKeyPem().data()) +
+		std::string(GetTestRsaPubKeyPem().data());
 	largeExtData += largeExtData + largeExtData;
 	largeExtData += largeExtData + largeExtData;
 
@@ -141,29 +386,36 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
 	std::string          caPem;
 	std::vector<uint8_t> caDer;
 	{
-		X509CertWriter writerCa = X509CertWriter::SelfSign(HashType::SHA256, testCaKey, "C=UK,O=ARM,CN=mbed TLS Server 1");
-		writerCa.SetBasicConstraints(true, -1).
-		SetKeyUsage(
+		X509CertWriter writerCa = X509CertWriter::SelfSign(
+			HashType::SHA256,
+			testCaKey,
+			"C=UK,O=ARM,CN=mbed TLS Server 1"
+		);
+		writerCa.SetBasicConstraints(
+			true, -1
+		).SetKeyUsage(
 			MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
 			MBEDTLS_X509_KU_NON_REPUDIATION   |
 			MBEDTLS_X509_KU_KEY_CERT_SIGN     |
-			MBEDTLS_X509_KU_CRL_SIGN).
-		SetNsType(
+			MBEDTLS_X509_KU_CRL_SIGN
+		).SetNsType(
 			MBEDTLS_X509_NS_CERT_TYPE_SSL_CA |
 			MBEDTLS_X509_NS_CERT_TYPE_EMAIL_CA |
-			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA).
-		SetSerialNum(
+			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA
+		).SetSerialNum(
 			BigNumber<>(12345)
-		).
-		SetV3Extensions({
-			std::make_pair("1.2.3.4.5.6.7.1", std::make_pair(false, "TestData1")),
-			std::make_pair("1.2.3.4.5.6.7.2", std::make_pair(false, "TestData2")),
-			std::make_pair("1.2.3.4.5.6.7.3", std::make_pair(false, largeExtData)),
-		}).
-		SetValidationTime("20210101000000", "20211231235959");
+		).SetV3Extension(
+			"1.2.3.4.5.6.7.1", false, CtnFullR(std::string("TestData1"))
+		).SetV3Extension(
+			"1.2.3.4.5.6.7.2", false, CtnFullR(std::string("TestData2"))
+		).SetV3Extension(
+			"1.2.3.4.5.6.7.3", false, CtnFullR(largeExtData)
+		).SetValidationTime(
+			"20210101000000", "29991231235959"
+		);
 
-		caPem = writerCa.GetPem();
-		caDer = writerCa.GetDer();
+		caPem = writerCa.GetPem(*rand);
+		caDer = writerCa.GetDer(*rand);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
@@ -173,29 +425,39 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
 	std::vector<uint8_t> subDer;
 	{
 		X509Cert certCa = X509Cert::FromDER(CtnFullR(caDer));
-		X509CertWriter writerSub = X509CertWriter::CaSign(HashType::SHA256, certCa, testCaKey, testSubKey, "C=UK,O=ARM,CN=mbed TLS Client 1");
-		writerSub.SetBasicConstraints(false, -1);
-		writerSub.SetKeyUsage(
+
+		X509CertWriter writerSub = X509CertWriter::CaSign(
+			HashType::SHA256,
+			certCa,
+			testCaKey,
+			testSubKey,
+			"C=UK,O=ARM,CN=mbed TLS Client 1"
+		);
+
+		writerSub.SetBasicConstraints(
+			false, 0
+		).SetKeyUsage(
 			MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
 			MBEDTLS_X509_KU_NON_REPUDIATION   |
 			MBEDTLS_X509_KU_KEY_ENCIPHERMENT  |
 			MBEDTLS_X509_KU_DATA_ENCIPHERMENT |
-			MBEDTLS_X509_KU_KEY_AGREEMENT);
-		writerSub.SetNsType(
+			MBEDTLS_X509_KU_KEY_AGREEMENT
+		).SetNsType(
 			MBEDTLS_X509_NS_CERT_TYPE_SSL_CLIENT |
 			MBEDTLS_X509_NS_CERT_TYPE_EMAIL      |
-			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING);
-		writerSub.SetSerialNum(
+			MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING
+		).SetSerialNum(
 			BigNumber<>(12345)
+		).SetV3Extension(
+			"1.2.3.4.5.6.7.1", false, CtnFullR(std::string("TestData1"))
+		).SetV3Extension(
+			"1.2.3.4.5.6.7.2", false, CtnFullR(std::string("TestData2"))
+		).SetValidationTime(
+			"20210101000000", "29991231235959"
 		);
-		writerSub.SetV3Extensions({
-			std::make_pair("1.2.3.4.5.6.7.1", std::make_pair(false, "TestData1")),
-			std::make_pair("1.2.3.4.5.6.7.2", std::make_pair(false, "TestData2")),
-		});
-		writerSub.SetValidationTime("20210101000000", "20211231235959");
 
-		subPem = writerSub.GetPem();
-		subDer = writerSub.GetDer();
+		subPem = writerSub.GetPem(*rand);
+		subDer = writerSub.GetDer(*rand);
 
 		EXPECT_NO_THROW(X509Cert testCert = X509Cert::FromPEM(subPem););
 		EXPECT_NO_THROW(X509Cert testCert = X509Cert::FromDER(CtnFullR(subDer)););
@@ -211,17 +473,35 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
 
 		EXPECT_NO_THROW(certCa.VerifySignature(););
 		EXPECT_NO_THROW(certCa.VerifySignature(certCa.BorrowPublicKey()););
-		EXPECT_NO_THROW(certCa.VerifySignature(certCa.GetPublicKey<EcPublicKey<EcType::SECP256R1> >()););
+		EXPECT_NO_THROW(certCa.VerifySignature(
+			certCa.GetPublicKey<EcPublicKey<EcType::SECP256R1> >()
+		););
 		EXPECT_NO_THROW(certCa.VerifySignature(testCaKey););
-		EXPECT_THROW(certCa.VerifySignature(testSubKey);, mbedTLSRuntimeError);
 
+		EXPECT_THROW(certCa.VerifySignature(testSubKey);, mbedTLSRuntimeError);
 		EXPECT_NO_THROW(certSub.VerifySignature(certCa.BorrowPublicKey()););
-		EXPECT_NO_THROW(certSub.VerifySignature(certCa.GetPublicKey<EcPublicKey<EcType::SECP256R1> >()););
+		EXPECT_NO_THROW(
+			certSub.VerifySignature(
+				certCa.GetPublicKey<EcPublicKey<EcType::SECP256R1> >()
+			);
+		);
 		EXPECT_NO_THROW(certSub.VerifySignature(testCaKey););
 		EXPECT_THROW(certSub.VerifySignature(testSubKey);, mbedTLSRuntimeError);
 
 		uint32_t flag = 0;
-		EXPECT_NO_THROW(certSub.VerifyChainWithCa(certCa, nullptr, "mbed TLS Client 1", flag, mbedtls_x509_crt_profile_default, [](void *, mbedtls_x509_crt *, int, uint32_t *){return 0;}, nullptr););
+		EXPECT_NO_THROW(
+			certSub.VerifyChainWithCa(
+				certCa,
+				nullptr,
+				"mbed TLS Client 1",
+				flag,
+				mbedtls_x509_crt_profile_default,
+				[](void *, mbedtls_x509_crt *, int, uint32_t *){
+					return 0;
+				},
+				nullptr
+			);
+		);
 		EXPECT_EQ(flag, 0);
 	}
 
@@ -276,35 +556,6 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSign)
 		certSub = X509Cert::FromPEM(certSub.GetPemChain());
 		EXPECT_NE(certSub.Get()->next, nullptr);
 		EXPECT_NE(certSub.Get()->next->next, nullptr);
-	}
-
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
-}
-
-GTEST_TEST(TestX509Cert, X509CertGetters)
-{
-	int64_t initCount = 0;
-	int64_t initSecCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
-
-	{
-		X509Cert cert = X509Cert::FromPEM(gsk_testX509CertPem);
-
-		EXPECT_EQ(cert.GetCommonName(), "mbed TLS Server 1");
-
-		EXPECT_EQ(cert.GetHashType(), HashType::SHA256);
-
-		EXPECT_EQ(cert.GetV3Extension("1.2.3.4.5.6.7.1").second, "TestData1");
-		EXPECT_EQ(cert.GetV3Extension("1.2.3.4.5.6.7.2").second, "TestData2");
-
-		auto exts = cert.GetV3Extensions();
-		EXPECT_EQ(exts["1.2.3.4.5.6.7.1"].second, "TestData1");
-		EXPECT_EQ(exts["1.2.3.4.5.6.7.2"].second, "TestData2");
-
-		EXPECT_EQ(static_cast<const X509Cert&>(cert).BorrowPublicKey().GetPublicDer(),
-			cert.GetPublicKey<PKeyBase<> >().GetPublicDer());
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

@@ -106,11 +106,44 @@ GetPemFooterCSR() noexcept
 	return sk_arr;
 }
 
-// static constexpr char const PEM_BEGIN_CRT[] = "-----BEGIN CERTIFICATE-----\n";
-// static constexpr char const PEM_END_CRT[]   = "-----END CERTIFICATE-----\n";
 
-// static constexpr size_t PEM_CRT_HEADER_SIZE = sizeof(PEM_BEGIN_CRT) - 1;
-// static constexpr size_t PEM_CRT_FOOTER_SIZE = sizeof(PEM_END_CRT) - 1;
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 29U : 28U
+>&
+GetPemHeaderCRT() noexcept
+{
+	static constexpr char const sk_charStr[] =
+		"-----BEGIN CERTIFICATE-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
+
+template<bool _IncludeNull = true>
+inline
+const std::array<
+	char,
+	_IncludeNull ? 27U : 26U
+>&
+GetPemFooterCRT() noexcept
+{
+	static constexpr char const sk_charStr[] =
+		"-----END CERTIFICATE-----\n";
+	static constexpr size_t sk_charStrLen = sizeof(sk_charStr);
+
+	static const auto sk_arr =
+		BuildAndRetStrArray<sk_charStrLen, _IncludeNull>(sk_charStr);
+
+	return sk_arr;
+}
+
 
 } // namespace Internal
 } // namespace mbedTLScpp
@@ -747,6 +780,31 @@ inline const void* GetSignOptsFromCsr(
 	return csr.MBEDTLS_PRIVATE(sig_opts);
 }
 
+
+inline const mbedtls_x509_buf& GetSignFromCrt(
+	const mbedtls_x509_crt& crt
+)
+{
+	return crt.MBEDTLS_PRIVATE(sig);
+}
+inline mbedtls_md_type_t GetSignMdFromCrt(
+	const mbedtls_x509_crt& crt
+)
+{
+	return crt.MBEDTLS_PRIVATE(sig_md);
+}
+inline mbedtls_pk_type_t GetSignPkTypeFromCrt(
+	const mbedtls_x509_crt& crt
+)
+{
+	return crt.MBEDTLS_PRIVATE(sig_pk);
+}
+inline const void* GetSignOptsFromCrt(
+	const mbedtls_x509_crt& crt
+)
+{
+	return crt.MBEDTLS_PRIVATE(sig_opts);
+}
 
 } // namespace Internal
 } // namespace mbedTLScpp

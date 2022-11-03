@@ -137,20 +137,29 @@ H0LkffixM8w2s/g2r0E=\n\
 	return keyPem;
 }
 
+inline const std::array<char, 346U>& GetTestX509CrlPem()
+{
+	using namespace mbedTLScpp::Internal;
 
-} // namespace mbedTLScpp_Test
-
-
-constexpr char const gsk_testX509CrlPem[] =
+	static constexpr char const sk_pem[] =
 "-----BEGIN X509 CRL-----\n\
 MIHXMH4wCgYIKoZIzj0EAwIwUjELMAkGA1UEBhMCVVMxEzARBgNVBAgMClNvbWUt\n\
 U3RhdGUxITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDELMAkGA1UE\n\
 AwwCQ0EXDTIxMDEwNjAwMzA0N1oXDTIzMDEwNjAwMzA0N1owCgYIKoZIzj0EAwID\n\
 SQAwRgIhAJ+RwEjFou1wC648VZHjXKhvNlFyZ1FfQvQutXy7BxLRAiEA9RHEjvUU\n\
 c69hI6SAn1kDYefI3PMgZTrzmlfEUEb2TkQ=\n\
------END X509 CRL-----";
+-----END X509 CRL-----\n";
 
-constexpr char const gsk_testX509CertPem[] =
+	static const auto pem = BuildAndRetStrArray(sk_pem);
+
+	return pem;
+}
+
+inline const std::array<char, 11699U>& GetTestX509CertPem()
+{
+	using namespace mbedTLScpp::Internal;
+
+	static constexpr char const sk_pem[] =
 "-----BEGIN CERTIFICATE-----\n\
 MIIhkjCCITagAwIBAgICMDkwDAYIKoZIzj0EAwIFADA3MQswCQYDVQQGEwJVSzEM\n\
 MAoGA1UECgwDQVJNMRowGAYDVQQDDBFtYmVkIFRMUyBTZXJ2ZXIgMTAeFw0yMTAx\n\
@@ -332,4 +341,11 @@ eDVSc2lzcU1EUkhqbjV6cEwxelZYUEQyaDhBMgpHUUlEQVFBQgotLS0tLUVORCBQ\n\
 VUJMSUMgS0VZLS0tLS0wDAYIKoZIzj0EAwIFAANIADBFAiA503sa3Unf7td5CtBh\n\
 3O4h01KjD/jLHfA3kYFlbRPMjgIhAKC0kKMJLRsr2/9ydXWYrWC2Tf5qE/Ukl6Q+\n\
 XCseA66h\n\
------END CERTIFICATE-----";
+-----END CERTIFICATE-----\n";
+
+	static const auto pem = BuildAndRetStrArray(sk_pem);
+
+	return pem;
+}
+
+} // namespace mbedTLScpp_Test

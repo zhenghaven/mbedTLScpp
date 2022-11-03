@@ -5,6 +5,13 @@
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
 
+
+namespace mbedTLScpp_Test
+{
+	extern size_t g_numOfTestFile;
+}
+
+
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
 #endif
@@ -15,10 +22,8 @@ using namespace mbedTLScpp;
 using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
-namespace mbedTLScpp_Test
-{
-	extern size_t g_numOfTestFile;
-}
+using namespace mbedTLScpp_Test;
+
 
 GTEST_TEST(TestX509Crl, CountTestFile)
 {
@@ -33,7 +38,9 @@ GTEST_TEST(TestX509Crl, X509CrlClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		X509Crl crl1 = X509Crl::FromPEM(gsk_testX509CrlPem);
+		X509Crl crl1 = X509Crl::FromPEM(
+			std::string(GetTestX509CrlPem().data())
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
@@ -75,7 +82,9 @@ GTEST_TEST(TestX509Crl, X509CrlClass)
 
 GTEST_TEST(TestX509Crl, X509CrlExport)
 {
-	X509Crl crl = X509Crl::FromPEM(gsk_testX509CrlPem);
+	X509Crl crl = X509Crl::FromPEM(
+		std::string(GetTestX509CrlPem().data())
+	);
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;

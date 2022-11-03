@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/EcKey.hpp>
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/X509Req.hpp>
 
 #include "MemoryTest.hpp"

@@ -17,50 +17,6 @@
 
 #include "../Exceptions.hpp"
 
-#if 0
-
-#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-namespace mbedTLScpp
-#else
-namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-#endif
-{
-namespace Internal
-{
-
-inline void Asn1ReverseNamedDataList(mbedtls_asn1_named_data*& dest)
-{
-	std::vector<mbedtls_asn1_named_data*> stack;
-
-	mbedtls_asn1_named_data* cur = dest;
-	while(cur != nullptr)
-	{
-		stack.push_back(cur);
-		cur = cur->next;
-	}
-
-	if (stack.size() > 0)
-	{
-		dest = stack.back();
-		stack.pop_back();
-		dest->next = nullptr;
-	}
-
-	cur = dest;
-
-	while(stack.size() > 0 && cur != nullptr)
-	{
-		cur->next = stack.back();
-		stack.pop_back();
-		cur = cur->next;
-		cur->next = nullptr;
-	}
-}
-
-}
-}
-
-#endif
 
 //==============================================================================
 // ASN.1 Write size estimation functions
@@ -407,6 +363,36 @@ inline void Asn1DeepCopy(
 
 		curSrc = curSrc->next;
 		curDest = curDest->next;
+	}
+}
+
+
+inline void Asn1ReverseNamedDataList(mbedtls_asn1_named_data*& dest)
+{
+	std::vector<mbedtls_asn1_named_data*> stack;
+
+	mbedtls_asn1_named_data* cur = dest;
+	while(cur != nullptr)
+	{
+		stack.push_back(cur);
+		cur = cur->next;
+	}
+
+	if (stack.size() > 0)
+	{
+		dest = stack.back();
+		stack.pop_back();
+		dest->next = nullptr;
+	}
+
+	cur = dest;
+
+	while(stack.size() > 0 && cur != nullptr)
+	{
+		cur->next = stack.back();
+		stack.pop_back();
+		cur = cur->next;
+		cur->next = nullptr;
 	}
 }
 

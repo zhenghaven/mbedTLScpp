@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/EcKey.hpp>
 
 #include "SharedVars.hpp"
