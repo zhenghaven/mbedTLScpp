@@ -43,5 +43,6 @@ add_library(mbedTLScpp INTERFACE)
 target_include_directories(mbedTLScpp INTERFACE include)
 
 if(${MBEDTLSCPP_TEST})
+	enable_testing()
 	add_subdirectory(test)
 endif(${MBEDTLSCPP_TEST})
