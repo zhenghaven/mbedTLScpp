@@ -181,7 +181,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				{
 					if (m_data != nullptr)
 					{
-						std::memset(m_data + m_size, 0, sk_extra_cap * sizeof(value_type));
+						std::memset(
+							static_cast<void*>(m_data + m_size),
+							0,
+							sk_extra_cap * sizeof(value_type)
+						);
 					}
 				}
 				catch(...)

@@ -98,13 +98,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		template<typename T>
-		static void DelObject(T* ptr) noexcept
+		static void DelObject(T* /* ptr */) noexcept
 		{}
 
-		static void Init(CObjType* ptr)
+		static void Init(CObjType* /* ptr */)
 		{}
 
-		static void Free(CObjType* ptr) noexcept
+		static void Free(CObjType* /* ptr */) noexcept
 		{}
 	};
 

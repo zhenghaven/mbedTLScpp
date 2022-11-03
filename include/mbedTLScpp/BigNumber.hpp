@@ -680,10 +680,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using DefaultAllocBase::NewObject;
 		using DefaultAllocBase::DelObject;
 
-		static void Init(CObjType* ptr)
+		static void Init(CObjType* /* ptr */)
 		{}
 
-		static void Free(CObjType* ptr) noexcept
+		static void Free(CObjType* /* ptr */) noexcept
 		{}
 	};
 

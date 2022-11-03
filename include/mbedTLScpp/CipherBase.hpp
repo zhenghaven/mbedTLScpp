@@ -146,19 +146,43 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	 * @param mode    The cipher mode
 	 * @return size_t The size of the cipher block.
 	 */
-	inline constexpr size_t GetCipherBlockSize(CipherType type, size_t bitSize, CipherMode mode)
+	inline constexpr size_t GetCipherBlockSize(
+		CipherType type,
+		size_t     /* bitSize */,
+		CipherMode /* mode */
+	)
 	{
 		return (type == CipherType::AES ?
 					(16) :
-					throw InvalidArgumentException("The given cipher type is not supported.")
+					throw InvalidArgumentException(
+						"The given cipher type is not supported."
+					)
 				);
 	}
-	static_assert(GetCipherBlockSize(CipherType::AES, 128, CipherMode::ECB) == 16, "Programming error.");
-	static_assert(GetCipherBlockSize(CipherType::AES, 192, CipherMode::ECB) == 16, "Programming error.");
-	static_assert(GetCipherBlockSize(CipherType::AES, 256, CipherMode::ECB) == 16, "Programming error.");
-	static_assert(GetCipherBlockSize(CipherType::AES, 128, CipherMode::GCM) == 16, "Programming error.");
-	static_assert(GetCipherBlockSize(CipherType::AES, 192, CipherMode::GCM) == 16, "Programming error.");
-	static_assert(GetCipherBlockSize(CipherType::AES, 256, CipherMode::GCM) == 16, "Programming error.");
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 128, CipherMode::ECB) == 16,
+		"Implementation error."
+	);
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 192, CipherMode::ECB) == 16,
+		"Implementation error."
+	);
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 256, CipherMode::ECB) == 16,
+		"Implementation error."
+	);
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 128, CipherMode::GCM) == 16,
+		"Implementation error."
+	);
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 192, CipherMode::GCM) == 16,
+		"Implementation error."
+	);
+	static_assert(
+		GetCipherBlockSize(CipherType::AES, 256, CipherMode::GCM) == 16,
+		"Implementation error."
+	);
 
 	/**
 	 * @brief The allocator of cipher objects.

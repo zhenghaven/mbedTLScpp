@@ -407,7 +407,7 @@ inline size_t x509write_csr_der_est_size(const mbedtls_x509write_csr& ctx)
 {
 	const char *sig_oid;
 	size_t sig_oid_len = 0;
-	size_t pub_len = 0, sig_and_oid_len = 0;
+	size_t sig_and_oid_len = 0;
 	size_t len = 0;
 	mbedtls_pk_type_t pk_alg;
 

@@ -15,11 +15,12 @@ OPTION(MBEDTLSCPP_TEST_LCOV "Option to turn on test code coverage." OFF)
 ################################################################################
 
 if(MSVC)
-	set(COMMON_OPTIONS /W3 /wd4996 /we4239 /we4002 /we4700 /we4305 /EHsc /MP)
+	set(COMMON_OPTIONS /W4 /WX /EHsc /MP /GR /Zc:__cplusplus)
 	set(DEBUG_OPTIONS /MTd /Od /Zi /DDEBUG)
-	set(RELEASE_OPTIONS /MT /Ox /Oi /Ob2 /fp:fast /GR-)# /DNDEBUG
+	set(RELEASE_OPTIONS /MT /Ox /Oi /Ob2 /fp:fast)# /DNDEBUG
 else()
-	set(COMMON_OPTIONS -pthread)
+	set(COMMON_OPTIONS -pthread -Wall -Wextra -Werror
+		-pedantic -Wpedantic -pedantic-errors)
 	set(DEBUG_OPTIONS -O0 -g -DDEBUG)
 	set(RELEASE_OPTIONS -O2) #-DNDEBUG defined by default
 endif()

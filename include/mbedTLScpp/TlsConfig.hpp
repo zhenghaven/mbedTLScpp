@@ -126,8 +126,8 @@ public:
 	 *                   not nullptr, the private key will be required.
 	 * \param prvKey     The private key of this side. Required if cert is
 	 *                   not \c nullptr .
-	 * \param ticketMgr  Manager for TLS ticket (Optional).
 	 * \param rand       The Random Bit Generator.
+	 * \param ticketMgr  Manager for TLS ticket (Optional).
 	 */
 	TlsConfig(
 		bool isStream, bool isServer, bool vrfyPeer,
@@ -136,15 +136,16 @@ public:
 		std::shared_ptr<const X509Crl>  crl,
 		std::shared_ptr<const X509Cert> cert,
 		std::shared_ptr<const PKeyBase<> > prvKey,
-		std::shared_ptr<TlsSessTktMgrIntf > ticketMgr,
-		std::unique_ptr<RbgInterface> rand) :
+		std::unique_ptr<RbgInterface> rand,
+		std::shared_ptr<TlsSessTktMgrIntf > ticketMgr
+	) :
 		_Base::ObjectBase(),
 		m_ca(ca),
 		m_crl(crl),
 		m_cert(cert),
 		m_prvKey(prvKey),
-		m_ticketMgr(ticketMgr),
-		m_rand(std::move(rand))
+		m_rand(std::move(rand)),
+		m_ticketMgr(ticketMgr)
 	{
 		mbedtls_ssl_conf_rng(
 			NonVirtualGet(),
@@ -243,11 +244,11 @@ public:
 	 */
 	TlsConfig(TlsConfig&& rhs) noexcept :
 		_Base::ObjectBase(std::forward<_Base>(rhs)), //noexcept
-		m_rand(std::move(rhs.m_rand)),          //noexcept
 		m_ca(std::move(rhs.m_ca)),              //noexcept
 		m_crl(std::move(rhs.m_crl)),            //noexcept
 		m_cert(std::move(rhs.m_cert)),          //noexcept
 		m_prvKey(std::move(rhs.m_prvKey)),      //noexcept
+		m_rand(std::move(rhs.m_rand)),          //noexcept
 		m_ticketMgr(std::move(rhs.m_ticketMgr)) //noexcept
 	{
 		if (NonVirtualGet() != nullptr)
@@ -279,11 +280,11 @@ public:
 
 		if (this != &rhs)
 		{
-			m_rand      = std::move(rhs.m_rand);      //noexcept
 			m_ca        = std::move(rhs.m_ca);        //noexcept
 			m_crl       = std::move(rhs.m_crl);       //noexcept
 			m_cert      = std::move(rhs.m_cert);      //noexcept
 			m_prvKey    = std::move(rhs.m_prvKey);    //noexcept
+			m_rand      = std::move(rhs.m_rand);      //noexcept
 			m_ticketMgr = std::move(rhs.m_ticketMgr); //noexcept
 
 			if (Get() != nullptr)
@@ -345,8 +346,9 @@ public:
 	 * \return	The verification error code return.
 	 */
 	virtual int CustomVerifyCert(
-		mbedtls_x509_crt& cert,
-		int depth, uint32_t& flag
+		mbedtls_x509_crt& /* cert */,
+		int               /* depth */,
+		uint32_t&         /* flag */
 	) const
 	{
 		// The default behavior is to keep the flag untouched and directly return success.
@@ -354,11 +356,11 @@ public:
 	}
 
 	private:
-		std::unique_ptr<RbgInterface> m_rand;
 		std::shared_ptr<const X509Cert> m_ca;
 		std::shared_ptr<const X509Crl>  m_crl;
 		std::shared_ptr<const X509Cert> m_cert;
 		std::shared_ptr<const PKeyBase<> > m_prvKey;
+		std::unique_ptr<RbgInterface> m_rand;
 		std::shared_ptr<TlsSessTktMgrIntf > m_ticketMgr;
 }; // class TlsConfig
 

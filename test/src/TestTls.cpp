@@ -101,7 +101,7 @@ public:
 		}
 	}
 
-	virtual int RecvTimeout(void* buf, size_t len, uint32_t t)
+	virtual int RecvTimeout(void* /* buf */, size_t /* len */, uint32_t /* t */)
 	{
 		throw mbedTLSRuntimeError(
 			MBEDTLS_ERR_SSL_FEATURE_UNAVAILABLE,
@@ -225,8 +225,8 @@ GTEST_TEST(TestTlsIntf, TlsClass)
 			nullptr,
 			testCert,
 			testPrvKey,
-			testTktMgr,
-			Internal::make_unique<DefaultRbg>()
+			Internal::make_unique<DefaultRbg>(),
+			testTktMgr
 		);
 
 	int64_t initCount = 0;
@@ -313,9 +313,6 @@ static void TlsHandshakeTillNoInMsg(_TlsType& tls)
 
 GTEST_TEST(TestTlsIntf, TlsCom)
 {
-	using TestingTktMgtType =
-		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM, 86400>;
-
 	std::unique_ptr<RbgInterface> rand =
 		Internal::make_unique<DefaultRbg>();
 
@@ -417,8 +414,8 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 			nullptr,
 			svrCert,
 			svrPrvKey,
-			nullptr,
-			Internal::make_unique<DefaultRbg>()
+			Internal::make_unique<DefaultRbg>(),
+			nullptr
 		);
 
 	std::shared_ptr<TlsConfig> cltConfig =
@@ -429,8 +426,8 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 			nullptr,
 			cltCert,
 			cltPrvKey,
-			nullptr,
-			Internal::make_unique<DefaultRbg>()
+			Internal::make_unique<DefaultRbg>(),
+			nullptr
 		);
 
 	int64_t initCount = 0;
@@ -464,9 +461,6 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 		cltTlsPre.reset();
 		EXPECT_EQ(cltTlsPre.get(), nullptr);
 
-		int cltState = 0;
-		int svrState = 0;
-
 		while (
 			!cltTls->HasHandshakeOver() ||
 			!svrTls->HasHandshakeOver()
@@ -475,12 +469,10 @@ GTEST_TEST(TestTlsIntf, TlsCom)
 			if(!cltTls->HasHandshakeOver())
 			{
 				TlsHandshakeTillNoInMsg(*cltTls);
-				cltState = cltTls->Get()->MBEDTLS_PRIVATE(state);
 			}
 			if(!svrTls->HasHandshakeOver())
 			{
 				TlsHandshakeTillNoInMsg(*svrTls);
-				svrState = svrTls->Get()->MBEDTLS_PRIVATE(state);
 			}
 		}
 
