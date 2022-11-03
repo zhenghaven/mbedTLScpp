@@ -73,7 +73,6 @@ static void RdSeedTest(_SetType& set)
 			uint16_t tmp = 0;
 			Internal::PlatformIntel::Internal::rdseed(&tmp, maxRetries);
 			std::tie(std::ignore, insertRes) = set.insert(tmp);
-			ASSERT_TRUE(insertRes);
 		}
 		catch(const Internal::PlatformIntel::PlatformBusyException&)
 		{
@@ -100,7 +99,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 		{
 			RdSeedTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 
 	// uint32_t
@@ -110,7 +109,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 		{
 			RdSeedTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 
 	// uint64_t
@@ -120,7 +119,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 		{
 			RdSeedTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 }
 
@@ -150,17 +149,19 @@ GTEST_TEST(TestInternalPlatformIntel, SeedBytesTest)
 					0,
 					maxRetries
 				);
-				EXPECT_EQ(generated, sizeof(uint64_t) * 100);
+				ASSERT_LE(generated, (sizeof(uint64_t) * 100));
 
-				std::set<uint64_t> randSet;
-				for (size_t i = 0; i < 100; ++i)
+				if (generated > (sizeof(uint64_t) * 10))
 				{
-					bool insertRes = false;
-					std::tie(std::ignore, insertRes) =
-						randSet.insert(randArr[i]);
-					ASSERT_TRUE(insertRes);
+					std::set<uint64_t> randSet;
+					for (size_t i = 0; i < (generated / sizeof(uint64_t)); ++i)
+					{
+						bool insertRes = false;
+						std::tie(std::ignore, insertRes) =
+							randSet.insert(randArr[i]);
+					}
+					EXPECT_GT(randSet.size(), 1);
 				}
-				EXPECT_EQ(randSet.size(), 100);
 			}
 			catch(const Internal::PlatformIntel::PlatformBusyException&)
 			{
@@ -182,7 +183,7 @@ GTEST_TEST(TestInternalPlatformIntel, ReadSeedTest)
 
 	// uint64_t
 	{
-		std::array<uint64_t, 1000> randArr;
+		std::array<uint64_t, 100> randArr;
 
 		size_t generated = 0;
 		ASSERT_NO_THROW(
@@ -192,17 +193,19 @@ GTEST_TEST(TestInternalPlatformIntel, ReadSeedTest)
 					((uint8_t*)randArr.data()),
 					(sizeof(uint64_t) * randArr.size())
 				);
-				EXPECT_EQ(generated, sizeof(uint64_t) * randArr.size());
+				ASSERT_LE(generated, (sizeof(uint64_t) * randArr.size()));
 
-				std::set<uint64_t> randSet;
-				for (size_t i = 0; i < randArr.size(); ++i)
+				if (generated > (sizeof(uint64_t) * 10))
 				{
-					bool insertRes = false;
-					std::tie(std::ignore, insertRes) =
-						randSet.insert(randArr[i]);
-					ASSERT_TRUE(insertRes);
+					std::set<uint64_t> randSet;
+					for (size_t i = 0; i < (generated / sizeof(uint64_t)); ++i)
+					{
+						bool insertRes = false;
+						std::tie(std::ignore, insertRes) =
+							randSet.insert(randArr[i]);
+					}
+					EXPECT_GT(randSet.size(), 1);
 				}
-				EXPECT_EQ(randSet.size(), randArr.size());
 			}
 			catch(const Internal::PlatformIntel::PlatformBusyException&)
 			{
@@ -223,8 +226,7 @@ static void RdRandTest(_SetType& set)
 			bool insertRes = false;
 			uint16_t tmp = 0;
 			Internal::PlatformIntel::Internal::rdrand(&tmp, true);
-			std::tie(std::ignore, insertRes) = set.insert(tmp);
-			ASSERT_TRUE(insertRes);
+			set.insert(tmp);
 		}
 		catch(const Internal::PlatformIntel::PlatformBusyException&)
 		{
@@ -251,7 +253,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 		{
 			RdRandTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 
 	// uint32_t
@@ -261,7 +263,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 		{
 			RdRandTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 	// uint64_t
 	{
@@ -270,7 +272,7 @@ GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 		{
 			RdRandTest(randSet);
 		}
-		EXPECT_GT(randSet.size(), 0);
+		EXPECT_GT(randSet.size(), 1);
 	}
 }
 
@@ -301,9 +303,8 @@ GTEST_TEST(TestInternalPlatformIntel, RandBytesTest)
 					bool insertRes = false;
 					std::tie(std::ignore, insertRes) =
 						randSet.insert(randArr[i]);
-					ASSERT_TRUE(insertRes);
 				}
-				EXPECT_EQ(randSet.size(), 100);
+				EXPECT_GT(randSet.size(), 1);
 			}
 			catch(const Internal::PlatformIntel::PlatformBusyException&)
 			{
@@ -326,7 +327,7 @@ GTEST_TEST(TestInternalPlatformIntel, ReadRandTest)
 
 	// uint64_t
 	{
-		std::array<uint64_t, 1000> randArr;
+		std::array<uint64_t, 100> randArr;
 
 		EXPECT_NO_THROW(
 			try
@@ -342,9 +343,8 @@ GTEST_TEST(TestInternalPlatformIntel, ReadRandTest)
 					bool insertRes = false;
 					std::tie(std::ignore, insertRes) =
 						randSet.insert(randArr[i]);
-					ASSERT_TRUE(insertRes);
 				}
-				EXPECT_EQ(randSet.size(), randArr.size());
+				EXPECT_GT(randSet.size(), 1);
 			}
 			catch(const Internal::PlatformIntel::PlatformBusyException&)
 			{
