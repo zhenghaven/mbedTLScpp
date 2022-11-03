@@ -836,7 +836,7 @@ public:
 		using _RetCtnKPtrType = typename _RetCtnType::const_pointer;
 
 		std::tuple<bool, _RetCtnType> res;
-		bool isFound;
+		bool isFound = false;
 
 		IterateV3Extensions(
 			[&oidCtn, &res, & isFound](

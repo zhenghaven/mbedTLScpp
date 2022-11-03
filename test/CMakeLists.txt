@@ -57,6 +57,15 @@ FetchContent_MakeAvailable(git_googletest)
 # MbedTLS
 set(ENABLE_TESTING OFF CACHE BOOL "Build mbed TLS tests." FORCE)
 set(ENABLE_PROGRAMS OFF CACHE BOOL "Build mbed TLS programs." FORCE)
+if (MSVC)
+	set(
+		MSVC_STATIC_RUNTIME
+		ON
+		CACHE BOOL
+		"Build the libraries with /MT compiler flag"
+		FORCE
+	)
+endif()
 FetchContent_Declare(
   git_mbedtls
   GIT_REPOSITORY https://github.com/zhenghaven/mbedtls.git

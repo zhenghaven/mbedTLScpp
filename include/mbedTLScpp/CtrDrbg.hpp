@@ -133,7 +133,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		virtual void Rand(void* buf, const size_t size) override
 		{
 			NullCheck();
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(CtrDrbg::Rand, mbedtls_ctr_drbg_random, Get(), static_cast<unsigned char *>(buf), size);
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				CtrDrbg::Rand,
+				mbedtls_ctr_drbg_random,
+				static_cast<void*>(Get()),
+				static_cast<unsigned char *>(buf),
+				size
+			);
 		}
 
 		/**
