@@ -82,6 +82,12 @@ static void RdSeedTest(_SetType& set)
 #ifdef MBEDTLSCPPTEST_ARCH_X86
 GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 {
+	if (!Internal::PlatformIntel::IsRdSeedSupportedCached())
+	{
+		std::cout<< "RdSeed is not supported, " <<
+			"RdSeed tests are disabled." << std::endl;
+		return;
+	}
 
 	// uint16_t
 	{
@@ -116,6 +122,13 @@ GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 
 GTEST_TEST(TestInternalPlatformIntel, SeedBytesTest)
 {
+	if (!Internal::PlatformIntel::IsRdSeedSupportedCached())
+	{
+		std::cout<< "RdSeed is not supported, " <<
+			"RdSeed tests are disabled." << std::endl;
+		return;
+	}
+
 	// uint64_t
 	{
 		std::array<uint64_t, 110> randArr;
@@ -156,6 +169,13 @@ GTEST_TEST(TestInternalPlatformIntel, SeedBytesTest)
 
 GTEST_TEST(TestInternalPlatformIntel, ReadSeedTest)
 {
+	if (!Internal::PlatformIntel::IsRdSeedSupportedCached())
+	{
+		std::cout<< "RdSeed is not supported, " <<
+			"RdSeed tests are disabled." << std::endl;
+		return;
+	}
+
 	// uint64_t
 	{
 		std::array<uint64_t, 1000> randArr;
@@ -213,6 +233,12 @@ static void RdRandTest(_SetType& set)
 
 GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 {
+	if (!Internal::PlatformIntel::IsRdRandSupportedCached())
+	{
+		std::cout<< "RdRand is not supported, " <<
+			"RdRand tests are disabled." << std::endl;
+		return;
+	}
 
 	// uint16_t
 	{
@@ -246,6 +272,13 @@ GTEST_TEST(TestInternalPlatformIntel, RdRandTest)
 
 GTEST_TEST(TestInternalPlatformIntel, RandBytesTest)
 {
+	if (!Internal::PlatformIntel::IsRdRandSupportedCached())
+	{
+		std::cout<< "RdRand is not supported, " <<
+			"RdRand tests are disabled." << std::endl;
+		return;
+	}
+
 	// uint64_t
 	{
 		std::array<uint64_t, 110> randArr;
@@ -280,6 +313,13 @@ GTEST_TEST(TestInternalPlatformIntel, RandBytesTest)
 
 GTEST_TEST(TestInternalPlatformIntel, ReadRandTest)
 {
+	if (!Internal::PlatformIntel::IsRdRandSupportedCached())
+	{
+		std::cout<< "RdRand is not supported, " <<
+			"RdRand tests are disabled." << std::endl;
+		return;
+	}
+
 	// uint64_t
 	{
 		std::array<uint64_t, 1000> randArr;
