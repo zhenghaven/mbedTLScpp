@@ -506,20 +506,22 @@ public:
 	}
 
 
-	// /**
-	//  * @brief Construct a new X509CertBase object that borrows the C object.
-	//  *
-	//  * @tparam _dummy_PKTrait A dummy template parameter used to make sure
-	//  *                        the constructor is only available for borrowers.
-	//  * @param ptr pointer to the borrowed C object.
-	//  */
-	// template<typename _dummy_ObjTrait = X509CertTrait,
-	// 	enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0>
-	// X509CertBase(mbedtls_x509_crt* ptr) :
-	// 	_Base::ObjectBase(ptr),
-	// 	m_certStack(1, NonVirtualGet()),
-	// 	m_currPtr(NonVirtualGet())
-	// {}
+	/**
+	 * @brief Construct a new X509CertBase object that borrows the C object.
+	 *
+	 * @tparam _dummy_PKTrait A dummy template parameter used to make sure
+	 *                        the constructor is only available for borrowers.
+	 * @param ptr pointer to the borrowed C object.
+	 */
+	template<
+		typename _dummy_ObjTrait = X509CertTrait,
+		enable_if_t<_dummy_ObjTrait::sk_isBorrower, int> = 0
+	>
+	X509CertBase(mbedtls_x509_crt* ptr) :
+		_Base::ObjectBase(ptr),
+		m_certStack(1, NonVirtualGet()),
+		m_currPtr(NonVirtualGet())
+	{}
 
 
 	X509CertBase(const X509CertBase& rhs) = delete;

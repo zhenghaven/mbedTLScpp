@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/TlsSession.hpp>
 #include <mbedTLScpp/TlsSessTktMgr.hpp>
 
@@ -42,13 +43,13 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TestingTktMgtType tlsSess1;
+		TestingTktMgtType tlsSess1(Internal::make_unique<DefaultRbg>());
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TestingTktMgtType tlsSess2;
+		TestingTktMgtType tlsSess2(Internal::make_unique<DefaultRbg>());
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
@@ -93,7 +94,7 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrFunc)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TestingTktMgtType tlsSessMgr;
+		TestingTktMgtType tlsSessMgr(Internal::make_unique<DefaultRbg>());
 		TlsSession tlsSess;
 
 		tlsSess.Get()->MBEDTLS_PRIVATE(tls_version) =

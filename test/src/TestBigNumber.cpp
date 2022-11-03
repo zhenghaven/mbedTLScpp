@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/BigNumber.hpp>
+#include <mbedTLScpp/DefaultRbg.hpp>
 
 #include "MemoryTest.hpp"
 
@@ -26,10 +27,18 @@ GTEST_TEST(TestBigNumber, CountTestFile)
 	++mbedTLScpp_Test::g_numOfTestFile;
 }
 
+static void InitMemLeakCount(int64_t& out)
+{
+	EXPECT_EQ(BigNum::Zero(), 0);
+	EXPECT_EQ(BigNum::NegativeOne(), -1);
+
+	MEMORY_LEAK_TEST_GET_COUNT(out);
+}
+
 GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 {
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	{
 		BigNumberBase<DefaultBigNumObjTrait> bigNum1;
@@ -67,128 +76,10 @@ GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
-GTEST_TEST(TestBigNumber, ConstBigNumberClass)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	static constexpr uint8_t bignumBytesE1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00 }; // 11640895
-	static constexpr uint8_t bignumBytesE2[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
-	static constexpr uint8_t bignumBytes1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
-	static constexpr uint8_t bignumBytes2[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
-
-	{
-		EXPECT_THROW({ConstBigNumber bigNum(CtnFullR(bignumBytesE1));}, InvalidArgumentException);
-		EXPECT_THROW({ConstBigNumber bigNum(CtnFullR(bignumBytesE2));}, InvalidArgumentException);
-
-		ConstBigNumber bigNum1(CtnFullR(bignumBytes1));
-
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-
-		ConstBigNumber bigNum2(CtnFullR(bignumBytes2));
-
-		// after successful initialization, we should have its allocation remains.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-
-		bigNum1 = std::move(bigNum1);
-
-		// Nothing moved, allocation should stay the same.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-
-		bigNum1 = std::move(bigNum2);
-
-		// Moved, allocation should reduce.
-		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
-
-		// Moved to initialize new one, allocation should remain the same.
-		ConstBigNumber bigNum3(std::move(bigNum1));
-
-		// This should success.
-		bigNum3.NullCheck();
-
-		//bigNum1.NullCheck();
-		EXPECT_THROW(bigNum1.NullCheck(), InvalidObjectException);
-		EXPECT_THROW(bigNum2.NullCheck(), InvalidObjectException);
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
-GTEST_TEST(TestBigNumber, ConstBigNumber)
-{
-	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
-
-	static constexpr uint8_t bignumBytes1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
-	static constexpr uint8_t bignumBytes2[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
-	static constexpr uint8_t bignumBytes3[] = { 0x89, 0xD3, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 512905
-	static constexpr uint8_t bignumBytes4[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
-
-	{
-		ConstBigNumber bigNum1(CtnFullR(bignumBytes1));        // 11640895
-		ConstBigNumber bigNum2(CtnFullR(bignumBytes2));        // 512905
-		ConstBigNumber bigNum3(CtnFullR(bignumBytes3));        // 512905
-		ConstBigNumber bigNum4(CtnFullR(bignumBytes4), false); // -11640895
-
-		EXPECT_TRUE(bigNum1 >  bigNum2);
-		EXPECT_TRUE(bigNum1 >= bigNum2);
-		EXPECT_TRUE(bigNum2 >  bigNum4);
-		EXPECT_TRUE(bigNum2 >= bigNum4);
-
-		EXPECT_TRUE(bigNum2 <  bigNum1);
-		EXPECT_TRUE(bigNum2 <= bigNum1);
-
-		EXPECT_TRUE(bigNum3 == bigNum3);
-		EXPECT_TRUE(bigNum3 >= bigNum3);
-		EXPECT_TRUE(bigNum3 <= bigNum3);
-		EXPECT_TRUE(bigNum1 != bigNum2);
-
-		EXPECT_FALSE(bigNum2 >  bigNum1);
-		EXPECT_FALSE(bigNum2 >= bigNum1);
-		EXPECT_FALSE(bigNum4 >  bigNum2);
-		EXPECT_FALSE(bigNum4 >= bigNum2);
-
-		EXPECT_FALSE(bigNum1 <  bigNum2);
-		EXPECT_FALSE(bigNum1 <= bigNum2);
-
-		EXPECT_FALSE(bigNum1 == bigNum2);
-		EXPECT_FALSE(bigNum3 != bigNum3);
-
-		EXPECT_TRUE (bigNum1.IsPositive());
-		EXPECT_FALSE(bigNum4.IsPositive());
-
-		bigNum4.FlipSign();
-
-		EXPECT_TRUE(bigNum4 >  bigNum2);
-		EXPECT_TRUE(bigNum4 >= bigNum2);
-		EXPECT_TRUE(bigNum4.IsPositive());
-
-		EXPECT_EQ((bigNum1.Hex()), "3fa0b1");
-		EXPECT_EQ((bigNum1.Hex<false>()), "b1a03f");
-		EXPECT_EQ((bigNum2.Hex()), "89d307");
-		EXPECT_EQ((bigNum2.Hex<false>()), "07d389");
-
-		EXPECT_EQ((bigNum1.Hex<true, true, 5>()), "3fa0b10000");
-		EXPECT_EQ((bigNum1.Hex<true, true, 16>()), "3fa0b100000000000000000000000000");
-		EXPECT_EQ((bigNum2.Hex<true, true, 5>()), "89d3070000");
-		EXPECT_EQ((bigNum2.Hex<true, true, 16>()), "89d30700000000000000000000000000");
-
-		EXPECT_EQ((bigNum1.Hex<false, true, 5>()), "0000b1a03f");
-		EXPECT_EQ((bigNum1.Hex<false, true, 16>()), "00000000000000000000000000b1a03f");
-		EXPECT_EQ((bigNum2.Hex<false, true, 5>()), "000007d389");
-		EXPECT_EQ((bigNum2.Hex<false, true, 16>()), "0000000000000000000000000007d389");
-	}
-
-	// Finally, all allocation should be cleaned after exit.
-	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
-}
-
 GTEST_TEST(TestBigNumber, BigNumberClass)
 {
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	static constexpr uint8_t bignumBytesE1[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00 }; // 11640895
 	static constexpr uint8_t bignumBytesE2[] = { 0x3F, 0xA0, 0xB1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }; // 11640895
@@ -219,8 +110,9 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		// Moved, allocation should reduce.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
-		// Moved to initialize new one, allocation should remain the same.
 		BigNum bigNum3(std::move(bigNum1));
+		// Moved to initialize new one, allocation should remain the same.
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 
 		// This should success.
 		bigNum3.NullCheck();
@@ -230,6 +122,9 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		EXPECT_THROW(bigNum2.NullCheck(), InvalidObjectException);
 	}
 
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+
 	{
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(CtnFullR(bignumBytesE2)));
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE2)), BigNum(CtnFullR(bignumBytesB1), true, false));
@@ -238,15 +133,12 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(11640895));
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), BigNum(11640895ULL));
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1), false), BigNum(-11640895));
-		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), BigNum(512905));
-		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), ConstBigNumber(CtnFullR(bignumBytes1)));
 
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), 11640895);
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1)), 11640895U);
 		EXPECT_TRUE(sizeof(uint64_t) >= sizeof(mbedtls_mpi_sint));
 		//BigNum(CtnFullR(bignumBytesE1)) == 11640895ULL;
 		EXPECT_EQ(BigNum(CtnFullR(bignumBytesE1), false), -11640895);
-		EXPECT_EQ(ConstBigNumber(CtnFullR(bignumBytes2)), 512905);
 
 		EXPECT_EQ(11640895, BigNum(CtnFullR(bignumBytesE1)));
 		EXPECT_TRUE(116408 <  BigNum(CtnFullR(bignumBytesE1)));
@@ -262,7 +154,7 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 GTEST_TEST(TestBigNumber, BigNumberCalc)
 {
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	static constexpr size_t testLoopTime = 500;
 	{
@@ -401,8 +293,6 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 		realBig = realBig * realBig * realBig * realBig * realBig;
 		EXPECT_EQ(realBig.Dec(), "28679718602997181072337614380936720482949");
 		EXPECT_EQ((-realBig).Dec(), "-28679718602997181072337614380936720482949");
-		EXPECT_EQ(realBig.Dec<64>(), "0000000000000000000000028679718602997181072337614380936720482949");
-		EXPECT_EQ((-realBig).Dec<64>(), "-0000000000000000000000028679718602997181072337614380936720482949");
 
 		realBig = 123456789;
 		realBig = realBig * realBig * realBig * realBig * realBig
@@ -424,12 +314,15 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 
 GTEST_TEST(TestBigNumber, Rand)
 {
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	{
-		BigNum num1 = BigNum::Rand(100);
-		BigNum num2 = BigNum::Rand(100);
+		BigNum num1 = BigNum::Rand(100, *rand);
+		BigNum num2 = BigNum::Rand(100, *rand);
 
 		EXPECT_NE(num1, num2);
 	}
@@ -441,7 +334,7 @@ GTEST_TEST(TestBigNumber, Rand)
 GTEST_TEST(TestBigNumber, BorrowerConstructor)
 {
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	{
 		BigNum num1 = 1;
@@ -458,7 +351,7 @@ GTEST_TEST(TestBigNumber, BorrowerConstructor)
 GTEST_TEST(TestBigNumber, Copy)
 {
 	int64_t initCount = 0;
-	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	InitMemLeakCount(initCount);
 
 	{
 		BigNum num1 = 1;

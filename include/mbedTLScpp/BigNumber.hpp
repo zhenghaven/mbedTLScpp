@@ -1,4 +1,10 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #pragma once
+
 
 #include "ObjectBase.hpp"
 
@@ -7,9 +13,9 @@
 #include <cstring>
 
 #include "Common.hpp"
-#include "Exceptions.hpp"
 #include "Container.hpp"
-#include "DefaultRbg.hpp"
+#include "Exceptions.hpp"
+#include "RandInterfaces.hpp"
 
 #include "Internal/Codec.hpp"
 
@@ -147,13 +153,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception InvalidObjectException Thrown when the current instance is
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
-		 * @return true If it's positive number
+		 * @return true If it's positive number (or zero)
 		 * @return false If it's negative number
 		 */
 		bool IsPositive() const
 		{
 			NullCheck();
-			return Get()->s > 0;
+			int cmpRes = mbedtls_mpi_cmp_int(Get(), 0);
+			return cmpRes >= 0;
 		}
 
 		/**
@@ -485,91 +492,32 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		/**
 		 * @brief Convert this big number to a hex string. This string doesn't
-		 *        contain neither the \c '0x' prefix nor the negative sign.
+		 *        contain the \c '0x' prefix.
 		 *
 		 * @exception InvalidObjectException Thrown when one or more given objects are
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _LitEndian  Should output in little-endian format? (Default to \c true )
-		 * @tparam _LowerCase  Should output alphabet in lower case? (Default to \c true )
-		 * @tparam _MinWidth   The minmum width of the output string, in bytes. (Default to \c 0 )
-		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
 		 * @return std::string The output hex string.
 		 */
-		template<bool _LitEndian = true, bool _LowerCase = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Hex() const
 		{
-			NullCheck();
-
-			if(_LitEndian && _LowerCase)       // Little Endian & Lower Case
-			{
-				return Internal::Bytes2HexLitEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
-			else if(_LitEndian && !_LowerCase) // Little Endian & Upper Case
-			{
-				return Internal::Bytes2HEXLitEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
-			else if(!_LitEndian && _LowerCase) // Big Endian & Lower Case
-			{
-				return Internal::Bytes2HexBigEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
-			else                               // Big Endian & Upper Case
-			{
-				return Internal::Bytes2HEXBigEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
+			return ToNumString<16>();
 		}
 
 		/**
 		 * @brief Convert this big number to a binary string with \c 0 's and \c 1 's.
-		 *        This string doesn't contain neither \c '0b' prefix nor the negative sign.
+		 *        This string doesn't contain \c '0b' prefix.
 		 *
 		 * @exception InvalidObjectException Thrown when one or more given objects are
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _LitEndian  Should output in little-endian format? (Default to \c true )
-		 * @tparam _MinWidth   The minmum width of the output string, in bytes. (Default to \c 0 )
-		 * @tparam _PaddingVal The byte value used for padding to get to the minimum width.
 		 * @return std::string The output binary string.
 		 */
-		template<bool _LitEndian = true, size_t _MinWidth = 0, uint8_t _PaddingVal = 0>
 		std::string Bin() const
 		{
-			NullCheck();
-
-			if(_LitEndian)       // Little Endian
-			{
-				return Internal::Bytes2BinLitEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
-			else                // Big Endian
-			{
-				return Internal::Bytes2BinBigEnd<_MinWidth, _PaddingVal>(
-					CtnFullR(CDynArray<const uint8_t>{
-						reinterpret_cast<const uint8_t*>(Get()->p),
-						mbedtls_mpi_size(Get())
-					}));
-			}
+			return ToNumString<2>();
 		}
 
 		/**
@@ -581,72 +529,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
 		 * @exception std::bad_alloc Thrown when memory allocation failed.
-		 * @tparam _MinWidth The minmum width of the output string, in number of chractors. (Default to \c 0 )
-		 * @tparam _PaddingCh The chractor used for padding to get to the minimum width.
 		 * @return std::string The output string.
 		 */
-		template<size_t _MinWidth = 0, uint8_t _PaddingCh = '0'>
 		std::string Dec() const
 		{
-			//static constexpr int32_t divisor       = 1000000000;
-			static constexpr int64_t divisor       = 1000000000000000000;
-			static constexpr size_t  divisorDigits = sizeof("1000000000000000000") - 1 - 1;
-
-			//static_assert(divisor <= (std::numeric_limits<int32_t>::max)(), "Programming Error.");
-			NullCheck();
-
-			std::string res;
-			//int64_t rem = 0;
-			mbedtls_mpi_uint rem = 0;
-			BigNumberBase<DefaultBigNumObjTrait> tmp;
-			BigNumberBase<DefaultBigNumObjTrait> bigRem;
-
-			// Create an copy
-			BigNumberBase<DefaultBigNumObjTrait> cpy;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumberBase::Dec, mbedtls_mpi_copy, cpy.Get(), Get());
-
-			// Is positive?
-			bool isPos = cpy.IsPositive();
-
-			// To absolute value
-			if (!isPos)
-			{
-				cpy.Get()->s = 1;
-			}
-
-			// while cpy > 0
-			while (cpy > 0)
-			{
-				size_t midPadNeeded = (res.size() % divisorDigits);
-				midPadNeeded = midPadNeeded == 0 ? 0 : (divisorDigits - midPadNeeded);
-
-				// rem = cpy mod divisor
-				// rem = cpy.Mod(divisor);
-
-				// bignum /= divisor
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumberBase::Dec, mbedtls_mpi_div_int, tmp.Get(), bigRem.Get(), cpy.Get(), divisor);
-				cpy.Swap(tmp);
-				rem = *(bigRem.Get()->p);
-
-
-				// Add str(rem) to result string.
-				// std::cerr << "REM: " << std::to_string(rem) << " PadNeeded: " << midPadNeeded << " RES: " << res << std::endl;
-				res = std::to_string(rem) + std::string(midPadNeeded, '0') + res;
-			}
-
-			// Add padding
-			if(_MinWidth > res.size())
-			{
-				res = std::string(_MinWidth - res.size(), _PaddingCh) + res;
-			}
-
-			// if not positive, add '-'.
-			if(!isPos)
-			{
-				res = '-' + res;
-			}
-
-			return res;
+			return ToNumString<10>();
 		}
 
 		/**
@@ -669,11 +556,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			if (_LitEndian) // Little Endian
 			{
-				std::memcpy(res.data(), Get()->p, size);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumberBase::Bytes,
+					mbedtls_mpi_write_binary_le,
+					Get(),
+					res.data(),
+					size
+				);
 			}
 			else            // Big Endian
 			{
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumberBase::Bytes, mbedtls_mpi_write_binary, Get(), res.data(), size);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumberBase::Bytes,
+					mbedtls_mpi_write_binary,
+					Get(),
+					res.data(),
+					size
+				);
 			}
 
 			return res;
@@ -699,11 +598,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 			if (_LitEndian) // Little Endian
 			{
-				std::memcpy(res.data(), Get()->p, size);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumberBase::Bytes,
+					mbedtls_mpi_write_binary_le,
+					Get(),
+					res.data(),
+					size
+				);
 			}
 			else            // Big Endian
 			{
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumberBase::Bytes, mbedtls_mpi_write_binary, Get(), res.data(), size);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumberBase::Bytes,
+					mbedtls_mpi_write_binary,
+					Get(),
+					res.data(),
+					size
+				);
 			}
 
 			return res;
@@ -712,6 +623,49 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		protected:
 
 			using _Base::NullCheck;
+
+		private:
+
+			template<size_t _Raidx>
+			std::string ToNumString() const
+			{
+				NullCheck();
+
+				size_t outLen = 0;
+				auto getLenRes = mbedtls_mpi_write_string(
+					Get(),
+					_Raidx,
+					nullptr,
+					0,
+					&outLen
+				);
+				if (getLenRes != MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL)
+				{
+					throw mbedTLSRuntimeError(
+						getLenRes,
+						mbedTLSRuntimeError::ConstructWhatMsg(
+							getLenRes,
+							"BigNumberBase::ToNumString",
+							"mbedtls_mpi_write_string"
+						)
+					);
+				}
+
+				std::string res(outLen, '\0');
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumberBase::ToNumString,
+					mbedtls_mpi_write_string,
+					Get(),
+					_Raidx,
+					&res[0],
+					res.size(),
+					&outLen
+				);
+
+				res.resize(outLen - 1); // -1 to remove null terminator
+
+				return res;
+			}
 	};
 
 
@@ -733,134 +687,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{}
 	};
 
-	/**
-	 * @brief Constant Big Number trait.
-	 *
-	 */
-	using ConstBigNumObjTrait = ObjTraitBase<ConstBigNumAllocator,
-									false,
-									true>;
-
-	/**
-	 * @brief A big number class used to share a little-endian bytes array to use
-	 *        as a big number object.
-	 *        NOTE: This object doesn't own the array, instead, it only share the
-	 *        array. Thus, the array shared with must be alive before this object
-	 *        is destroyed.
-	 *
-	 */
-	class ConstBigNumber : public BigNumberBase<ConstBigNumObjTrait>
-	{
-	public: // Static members:
-
-		static constexpr bool CanMemRegFit(size_t regSize)
-		{
-			return regSize % sizeof(mbedtls_mpi_uint) == 0;
-		}
-
-	public:
-
-		/**
-		 * @brief Construct a new Const Big Number object with a reference to an
-		 *        existing container.
-		 *
-		 * @exception InvalidArgumentException Thrown when data size can't fit in whole mbedtls_mpi_uint.
-		 * @exception std::bad_alloc           Thrown when memory allocation failed.
-		 * @tparam _CtnType    The type of the container.
-		 * @tparam _CtnSecrecy The secrecy of the container.
-		 * @param data The container stores the data.
-		 * @param isPositive Should it be a positive number (since we assume the
-		 *                   byte array only stores unsigned value)?
-		 */
-		template<typename _CtnType, bool _CtnSecrecy>
-		ConstBigNumber(const ContCtnReadOnlyRef<_CtnType, _CtnSecrecy>& data, bool isPositive = true) :
-			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
-		{
-			if (!CanMemRegFit(data.GetRegionSize()))
-			{
-				throw InvalidArgumentException("The size of data region must be a factor of the size of mbedtls_mpi_uint type.");
-			}
-
-			MutableGet()->s = isPositive ? 1 : -1;
-			MutableGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
-			MutableGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
-		}
-
-
-		/**
-		 * @brief Construct a new Const Big Number object with a reference to an
-		 *        existing container.
-		 *
-		 * @exception std::bad_alloc           Thrown when memory allocation failed.
-		 * @tparam _CtnType    The type of the container.
-		 * @tparam _RegSize    The size of the referenced region.
-		 * @tparam _CtnSecrecy The secrecy of the container.
-		 * @param data The container stores the data.
-		 * @param isPositive Should it be a positive number (since we assume the
-		 *                   byte array only stores unsigned value)?
-		 */
-		template<typename _CtnType, size_t _RegSize, bool _CtnSecrecy,
-				 enable_if_t<CanMemRegFit(_RegSize), int> = 0>
-		ConstBigNumber(const ContCtnReadOnlyStRef<_CtnType, _RegSize, _CtnSecrecy>& data, bool isPositive = true) :
-			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase()
-		{
-			MutableGet()->s = isPositive ? 1 : -1;
-			MutableGet()->n = data.GetRegionSize() / sizeof(mbedtls_mpi_uint);
-			MutableGet()->p = static_cast<mbedtls_mpi_uint*>(const_cast<void*>(data.BeginPtr()));
-		}
-
-		/**
-		 * @brief Move Constructor. The `rhs` will be empty/null afterwards.
-		 *
-		 * @exception None No exception thrown
-		 * @param rhs The other ConstBigNumber instance.
-		 */
-		ConstBigNumber(ConstBigNumber&& rhs) noexcept :
-			BigNumberBase<ConstBigNumObjTrait>::BigNumberBase(std::forward<BigNumberBase<ConstBigNumObjTrait> >(rhs)) //noexcept
-		{}
-
-		ConstBigNumber(const ConstBigNumber& rhs) = delete;
-
-		/**
-		 * @brief Destroy the Big Number Base object
-		 *
-		 */
-		virtual ~ConstBigNumber()
-		{}
-
-		/**
-		 * @brief Move assignment. The `rhs` will be empty/null afterwards.
-		 *
-		 * @exception None No exception thrown
-		 * @param rhs The other ConstBigNumber instance.
-		 * @return ConstBigNumber& A reference to this instance.
-		 */
-		ConstBigNumber& operator=(ConstBigNumber&& rhs) noexcept
-		{
-			BigNumberBase<ConstBigNumObjTrait>::operator=(std::forward<BigNumberBase<ConstBigNumObjTrait> >(rhs)); //noexcept
-
-			return *this;
-		}
-
-		ConstBigNumber& operator=(const ConstBigNumber& other) = delete;
-
-		/**
-		 * @brief Flip the sign of the big number. The sign is a extra piece info
-		 *        owned only by this object, thus, we can mutate it.
-		 *
-		 * @exception InvalidObjectException Thrown when one or more given objects are
-		 *                                   holding a null pointer for the C mbed TLS
-		 *                                   object.
-		 * @return ConstBigNumber& A reference to this instance.
-		 */
-		ConstBigNumber& FlipSign()
-		{
-			NullCheck();
-
-			MutableGet()->s *= -1;
-			return *this;
-		}
-	};
 
 	/**
 	 * @brief The class for a normal Big Number object.
@@ -878,17 +704,50 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @brief Construct a new Big Number object and fill with random value.
 		 *
 		 * @param size The number of random bytes to generate.
-		 * @param rand The random bit generator. It's default to use \c DefaultRbg .
+		 * @param rand The random bit generator.
 		 * @return BigNumber The new random big number.
 		 */
-		static BigNumber<DefaultBigNumObjTrait>
-			Rand(size_t size, std::unique_ptr<RbgInterface> rand = Internal::make_unique<DefaultRbg>())
+		static BigNumber<DefaultBigNumObjTrait> Rand(
+			size_t size,
+			RbgInterface& rand
+		)
 		{
 			BigNumber<DefaultBigNumObjTrait> rd;
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::Rand,
-				mbedtls_mpi_fill_random, rd.Get(), size, &RbgInterface::CallBack, rand.get());
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				BigNumber::Rand,
+				mbedtls_mpi_fill_random,
+				rd.Get(),
+				size,
+				&RbgInterface::CallBack,
+				&rand
+			);
 
 			return rd;
+		}
+
+		static const BigNumber<DefaultBigNumObjTrait>& Zero()
+		{
+			static BigNumber<DefaultBigNumObjTrait> zero;
+			return zero;
+		}
+
+		static const BigNumber<DefaultBigNumObjTrait>& NegativeOne()
+		{
+			static auto constructFunc = []() -> BigNumber<DefaultBigNumObjTrait>
+			{
+				BigNumber<DefaultBigNumObjTrait> res;
+
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumber::NegativeOne,
+					mbedtls_mpi_lset,
+					res.Get(),
+					-1
+				);
+				return res;
+			};
+
+			static BigNumber<DefaultBigNumObjTrait> nOne = constructFunc();
+			return nOne;
 		}
 
 	public:
@@ -987,12 +846,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			if (isLittleEndian)
 			{
-				const size_t size = data.GetRegionSize();
-				const size_t extraLimb  = (size % sizeof(mbedtls_mpi_uint)) ? 1 : 0;
-				const size_t totalLimbs = (size / sizeof(mbedtls_mpi_uint)) + extraLimb;
-				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber, mbedtls_mpi_grow, NonVirtualGet(), totalLimbs);
-
-				memcpy(NonVirtualGet()->p, data.BeginPtr(), size);
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber,
+					mbedtls_mpi_read_binary_le,
+					NonVirtualGet(),
+					static_cast<const unsigned char*>(data.BeginPtr()),
+					data.GetRegionSize());
 			}
 			else
 			{
@@ -1000,10 +858,21 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 					mbedtls_mpi_read_binary,
 					NonVirtualGet(),
 					static_cast<const unsigned char*>(data.BeginPtr()),
-					data.GetRegionSize())
+					data.GetRegionSize());
 			}
 
-			NonVirtualGet()->s = isPositive ? 1 : -1;
+			if (!isPositive)
+			{
+				BigNumber x;
+				MBEDTLSCPP_MAKE_C_FUNC_CALL(
+					BigNumber::BigNumber,
+					mbedtls_mpi_sub_mpi,
+					x.NonVirtualGet(),
+					Zero().NonVirtualGet(),
+					NonVirtualGet()
+				);
+				mbedtls_mpi_swap(x.NonVirtualGet(), NonVirtualGet());
+			}
 		}
 
 		/**
@@ -1018,11 +887,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		template<typename _dummy_Trait = _ObjTrait,
 				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
 		BigNumber(mbedtls_mpi_uint val, bool isPositive = true) :
-			BigNumber(CtnFullR(CDynArray<mbedtls_mpi_uint>{
-						&val,
-						1
-					}),
-			isPositive, true)
+			BigNumber(
+				CtnFullR(CDynArray<mbedtls_mpi_uint>{
+					&val,
+					1
+				}),
+				isPositive,
+				true  // TODO: get endianness from platform
+			)
 		{}
 
 		/**
@@ -1155,13 +1027,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @exception InvalidObjectException Thrown when one or more given objects are
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
-		 * @return ConstBigNumber& A reference to this instance.
+		 * @return BigNumber& A reference to this instance.
 		 */
 		BigNumber& FlipSign()
 		{
 			NullCheck();
 
-			Get()->s *= -1;
+			BigNumber<DefaultBigNumObjTrait> x;
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				BigNumber::FlipSign,
+				mbedtls_mpi_sub_mpi,
+				x.Get(),
+				Zero().Get(),
+				Get()
+			);
+			mbedtls_mpi_swap(Get(), x.Get());
+
 			return *this;
 		}
 
@@ -1617,7 +1498,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		enable_if_t<std::is_same<typename _BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	inline bool operator==(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
-		return rhs == lhs;
+		return rhs.operator==(lhs);
 	}
 
 	/**
@@ -1640,7 +1521,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		enable_if_t<std::is_same<typename _BigNumTrait::CObjType, mbedtls_mpi>::value, int> = 0>
 	inline bool operator!=(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
-		return rhs != lhs;
+		return rhs.operator!=(lhs);
 	}
 
 	/**
@@ -1664,7 +1545,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline bool operator>=(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
 		// lhs >= rhs
-		return rhs <= lhs;
+		return rhs.operator<=(lhs);
 	}
 
 	/**
@@ -1688,7 +1569,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline bool operator>(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
 		// lhs > rhs
-		return rhs < lhs;
+		return rhs.operator<(lhs);
 	}
 
 	/**
@@ -1712,7 +1593,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline bool operator<=(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
 		// lhs <= rhs
-		return rhs >= lhs;
+		return rhs.operator>=(lhs);
 	}
 
 	/**
@@ -1736,7 +1617,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline bool operator<(_ValType lhs, const BigNumberBase<_BigNumTrait> & rhs)
 	{
 		// lhs < rhs
-		return rhs > lhs;
+		return rhs.operator>(lhs);
 	}
 
 	/**
@@ -2191,7 +2072,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline BigNum operator<<(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
 	{
 		BigNum res(lhs);
-		res <<= rhs;
+		res.operator<<=(rhs);
 		return res;
 	}
 
@@ -2213,7 +2094,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	inline BigNum operator>>(const BigNumberBase<_lhs_BigNumTrait>& lhs, size_t rhs)
 	{
 		BigNum res(lhs);
-		res >>= rhs;
+		res.operator>>=(rhs);
 		return res;
 	}
 }

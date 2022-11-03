@@ -1,22 +1,20 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
+
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/TlsConfig.hpp>
 
+#include <mbedTLScpp/DefaultRbg.hpp>
 #include <mbedTLScpp/EcKey.hpp>
-#include <mbedTLScpp/X509Cert.hpp>
 #include <mbedTLScpp/TlsSessTktMgr.hpp>
+#include <mbedTLScpp/X509Cert.hpp>
 
 #include "MemoryTest.hpp"
 
-#ifdef MBEDTLSCPPTEST_TEST_STD_NS
-using namespace std;
-#endif
-
-#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-using namespace mbedTLScpp;
-#else
-using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
-#endif
 
 namespace mbedTLScpp_Test
 {
@@ -29,6 +27,18 @@ namespace mbedTLScpp_Test
 	static constexpr bool gsk_threadEnabled = false;
 #endif
 
+
+#ifdef MBEDTLSCPPTEST_TEST_STD_NS
+using namespace std;
+#endif
+
+#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+using namespace mbedTLScpp;
+#else
+using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
+#endif
+
+
 GTEST_TEST(TestTlsConfig, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -36,28 +46,45 @@ GTEST_TEST(TestTlsConfig, CountTestFile)
 
 GTEST_TEST(TestTlsConfig, TlsConfigClass)
 {
+	using TestingTktMgtType =
+		TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM, 86400>;
+
+	std::unique_ptr<RbgInterface> rand =
+		Internal::make_unique<DefaultRbg>();
+
 	std::shared_ptr<EcKeyPair<EcType::SECP256R1> > testPrvKey =
-	std::make_shared<EcKeyPair<EcType::SECP256R1> >(EcKeyPair<EcType::SECP256R1>::Generate());
+		std::make_shared<EcKeyPair<EcType::SECP256R1> >(
+			EcKeyPair<EcType::SECP256R1>::Generate(*rand)
+		);
+
+	auto testCertDer = X509CertWriter::SelfSign(
+		HashType::SHA256,
+		*testPrvKey,
+		"C=US,CN=Test CA"
+	).SetBasicConstraints(
+		true, -1
+	).SetKeyUsage(
+		MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
+		MBEDTLS_X509_KU_NON_REPUDIATION   |
+		MBEDTLS_X509_KU_KEY_CERT_SIGN     |
+		MBEDTLS_X509_KU_CRL_SIGN
+	).SetNsType(
+		MBEDTLS_X509_NS_CERT_TYPE_SSL_CA |
+		MBEDTLS_X509_NS_CERT_TYPE_EMAIL_CA |
+		MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA
+	).SetSerialNum(
+		BigNumber<>(12345)
+	).SetValidationTime(
+		"20210101000000", "29991231235959"
+	).GetDer(*rand);
 
 	std::shared_ptr<X509Cert> testCert =
 	std::make_shared<X509Cert>(
-		X509Cert::FromDER(CtnFullR(
-			X509CertWriter::SelfSign(HashType::SHA256, *testPrvKey, "C=US,CN=Test CA").
-				SetBasicConstraints(true, -1).
-				SetKeyUsage(MBEDTLS_X509_KU_DIGITAL_SIGNATURE |
-					MBEDTLS_X509_KU_NON_REPUDIATION   |
-					MBEDTLS_X509_KU_KEY_CERT_SIGN     |
-					MBEDTLS_X509_KU_CRL_SIGN).
-				SetNsType(MBEDTLS_X509_NS_CERT_TYPE_SSL_CA |
-					MBEDTLS_X509_NS_CERT_TYPE_EMAIL_CA |
-					MBEDTLS_X509_NS_CERT_TYPE_OBJECT_SIGNING_CA).
-				SetSerialNum(BigNumber<>(12345)).
-				SetValidationTime("20210101000000", "20211231235959").GetDer()
-		))
+		X509Cert::FromDER(CtnFullR(testCertDer))
 	);
 
-	std::shared_ptr<TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> > testTktMgr =
-		std::make_shared<TlsSessTktMgr<CipherType::AES, 256, CipherMode::GCM> >();
+	std::shared_ptr<TestingTktMgtType> testTktMgr =
+		std::make_shared<TestingTktMgtType>(Internal::make_unique<DefaultRbg>());
 
 	int64_t initCount = 0;
 	int64_t initSecCount = 0;
@@ -65,15 +92,30 @@ GTEST_TEST(TestTlsConfig, TlsConfigClass)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		TlsConfig tlsConf1(true, true, false,
-			MBEDTLS_SSL_PRESET_SUITEB, testCert, nullptr, testCert, testPrvKey, testTktMgr);
+		TlsConfig tlsConf1(
+			true, true, false,
+			MBEDTLS_SSL_PRESET_SUITEB,
+			testCert,
+			nullptr,
+			testCert,
+			testPrvKey,
+			testTktMgr,
+			Internal::make_unique<DefaultRbg>()
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		TlsConfig tlsConf2(true, false, true,
-			MBEDTLS_SSL_PRESET_SUITEB, testCert, nullptr, testCert, testPrvKey, testTktMgr);
+			MBEDTLS_SSL_PRESET_SUITEB,
+			testCert,
+			nullptr,
+			testCert,
+			testPrvKey,
+			testTktMgr,
+			Internal::make_unique<DefaultRbg>()
+		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 2 : 0));

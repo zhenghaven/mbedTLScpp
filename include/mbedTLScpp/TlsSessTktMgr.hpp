@@ -9,12 +9,12 @@
 #include "ObjectBase.hpp"
 
 #include <mbedtls/ssl_ticket.h>
-#include "TlsSessTktMgrIntf.hpp"
 
+#include "CipherBase.hpp"
 #include "Common.hpp"
 #include "Exceptions.hpp"
-#include "DefaultRbg.hpp"
-#include "CipherBase.hpp"
+#include "RandInterfaces.hpp"
+#include "TlsSessTktMgrIntf.hpp"
 
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
@@ -82,8 +82,7 @@ public: // Static members:
 public:
 
 	TlsSessTktMgr(
-		std::unique_ptr<RbgInterface> rand =
-			Internal::make_unique<DefaultRbg>()
+		std::unique_ptr<RbgInterface> rand
 	) :
 		_Base::ObjectBase(),
 		m_rand(std::move(rand))
