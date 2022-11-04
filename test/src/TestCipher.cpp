@@ -3,6 +3,7 @@
 #include <mbedTLScpp/CipherBase.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -75,7 +76,7 @@ GTEST_TEST(TestCipher, CipherBaseClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		cpBase1 = std::move(cpBase1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(cpBase1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

@@ -6,6 +6,7 @@
 #include <mbedTLScpp/HmacDrbg.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -52,7 +53,7 @@ GTEST_TEST(TestRbg, CtrDrbgClass)
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
-		rbg1 = std::move(rbg1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(rbg1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
@@ -107,7 +108,7 @@ GTEST_TEST(TestRbg, HmacDrbgClass)
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
-		rbg1 = std::move(rbg1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(rbg1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));

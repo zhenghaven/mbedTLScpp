@@ -5,6 +5,8 @@
 #include <mbedTLScpp/TlsSessTktMgr.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
+
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -55,7 +57,7 @@ GTEST_TEST(TestTlsSessTktMgr, TlsSessTktMgrClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		tlsSess1 = std::move(tlsSess1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(tlsSess1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 4 : 0));
