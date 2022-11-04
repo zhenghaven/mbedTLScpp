@@ -4,6 +4,7 @@
 #include <mbedTLScpp/Gcm.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -50,7 +51,7 @@ GTEST_TEST(TestGcmBase, GcmBaseClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		gcm1 = std::move(gcm1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(gcm1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -158,7 +159,7 @@ GTEST_TEST(TestGcm, GcmClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		gcm1 = std::move(gcm1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(gcm1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

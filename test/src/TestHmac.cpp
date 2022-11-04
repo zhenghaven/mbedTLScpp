@@ -4,6 +4,7 @@
 #include <mbedTLScpp/Internal/Codec.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -54,7 +55,7 @@ GTEST_TEST(TestHmac, HmacerBaseClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		hmacBase1 = std::move(hmacBase1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(hmacBase1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -162,7 +163,7 @@ GTEST_TEST(TestHmac, HmacerClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		hmac2561 = std::move(hmac2561);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(hmac2561);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

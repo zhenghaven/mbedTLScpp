@@ -312,12 +312,21 @@ GTEST_TEST(TestContainer, ContainerByteStaticRangeWithBegin)
 	vecCtn.resize(50);
 	strCtn.resize(55);
 
-	auto stat_vecCtn1 = [vecCtn](){CtnByteRgR<51 * sizeof(uint16_t)>(vecCtn);};
+	auto stat_vecCtn1 = [vecCtn](){
+		CtnByteRgR<51 * sizeof(uint16_t)>(vecCtn);
+	};
 	EXPECT_THROW({stat_vecCtn1();}, std::out_of_range);
-	auto stat_strCtn1 = [strCtn](){CtnByteRgR<56 * sizeof(char)>(strCtn);};
+
+	auto stat_strCtn1 = [strCtn](){
+		CtnByteRgR<56 * sizeof(char)>(strCtn);
+	};
 	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
-	auto stat_cDynAr1 = [cDynArrayCtnSt](){CtnByteRgR<51 * sizeof(char)>(cDynArrayCtnSt);};
-	EXPECT_THROW({stat_strCtn1();}, std::out_of_range);
+
+	auto stat_cDynAr1 = [cDynArrayCtnSt](){
+		CtnByteRgR<51 * sizeof(uint64_t)>(cDynArrayCtnSt);
+	};
+	EXPECT_THROW({stat_cDynAr1();}, std::out_of_range);
+
 	EXPECT_NO_THROW((
 		[vecCtn]()
 		{

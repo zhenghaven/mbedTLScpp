@@ -14,6 +14,7 @@
 #include <mbedTLScpp/X509Cert.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 
 namespace mbedTLScpp_Test
@@ -99,29 +100,30 @@ GTEST_TEST(TestTlsConfig, TlsConfigClass)
 			nullptr,
 			testCert,
 			testPrvKey,
-			testTktMgr,
-			Internal::make_unique<DefaultRbg>()
+			Internal::make_unique<DefaultRbg>(),
+			testTktMgr
 		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 1 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		TlsConfig tlsConf2(true, false, true,
+		TlsConfig tlsConf2(
+			true, false, true,
 			MBEDTLS_SSL_PRESET_SUITEB,
 			testCert,
 			nullptr,
 			testCert,
 			testPrvKey,
-			testTktMgr,
-			Internal::make_unique<DefaultRbg>()
+			Internal::make_unique<DefaultRbg>(),
+			testTktMgr
 		);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 2 : 0));
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		tlsConf1 = std::move(tlsConf1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(tlsConf1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 4 + (gsk_threadEnabled ? 2 : 0));

@@ -134,6 +134,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		using _Base::Get;
 		using _Base::NonVirtualGet;
+		using _Base::Swap;
 
 		/**
 		 * @brief Swap the internal pointer of a Big Number base object with the
@@ -680,10 +681,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using DefaultAllocBase::NewObject;
 		using DefaultAllocBase::DelObject;
 
-		static void Init(CObjType* ptr)
+		static void Init(CObjType* /* ptr */)
 		{}
 
-		static void Free(CObjType* ptr) noexcept
+		static void Free(CObjType* /* ptr */) noexcept
 		{}
 	};
 
@@ -1006,6 +1007,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		using _Base::Swap;
 		using _Base::Get;
 		using _Base::NonVirtualGet;
+		using _Base::NullCheck;
 
 		/**
 		 * @brief Check if the current instance is holding a null pointer for

@@ -114,6 +114,11 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		Entropy& operator=(const Entropy& other) = delete;
 
+
+		using _Base::NullCheck;
+		using _Base::Get;
+
+
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
 		 *        the mbedTLS object. If so, exception will be thrown. Helper
@@ -127,8 +132,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(Entropy));
 		}
-
-		using _Base::Get;
 
 		/**
 		 * @brief Get the internal pointer to the C mbed TLS object.

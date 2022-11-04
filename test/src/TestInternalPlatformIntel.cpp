@@ -223,7 +223,6 @@ static void RdRandTest(_SetType& set)
 	ASSERT_NO_THROW(
 		try
 		{
-			bool insertRes = false;
 			uint16_t tmp = 0;
 			Internal::PlatformIntel::Internal::rdrand(&tmp, true);
 			set.insert(tmp);

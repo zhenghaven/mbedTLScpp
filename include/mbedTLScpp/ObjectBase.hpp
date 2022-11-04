@@ -92,19 +92,19 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		typedef _CObjType      CObjType;
 
 		template<typename T, class... _Args>
-		static T* NewObject(_Args&&... __args)
+		static T* NewObject(_Args&&... /* __args */)
 		{
 			return nullptr;
 		}
 
 		template<typename T>
-		static void DelObject(T* ptr) noexcept
+		static void DelObject(T* /* ptr */) noexcept
 		{}
 
-		static void Init(CObjType* ptr)
+		static void Init(CObjType* /* ptr */)
 		{}
 
-		static void Free(CObjType* ptr) noexcept
+		static void Free(CObjType* /* ptr */) noexcept
 		{}
 	};
 

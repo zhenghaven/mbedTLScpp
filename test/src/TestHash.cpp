@@ -4,6 +4,7 @@
 #include <mbedTLScpp/Internal/Codec.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -52,7 +53,7 @@ GTEST_TEST(TestHash, MsgDigestBaseClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		mdBase1 = std::move(mdBase1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(mdBase1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -107,7 +108,7 @@ GTEST_TEST(TestHash, HasherBaseClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		hashBase1 = std::move(hashBase1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(hashBase1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -206,7 +207,7 @@ GTEST_TEST(TestHash, HasherClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		hash2561 = std::move(hash2561);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(hash2561);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

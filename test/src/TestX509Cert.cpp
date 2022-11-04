@@ -12,6 +12,7 @@
 
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 
 namespace mbedTLScpp_Test
@@ -73,7 +74,7 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtConstructionAndMove)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		writer1 = std::move(writer1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(writer1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -183,7 +184,7 @@ GTEST_TEST(TestX509Cert, X509CertConstructionAndMove)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		cert1 = std::move(cert1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(cert1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -502,7 +503,7 @@ GTEST_TEST(TestX509CertWrt, X509CertChain)
 				nullptr
 			);
 		);
-		EXPECT_EQ(flag, 0);
+		EXPECT_EQ(flag, 0U);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

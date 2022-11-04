@@ -6,6 +6,7 @@
 #include <mbedTLScpp/DefaultRbg.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -51,7 +52,7 @@ GTEST_TEST(TestBigNumber, BigNumberBaseClass)
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
-		bigNum1 = std::move(bigNum1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -100,7 +101,7 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 
-		bigNum1 = std::move(bigNum1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(bigNum1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

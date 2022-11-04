@@ -250,7 +250,7 @@ inline constexpr size_t asn1_write_algorithm_identifier_est_size(
  * @return size_t
  */
 inline constexpr size_t asn1_write_tagged_string_est_size(
-	int tag,
+	unsigned char tag,
 	const void *text,
 	size_t text_len
 )

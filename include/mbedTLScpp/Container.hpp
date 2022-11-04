@@ -174,7 +174,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static constexpr size_t GetItemCount(const _ValType(&v)[_ArrayLength]) noexcept
+		static constexpr size_t GetItemCount(const _ValType(&/*v*/)[_ArrayLength]) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
 		}
@@ -186,7 +186,9 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the total container size in bytes
 		 */
-		static constexpr size_t GetCtnSize(const _ValType(&v)[_ArrayLength]) noexcept
+		static constexpr size_t GetCtnSize(
+			const _ValType(&/*v*/)[_ArrayLength]
+		) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
 		}
@@ -294,7 +296,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static constexpr size_t GetItemCount(const std::array<_ValType, _ArrayLength>& v) noexcept
+		static constexpr size_t GetItemCount(const std::array<_ValType, _ArrayLength>& /*v*/) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
 		}
@@ -306,7 +308,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the total container size in bytes
 		 */
-		static constexpr size_t GetCtnSize(const std::array<_ValType, _ArrayLength>& v) noexcept
+		static constexpr size_t GetCtnSize(const std::array<_ValType, _ArrayLength>& /*v*/) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
 		}
@@ -777,7 +779,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the count of the container.
 		 */
-		static constexpr size_t GetItemCount(const SecretArray<_ValType, _ArrayLength>& v) noexcept
+		static constexpr size_t GetItemCount(const SecretArray<_ValType, _ArrayLength>& /*v*/) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_itemCount;
 		}
@@ -789,7 +791,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param v The container.
 		 * @return constexpr size_t the total container size in bytes
 		 */
-		static constexpr size_t GetCtnSize(const SecretArray<_ValType, _ArrayLength>& v) noexcept
+		static constexpr size_t GetCtnSize(const SecretArray<_ValType, _ArrayLength>& /*v*/) noexcept
 		{
 			return StaticCtnType<_ValType, _ArrayLength>::sk_ctnSize;
 		}

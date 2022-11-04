@@ -124,6 +124,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		HmacDrbg& operator=(const HmacDrbg& other) = delete;
 
+
+		using _Base::NullCheck;
+
+
 		/**
 		 * @brief Fill random bits into the given memory region.
 		 *

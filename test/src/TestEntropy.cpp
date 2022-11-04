@@ -3,6 +3,7 @@
 #include <mbedTLScpp/Entropy.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
@@ -48,7 +49,7 @@ GTEST_TEST(TestEntropy, EntropyClass)
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
 
-		entropy1 = std::move(entropy1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(entropy1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2 + (gsk_threadEnabled ? 2 : 0));
@@ -100,11 +101,11 @@ GTEST_TEST(TestEntropy, SharedEntropy)
 	{
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 
-		std::unique_ptr<EntropyInterface> shared = GetSharedEntropy();
+		std::unique_ptr<EntropyInterface> anotherShared = GetSharedEntropy();
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 
-		EXPECT_EQ(shared->GetRawPtr(), sharedPtr);
+		EXPECT_EQ(anotherShared->GetRawPtr(), sharedPtr);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

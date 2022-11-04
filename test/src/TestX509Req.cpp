@@ -5,6 +5,7 @@
 #include <mbedTLScpp/X509Req.hpp>
 
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 
 namespace mbedTLScpp_Test
@@ -66,7 +67,7 @@ GTEST_TEST(TestX509ReqWrt, X509ReqWrtConstructAndMove)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		writer1 = std::move(writer1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(writer1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
@@ -164,7 +165,7 @@ GTEST_TEST(TestX509Req, X509ReqConstructAndMove)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		req1 = std::move(req1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(req1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);

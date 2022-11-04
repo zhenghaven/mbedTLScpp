@@ -246,7 +246,7 @@ inline constexpr size_t x509_write_name_est_size_est_tag_str(
 	return
 	// Write correct string tag and value
 	asn1_write_tagged_string_est_size(
-		cur_name.val.tag,
+		static_cast<unsigned char>(cur_name.val.tag),
 		cur_name.val.p,
 		cur_name.val.len
 	) +
@@ -407,7 +407,7 @@ inline size_t x509write_csr_der_est_size(const mbedtls_x509write_csr& ctx)
 {
 	const char *sig_oid;
 	size_t sig_oid_len = 0;
-	size_t pub_len = 0, sig_and_oid_len = 0;
+	size_t sig_and_oid_len = 0;
 	size_t len = 0;
 	mbedtls_pk_type_t pk_alg;
 

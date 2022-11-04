@@ -4,6 +4,7 @@
 
 #include "SharedVars.hpp"
 #include "MemoryTest.hpp"
+#include "SelfMoveTest.hpp"
 
 
 namespace mbedTLScpp_Test
@@ -52,7 +53,7 @@ GTEST_TEST(TestX509Crl, X509CrlClass)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
-		crl1 = std::move(crl1);
+		MBEDTLSCPPTEST_SELF_MOVE_TEST(crl1);
 
 		// Nothing moved, allocation should stay the same.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
