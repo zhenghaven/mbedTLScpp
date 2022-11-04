@@ -339,7 +339,7 @@ public:
 		);
 	}
 
-	void UnsetAuthmode(bool vrfyPeer)
+	void UnsetAuthmode()
 	{
 		NullCheck();
 
