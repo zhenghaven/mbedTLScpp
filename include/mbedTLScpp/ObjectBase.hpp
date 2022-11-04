@@ -92,7 +92,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		typedef _CObjType      CObjType;
 
 		template<typename T, class... _Args>
-		static T* NewObject(_Args&&... __args)
+		static T* NewObject(_Args&&... /* __args */)
 		{
 			return nullptr;
 		}

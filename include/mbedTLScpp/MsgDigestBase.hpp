@@ -200,6 +200,12 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		MsgDigestBase& operator=(const MsgDigestBase& other) = delete;
 
+
+		using _Base::Get;
+		using _Base::NonVirtualGet;
+		using _Base::NullCheck;
+
+
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
 		 *        the mbedTLS object. If so, exception will be thrown. Helper
@@ -213,9 +219,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(MsgDigestBase));
 		}
-
-		using _Base::Get;
-		using _Base::NonVirtualGet;
 	};
 
 	static_assert(IsCppObjOfCtype<MsgDigestBase<>, mbedtls_md_context_t>::value == true, "Programming Error");

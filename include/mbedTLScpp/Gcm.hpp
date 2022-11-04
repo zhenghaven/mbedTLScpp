@@ -109,6 +109,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		GcmBase& operator=(const GcmBase& other) = delete;
 
+
+		using _Base::Get;
+		using _Base::NonVirtualGet;
+		using _Base::NullCheck;
+		using _Base::Swap;
+
+
 		/**
 		 * @brief Check if the current instance is holding a null pointer for
 		 *        the mbedTLS object. If so, exception will be thrown. Helper
@@ -122,11 +129,6 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		{
 			_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(GcmBase));
 		}
-
-		using _Base::NullCheck;
-		using _Base::Get;
-		using _Base::NonVirtualGet;
-		using _Base::Swap;
 
 		template<typename _DataCtnType, bool _DataSec,
 			typename _IvCtnType, bool _IvSec,
@@ -245,6 +247,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		Gcm& operator=(const Gcm& other) = delete;
+
+
+		using _Base::NullCheck;
+
 
 		/**
 		 * @brief Check if the current instance is holding a null pointer for

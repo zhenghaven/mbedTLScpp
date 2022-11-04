@@ -180,6 +180,11 @@ public:
 	}
 
 
+	using _Base::Get;
+	using _Base::NonVirtualGet;
+	using _Base::NullCheck;
+
+
 	template<typename _other_ObjTraits>
 	void DeepCopy(
 		const EcGroup<_other_ObjTraits>& other
@@ -214,10 +219,6 @@ public:
 	{
 		_Base::NullCheck(MBEDTLSCPP_CLASS_NAME_STR(EcGroup));
 	}
-
-
-	using _Base::Get;
-	using _Base::NonVirtualGet;
 
 
 	void Load(EcType type)
@@ -1384,6 +1385,9 @@ public:
 	}
 
 
+	using _Base::NullCheck;
+
+
 	/**
 	 * @brief Check if the current instance is holding a null pointer for
 	 *        the mbedTLS object. If so, exception will be thrown. Helper
@@ -1650,6 +1654,10 @@ public:
 
 		return *this;
 	}
+
+
+	using _Base::NullCheck;
+
 
 	/**
 	 * @brief Check if the current instance is holding a null pointer for
