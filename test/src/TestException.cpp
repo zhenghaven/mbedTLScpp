@@ -1,3 +1,9 @@
+// Copyright (c) 2022 Haofan Zheng
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
+
 #include <gtest/gtest.h>
 
 #include <mbedTLScpp/Exceptions.hpp>
@@ -27,20 +33,37 @@ GTEST_TEST(TestException, CountTestFile)
 GTEST_TEST(TestException, ThrowIfErrorMacro)
 {
 	EXPECT_THROW(
-		MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(MBEDTLS_ERR_SSL_INVALID_RECORD, TestCaller, TestCallee),
-		mbedTLSRuntimeError);
+		int errCode = MBEDTLS_ERR_SSL_INVALID_RECORD;
+		MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(
+			errCode,
+			TestCaller,
+			TestCallee
+		),
+		mbedTLSRuntimeError
+	);
 }
 
 GTEST_TEST(TestException, CFuncCall)
 {
 	EXPECT_THROW(
-		MBEDTLSCPP_C_FUNC_CALL(TestCaller, mbedtls_md_setup, mbedtls_md_setup(nullptr, nullptr, false)),
-		mbedTLSRuntimeError);
+		MBEDTLSCPP_C_FUNC_CALL(
+			TestCaller,
+			mbedtls_md_setup, mbedtls_md_setup(nullptr, nullptr, false)
+		),
+		mbedTLSRuntimeError
+	);
 }
 
 GTEST_TEST(TestException, MakeCFuncCall)
 {
 	EXPECT_THROW(
-		MBEDTLSCPP_MAKE_C_FUNC_CALL(TestCaller, mbedtls_md_setup, nullptr, nullptr, false),
-		mbedTLSRuntimeError);
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			TestCaller,
+			mbedtls_md_setup,
+			nullptr,
+			nullptr,
+			false
+		),
+		mbedTLSRuntimeError
+	);
 }

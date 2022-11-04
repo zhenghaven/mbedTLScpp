@@ -502,7 +502,7 @@ GTEST_TEST(TestX509CertWrt, X509CertChain)
 				nullptr
 			);
 		);
-		EXPECT_EQ(flag, 0);
+		EXPECT_EQ(flag, 0U);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

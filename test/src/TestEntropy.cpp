@@ -100,11 +100,11 @@ GTEST_TEST(TestEntropy, SharedEntropy)
 	{
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 
-		std::unique_ptr<EntropyInterface> shared = GetSharedEntropy();
+		std::unique_ptr<EntropyInterface> anotherShared = GetSharedEntropy();
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 
-		EXPECT_EQ(shared->GetRawPtr(), sharedPtr);
+		EXPECT_EQ(anotherShared->GetRawPtr(), sharedPtr);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);

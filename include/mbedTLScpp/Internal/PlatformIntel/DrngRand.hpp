@@ -189,15 +189,15 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 				void rdrand_get_bytes(size_t n, uint8_t *dest)
 				{
-					uint8_t *start;
-					uint8_t *residualstart;
-					MaxIntType *blockstart;
-					MaxIntType temprand;
-					size_t i;
-					size_t count;
-					size_t residual;
-					size_t startlen;
-					size_t length;
+					uint8_t *start         = nullptr;
+					uint8_t *residualstart = nullptr;
+					MaxIntType *blockstart = nullptr;
+					MaxIntType temprand    = 0;
+					size_t i               = 0;
+					size_t count           = 0;
+					size_t residual        = 0;
+					size_t startlen        = 0;
+					size_t length          = 0;
 
 					/* Compute the address of the first 32- or 64- bit aligned
 					block in the destination buffer, depending on whether we are

@@ -201,17 +201,18 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 				size_t rdseed_get_bytes(size_t n, uint8_t *dest, size_t skip, size_t max_retries)
 				{
-					uint8_t *start;
-					uint8_t *residualstart;
-					MaxIntType *blockstart;
-					MaxIntType i, temprand;
-					size_t count;
-					size_t residual;
-					size_t startlen;
-					size_t length;
-					size_t success;
-					size_t success_count = 0;
-					size_t buffsize = n;
+					uint8_t *start         = nullptr;
+					uint8_t *residualstart = nullptr;
+					MaxIntType *blockstart = nullptr;
+					MaxIntType i           = 0;
+					MaxIntType temprand    = 0;
+					size_t count           = 0;
+					size_t residual        = 0;
+					size_t startlen        = 0;
+					size_t length          = 0;
+					size_t success         = 0;
+					size_t success_count   = 0;
+					size_t buffsize        = n;
 
 					if (skip)
 					{

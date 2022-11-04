@@ -246,7 +246,7 @@ inline constexpr size_t x509_write_name_est_size_est_tag_str(
 	return
 	// Write correct string tag and value
 	asn1_write_tagged_string_est_size(
-		cur_name.val.tag,
+		static_cast<unsigned char>(cur_name.val.tag),
 		cur_name.val.p,
 		cur_name.val.len
 	) +

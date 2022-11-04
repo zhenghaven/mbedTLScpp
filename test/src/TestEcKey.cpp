@@ -412,7 +412,10 @@ GTEST_TEST(TestEcKey, EcKeyPairBasePEMAndDER)
 		EcKeyPairBase<> ec2 = EcKeyPairBase<>::FromDER(CtnFullR(der), *rand);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, der.capacity());
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(
+			initSecCount,
+			static_cast<int64_t>(der.capacity())
+		);
 
 		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
 		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
@@ -947,7 +950,10 @@ GTEST_TEST(TestEcKey, EcKeyPairPEMAndDER)
 		auto ec2 = EcKeyPair<EcType::SECP256R1>::FromDER(CtnFullR(der), *rand);
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
-		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, der.capacity());
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(
+			initSecCount,
+			static_cast<int64_t>(der.capacity())
+		);
 
 		EXPECT_EQ(ec2.GetAlgorithmCat(), PKeyAlgmCat::EC);
 		EXPECT_EQ(ec2.GetKeyType(),      PKeyType::Private);
