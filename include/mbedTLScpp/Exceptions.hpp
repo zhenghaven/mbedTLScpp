@@ -328,6 +328,24 @@ inline void CheckMbedTlsLenRetVal(
 	}
 }
 
+inline void CheckMbedTlsIntRetVal(
+	int lenVal,
+	const char* callerName,
+	const char* calleeName
+)
+{
+	if (lenVal != 0)
+	{
+		throw mbedTLSRuntimeError(lenVal,
+			mbedTLSRuntimeError::ConstructWhatMsg(
+				lenVal,
+				callerName,
+				calleeName
+			)
+		);
+	}
+}
+
 } // namespace mbedTLScpp
 
 /**
