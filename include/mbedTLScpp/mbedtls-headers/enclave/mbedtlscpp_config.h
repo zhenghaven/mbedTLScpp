@@ -3387,7 +3387,11 @@ static inline int empty_int_func_cvoidp(const void* ptr, ...) { (void)ptr; retur
  * If the implementation here is empty, this will effectively disable the
  * checking of functions' return values.
  */
+#ifdef _MSC_VER
+#define MBEDTLS_CHECK_RETURN
+#else // _MSC_VER
 //#define MBEDTLS_CHECK_RETURN __attribute__((__warn_unused_result__))
+#endif // _MSC_VER
 
 /** \def MBEDTLS_IGNORE_RETURN
  *

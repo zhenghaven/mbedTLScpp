@@ -1,5 +1,5 @@
---- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2022-10-25 21:05:21.979558746 -0700
-+++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2022-11-17 01:56:33.528416685 -0800
+--- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2022-11-17 02:09:24.530694327 -0800
++++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2022-11-20 22:54:03.808995899 -0800
 @@ -24,6 +24,9 @@
   *  limitations under the License.
   */
@@ -190,7 +190,19 @@
  //#define MBEDTLS_PLATFORM_NV_SEED_READ_MACRO   mbedtls_platform_std_nv_seed_read /**< Default nv_seed_read function to use, can be undefined */
  //#define MBEDTLS_PLATFORM_NV_SEED_WRITE_MACRO  mbedtls_platform_std_nv_seed_write /**< Default nv_seed_write function to use, can be undefined */
  
-@@ -3580,3 +3596,5 @@
+@@ -3371,7 +3387,11 @@
+  * If the implementation here is empty, this will effectively disable the
+  * checking of functions' return values.
+  */
++#ifdef _MSC_VER
++#define MBEDTLS_CHECK_RETURN
++#else // _MSC_VER
+ //#define MBEDTLS_CHECK_RETURN __attribute__((__warn_unused_result__))
++#endif // _MSC_VER
+ 
+ /** \def MBEDTLS_IGNORE_RETURN
+  *
+@@ -3580,3 +3600,5 @@
  //#define MBEDTLS_ECDH_VARIANT_EVEREST_ENABLED
  
  /** \} name SECTION: Module configuration options */
