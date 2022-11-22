@@ -421,6 +421,25 @@ GTEST_TEST(TestInternalAsn1Helper, FillWritingBits)
 		EXPECT_EQ(lastByte,          0x00); // ---- ---1
 		EXPECT_EQ(lastByteBitLength, 0U);
 	}
+
+	// invalid fill length
+	{
+		std::vector<uint8_t> input = {  };
+		uint8_t lastByte = 0x01; // ---- ---1
+		size_t lastByteBitLength = 1;
+
+		auto byteBegin = input.begin();
+		EXPECT_THROW(
+			Internal::FillWritingBits(
+				10,
+				lastByte,
+				lastByteBitLength,
+				byteBegin,
+				input.end()
+			);,
+			InvalidArgumentException
+		);
+	}
 }
 
 GTEST_TEST(TestInternalAsn1Helper, Asn1MultiBytesOidEncode)
@@ -488,5 +507,53 @@ GTEST_TEST(TestInternalAsn1Helper, Asn1MultiBytesOidEncode)
 			input.size()
 		);
 		EXPECT_EQ(output, expOutput);
+	}
+
+	// empty input
+	{
+		std::vector<uint8_t> input = {};
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
+	}
+
+	// too many leading zeros
+	{
+		std::vector<uint8_t> input = { 0x00U, 0x00U, 0x01U, 0x37U, };
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
+	}
+
+	// non-multi-bytes OID
+	{
+		std::vector<uint8_t> input = { 0x01U, };
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
 	}
 }

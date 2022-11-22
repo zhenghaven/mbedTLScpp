@@ -506,7 +506,7 @@ inline _ByteType FillWritingBits(
 }
 
 
-template<size_t _FillLen, typename _ByteType, typename _InIt>
+template<uint8_t _FillLen, typename _ByteType, typename _InIt>
 inline _ByteType FillWritingBits(
 	_ByteType& lastByte,
 	size_t&    lastByteBitLen,
@@ -554,6 +554,13 @@ inline void Asn1MultiBytesOidEncode(
 			" - There are too many leading zeros"
 		);
 	}
+	if (firstByte < 128U && totalBytes <= 1)
+	{
+		throw InvalidArgumentException(
+			"mbedTLScpp::Internal::Asn1MultiBytesOidEncode"
+			" - This OID is not multi-bytes"
+		);
+	}
 
 	size_t leadingZeroBits = CalcLeadingZeroBitsInByte(firstByte);
 	size_t totalBits = (totalBytes * 8) - leadingZeroBits;
@@ -571,7 +578,7 @@ inline void Asn1MultiBytesOidEncode(
 	*out++ =
 		sk_leadingBitOne |
 		FillWritingBits(
-			validBitsInFirstByte,
+			static_cast<uint8_t>(validBitsInFirstByte),
 			lastByte,
 			lastByteBitLen,
 			begin,
