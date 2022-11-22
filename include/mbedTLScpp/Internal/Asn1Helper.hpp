@@ -397,5 +397,229 @@ inline void Asn1ReverseNamedDataList(mbedtls_asn1_named_data*& dest)
 }
 
 
+template<typename _ByteType>
+inline size_t CalcLeadingZeroBitsInByte(const _ByteType& b)
+{
+	size_t leadingZeroBits = 0;
+	for (int i = 7; i > 0; --i)
+	{
+		if ((b >> i) & 0x01U)
+		{
+			return leadingZeroBits;
+		}
+		++leadingZeroBits;
+	}
+	return leadingZeroBits +
+		((b & 0x01U) ? 0 : 1);
+}
+
+
+template<typename _ByteType, typename _InIt>
+inline _ByteType FillWritingBitsImpl(
+	uint8_t    fillLen,
+	_ByteType& lastByte,
+	size_t&    lastByteBitLen,
+	_InIt&     bytesBegin,
+	_InIt      bytesEnd
+)
+{
+	_ByteType writingByte = 0;
+	size_t    writingByteBitLen = 0;
+	size_t    bitLenToBeWrite = fillLen;
+
+	while(writingByteBitLen < fillLen)
+	{
+		if (lastByteBitLen == 0)
+		{
+			// last byte is empty, fill it with new byte
+
+			if (bytesBegin == bytesEnd)
+			{
+				// We need more bytes, but there is no more input bytes
+				throw InvalidArgumentException(
+					"mbedTLScpp::Internal::FillWritingBitsImpl"
+					" - unexpected ending of input bytes"
+				);
+			}
+			lastByte = *bytesBegin++;
+			lastByteBitLen = 8;
+		}
+		else if (lastByteBitLen > bitLenToBeWrite)
+		{
+			// we only need to use part of lastByte
+			// so there will be leftovers in lastByte
+			size_t leftOverBitLen = (lastByteBitLen - bitLenToBeWrite);
+
+			_ByteType usedBits = lastByte >> leftOverBitLen;
+			writingByte |= usedBits;
+			writingByteBitLen += bitLenToBeWrite;
+
+			// make used bits to 0
+			_ByteType usedBitsMask = usedBits << leftOverBitLen;
+			lastByte ^= usedBitsMask;
+			lastByteBitLen = leftOverBitLen;
+		}
+		else if (lastByteBitLen == bitLenToBeWrite)
+		{
+			// The bits in lastByte are exactly the length of bits we need
+			writingByte |= lastByte;
+			writingByteBitLen += bitLenToBeWrite;
+
+			lastByte = 0;
+			lastByteBitLen = 0;
+		}
+		else if (lastByteBitLen < bitLenToBeWrite)
+		{
+			// The bits in lastByte are less than the length of bits we need
+
+			// bits to be filled in next round
+			size_t nextRoundBitLen = (bitLenToBeWrite - lastByteBitLen);
+
+			writingByte |= lastByte << nextRoundBitLen;
+			writingByteBitLen += lastByteBitLen;
+
+			lastByte = 0;
+			lastByteBitLen = 0;
+		}
+		bitLenToBeWrite = (fillLen - writingByteBitLen);
+	}
+
+	return writingByte;
+}
+
+
+template<typename _ByteType, typename _InIt>
+inline _ByteType FillWritingBits(
+	uint8_t    fillLen,
+	_ByteType& lastByte,
+	size_t&    lastByteBitLen,
+	_InIt&     bytesBegin,
+	_InIt      bytesEnd
+)
+{
+	if (fillLen > 8)
+	{
+		throw InvalidArgumentException(
+			"mbedTLScpp::Internal::FillWritingBits"
+			" - fillLen must be within the size of a byte"
+		);
+	}
+	return FillWritingBitsImpl(
+		fillLen,
+		lastByte,
+		lastByteBitLen,
+		bytesBegin,
+		bytesEnd
+	);
+}
+
+
+template<size_t _FillLen, typename _ByteType, typename _InIt>
+inline _ByteType FillWritingBits(
+	_ByteType& lastByte,
+	size_t&    lastByteBitLen,
+	_InIt&     bytesBegin,
+	_InIt      bytesEnd
+)
+{
+	static_assert(_FillLen <= 8, "_FillLen must be within the size of a byte");
+
+	return FillWritingBitsImpl(
+		_FillLen,
+		lastByte,
+		lastByteBitLen,
+		bytesBegin,
+		bytesEnd
+	);
+}
+
+
+template<typename _OutValType, typename _OutIt, typename _InIt>
+inline void Asn1MultiBytesOidEncode(
+	_OutIt out,
+	_InIt begin,
+	_InIt end,
+	size_t totalBytes
+)
+{
+	static constexpr size_t sk_validBitsPerByte = 7;
+	static constexpr _OutValType sk_leadingBitOne = ~(_OutValType(0x7F));
+
+	if (begin == end)
+	{
+		throw InvalidArgumentException(
+			"mbedTLScpp::Internal::Asn1MultiBytesOidEncode"
+			" - At least one byte should be given"
+		);
+	}
+
+	auto firstByte = *begin++;
+
+	if (firstByte == 0U)
+	{
+		throw InvalidArgumentException(
+			"mbedTLScpp::Internal::Asn1MultiBytesOidEncode"
+			" - There are too many leading zeros"
+		);
+	}
+
+	size_t leadingZeroBits = CalcLeadingZeroBitsInByte(firstByte);
+	size_t totalBits = (totalBytes * 8) - leadingZeroBits;
+	size_t validBitsInFirstByte = totalBits % sk_validBitsPerByte;
+	validBitsInFirstByte =
+		(validBitsInFirstByte == 0) ?
+			sk_validBitsPerByte : // there is no leftover, use all 7 bits
+			validBitsInFirstByte;
+	size_t totalBytesNeeded =
+		(totalBits + (sk_validBitsPerByte - 1)) / sk_validBitsPerByte;
+
+	auto   lastByte = firstByte;
+	size_t lastByteBitLen = 8 - leadingZeroBits;
+
+	*out++ =
+		sk_leadingBitOne |
+		FillWritingBits(
+			validBitsInFirstByte,
+			lastByte,
+			lastByteBitLen,
+			begin,
+			end
+		);
+
+	for(size_t i = 1; i < totalBytesNeeded; ++i)
+	{
+		bool isEnding = (i == (totalBytesNeeded - 1));
+		_OutValType leadingBit = isEnding ?
+			0 : // The leftmost bit of ending byte is 0
+			sk_leadingBitOne; // The leftmost bit of non-ending byte is 1
+
+		*out++ =
+			leadingBit |
+			FillWritingBits<7>(
+				lastByte,
+				lastByteBitLen,
+				begin,
+				end
+			);
+	}
+}
+
+
+template<typename _OutValType, typename _OutIt, typename _InIt>
+inline void Asn1MultiBytesOidEncode(
+	_OutIt out,
+	_InIt begin,
+	_InIt end
+)
+{
+	return Asn1MultiBytesOidEncode<_OutValType, _OutIt, _InIt>(
+		out,
+		begin,
+		end,
+		std::distance(begin, end)
+	);
+}
+
+
 } // namespace Internal
 } // namespace mbedTLScpp
