@@ -459,18 +459,10 @@ inline _ByteType FillWritingBitsImpl(
 			lastByte ^= usedBitsMask;
 			lastByteBitLen = leftOverBitLen;
 		}
-		else if (lastByteBitLen == bitLenToBeWrite)
+		else if (lastByteBitLen <= bitLenToBeWrite)
 		{
+			// The bits in lastByte are less than the length of bits we need, OR
 			// The bits in lastByte are exactly the length of bits we need
-			writingByte |= lastByte;
-			writingByteBitLen += bitLenToBeWrite;
-
-			lastByte = 0;
-			lastByteBitLen = 0;
-		}
-		else if (lastByteBitLen < bitLenToBeWrite)
-		{
-			// The bits in lastByte are less than the length of bits we need
 
 			// bits to be filled in next round
 			size_t nextRoundBitLen = (bitLenToBeWrite - lastByteBitLen);
