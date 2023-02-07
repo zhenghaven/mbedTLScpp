@@ -76,6 +76,23 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	{
 	public: //static members
 
+		static std::string ErrorCodeToString(int errorCode)
+		{
+			static constexpr char sk_alphabet[] = "0123456789ABCDEF";
+			static constexpr size_t sk_errCodeDigits = 4;
+
+			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
+			std::string errCodeHex(sk_errCodeDigits, '\0');
+			for (size_t i = 0; i < sk_errCodeDigits; ++i)
+			{
+				errCodeHex[sk_errCodeDigits - i - 1] =
+					sk_alphabet[posErrCode & 0x0F];
+				posErrCode >>= 4;
+			}
+
+			return std::string("-0x") + errCodeHex;
+		}
+
 		/**
 		 * @brief The helper function to construct the explanatory string.
 		 *
@@ -86,41 +103,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 */
 		static std::string ConstructWhatMsg(int errorCode, const char* caller, const char* callee)
 		{
-			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
-			char errCodeHex[12];  //%04X needs 8 bytes at max, based on compiler msg.
 			const char* highErrCStr = mbedtls_high_level_strerr(errorCode);
 			const char* lowErrCStr = mbedtls_low_level_strerr(errorCode);
 			std::string highErrStr(highErrCStr != nullptr ? highErrCStr : "N/A");
 			std::string lowErrStr(lowErrCStr != nullptr ? lowErrCStr : "N/A");
 
-			mbedtls_snprintf(errCodeHex, sizeof(errCodeHex), "-0x%04X", (unsigned int) posErrCode);
+			std::string errCodeHex = ErrorCodeToString(errorCode);
 
 			return std::string("embed TLS returned error ") + errCodeHex +
 			       " (" + highErrStr + " : " + lowErrStr + ") when function " +
 				   caller + " called function " + callee;
-		}
-
-		/**
-		 * @brief The helper function that picks and returns an C string as the
-		 *        explanatory string. The returned pointer could point to the
-		 *        mbed TLS high level strerr or mbed TLS low level strerr or the
-		 *        fallback buffer. The fallback buffer is a C string buffer to
-		 *        write error code string if the error code is unknown.
-		 *
-		 * @param errorCode       Error code returned by mbed TLS.
-		 * @param fallbackBuf     The pointer points to the fallback buffer.
-		 * @param fallbackBufSize The size of the fallback buffer.
-		 * @return const char* The explanatory string.
-		 */
-		static const char* ConstructFallbackMsg(int errorCode, char* fallbackBuf, size_t fallbackBufSize)
-		{
-			int posErrCode = errorCode < 0 ? -errorCode : errorCode;
-			mbedtls_snprintf(fallbackBuf, fallbackBufSize, "UNKNOWN ERROR CODE -0x%04X", posErrCode);
-			const char* highErrCStr = mbedtls_high_level_strerr(errorCode);
-			const char* lowErrCStr = mbedtls_low_level_strerr(errorCode);
-
-			return highErrCStr != nullptr ? highErrCStr :
-				        (lowErrCStr != nullptr ? lowErrCStr : fallbackBuf);
 		}
 
 	public:
@@ -356,12 +348,7 @@ inline void CheckMbedTlsIntRetVal(
 #define MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(ERROR_CODE, CALLER, CALLEE) { \
 	if ((ERROR_CODE) != MBEDTLS_EXIT_SUCCESS) { \
 		std::unique_ptr<std::string> errorStrPtr; \
-		try	{ \
-			errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
-		} catch(...) { \
-			char fallbackStr[] = "UNKNOWN ERROR CODE            "; \
-			throw mbedTLSRuntimeError(ERROR_CODE, mbedTLSRuntimeError::ConstructFallbackMsg(ERROR_CODE, fallbackStr, sizeof(fallbackStr))); \
-		} \
+		errorStrPtr = Internal::make_unique<std::string>(mbedTLSRuntimeError::ConstructWhatMsg(ERROR_CODE, #CALLER, #CALLEE)); \
 		throw mbedTLSRuntimeError(ERROR_CODE, *errorStrPtr); \
 	} \
 }
