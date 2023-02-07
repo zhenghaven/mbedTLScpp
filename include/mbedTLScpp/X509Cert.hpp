@@ -489,6 +489,13 @@ public: // Static members:
 	}
 
 
+	static X509CertBase<DefaultX509CertObjTrait> Empty()
+	{
+		X509CertBase<DefaultX509CertObjTrait> cert;
+		return cert;
+	}
+
+
 public:
 
 	/**
@@ -1135,6 +1142,32 @@ public:
 	}
 
 
+
+	template<
+		typename _SecCtnType,
+		typename _dummy_CertTrait = X509CertTrait,
+		enable_if_t<
+			!_dummy_CertTrait::sk_isBorrower && !_dummy_CertTrait::sk_isConst,
+			int
+		> = 0
+	>
+	void AppendDER(const ContCtnReadOnlyRef<_SecCtnType, false>& der)
+	{
+		X509CertBase* pThis = static_cast<X509CertBase*>(this);
+
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			X509CertBase::AppendDER,
+			mbedtls_x509_crt_parse_der_with_ext_cb,
+			Get(),
+			der.BeginBytePtr(),
+			der.GetRegionSize(),
+			1,
+			mbedTLSParseExtCallback,
+			pThis
+		);
+	}
+
+
 protected:
 
 
@@ -1161,6 +1194,39 @@ protected:
 	{
 		m_certStack.push_back(m_currPtr->next);
 		m_currPtr = m_currPtr->next;
+	}
+
+
+	virtual int mbedTLSParseExt(
+		mbedtls_x509_crt const* /* crt */,
+		mbedtls_x509_buf const* /* oid */,
+		int /* critical */,
+		const unsigned char* /* p */,
+		const unsigned char* /* end */
+	)
+	{
+		return MBEDTLS_ERROR_ADD(
+			MBEDTLS_ERR_X509_INVALID_EXTENSIONS,
+			MBEDTLS_ERR_ASN1_UNEXPECTED_TAG
+		);
+	}
+
+
+private: // static members
+
+
+	static int mbedTLSParseExtCallback(
+		void *p_ctx,
+		mbedtls_x509_crt const *crt,
+		mbedtls_x509_buf const *oid,
+		int critical,
+		const unsigned char *p,
+		const unsigned char *end
+	)
+	{
+		X509CertBase* pThis = static_cast<X509CertBase*>(p_ctx);
+
+		return pThis->mbedTLSParseExt(crt, oid, critical, p, end);
 	}
 
 

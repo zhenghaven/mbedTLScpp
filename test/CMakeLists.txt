@@ -73,9 +73,9 @@ FetchContent_Declare(
   GIT_TAG        decent-enclave
 )
 FetchContent_MakeAvailable(git_mbedtls)
-mbedTLScpp_UseMbedtlsHeaders_Normal(mbedcrypto)
-mbedTLScpp_UseMbedtlsHeaders_Normal(mbedx509)
-mbedTLScpp_UseMbedtlsHeaders_Normal(mbedtls)
+mbedTLScpp_Decentize_Normal(mbedcrypto)
+mbedTLScpp_Decentize_Normal(mbedx509)
+mbedTLScpp_Decentize_Normal(mbedtls)
 
 
 ################################################################################
