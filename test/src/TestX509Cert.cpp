@@ -176,7 +176,7 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSettersAndPEM)
 
 		EXPECT_NO_THROW(
 			writer1.SetSerialNum(
-				BigNum::Rand(32, *rand)
+				BigNum::Rand(20, *rand)
 			).SetValidationTime(
 				"20210101000000", "29991231235959"
 			).SetBasicConstraints(

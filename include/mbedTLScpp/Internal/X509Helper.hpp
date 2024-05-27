@@ -1,7 +1,10 @@
-// Copyright (c) 2022 Haofan Zheng
+// Copyright (c) 2024 Haofan Zheng
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
+
+// Most of the size estimation functions implemented here are derived from the
+// certificate writing functions in mbedtls library.
 
 #pragma once
 
@@ -557,7 +560,8 @@ inline size_t x509write_crt_der_est_size(const mbedtls_x509write_cert& ctx)
 	mbedtls_pk_type_t pk_alg;
 
 	int certVer = ctx.MBEDTLS_PRIVATE(version);
-	const mbedtls_mpi& certSerial = (ctx.MBEDTLS_PRIVATE(serial));
+	const unsigned char* certSerial = (ctx.MBEDTLS_PRIVATE(serial));
+	const size_t certSerialLen = (ctx.MBEDTLS_PRIVATE(serial_len));
 	const mbedtls_pk_context* certIssKey = (ctx.MBEDTLS_PRIVATE(issuer_key));
 	const mbedtls_x509_name* certIssName = (ctx.MBEDTLS_PRIVATE(issuer));
 	const mbedtls_pk_context* certSubjKey = (ctx.MBEDTLS_PRIVATE(subject_key));
@@ -674,8 +678,25 @@ inline size_t x509write_crt_der_est_size(const mbedtls_x509write_cert& ctx)
 
 	/*
 	*  Serial   ::=  INTEGER
+	*
+	* Written data is:
+	* - "ctx->serial_len" bytes for the raw serial buffer
+	*   - if MSb of "serial" is 1, then prepend an extra 0x00 byte
+	* - 1 byte for the length
+	* - 1 byte for the TAG
 	*/
-	len += asn1_write_mpi_est_size(certSerial);
+	len += asn1_write_raw_buffer_est_size(certSerial, certSerialLen);
+	const char certSerialMsb = certSerial[0];
+	if (certSerialMsb & 0x80)
+	{
+		len++;
+		len += asn1_write_len_est_size(certSerialLen + 1);
+	}
+	else
+	{
+		len += asn1_write_len_est_size(certSerialLen);
+	}
+	len += asn1_write_tag_est_size(MBEDTLS_ASN1_INTEGER);
 
 	/*
 	*  Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }

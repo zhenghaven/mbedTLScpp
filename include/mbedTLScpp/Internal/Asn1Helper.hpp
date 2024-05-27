@@ -3,6 +3,9 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+// Most of the size estimation functions implemented here are derived from the
+// asn1 writing functions in mbedtls library.
+
 #pragma once
 
 
