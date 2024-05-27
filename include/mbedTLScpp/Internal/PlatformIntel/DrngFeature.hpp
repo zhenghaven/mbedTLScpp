@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include <string>
+
 #include "../CpuId.hpp"
 
 #include "Exceptions.hpp"
@@ -50,6 +52,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				return  std::memcmp(&ebx, "Genu", 4) == 0 &&
 						std::memcmp(&edx, "ineI", 4) == 0 &&
 						std::memcmp(&ecx, "ntel", 4) == 0;
+			}
+
+			inline std::string GetBrandStr()
+			{
+				uint32_t ebx = 0;
+				uint32_t ecx = 0;
+				uint32_t edx = 0;
+
+				std::tie(std::ignore, ebx, ecx, edx) = RunCpuid(0x00, 0x00);
+
+				char str[sizeof(uint32_t) * 3];
+				std::memcpy(&str[sizeof(uint32_t) * 0], &ebx, sizeof(uint32_t));
+				std::memcpy(&str[sizeof(uint32_t) * 1], &edx, sizeof(uint32_t));
+				std::memcpy(&str[sizeof(uint32_t) * 2], &ecx, sizeof(uint32_t));
+
+				return std::string(str, sizeof(str));
 			}
 
 			inline bool IsRdSeedSupported()
