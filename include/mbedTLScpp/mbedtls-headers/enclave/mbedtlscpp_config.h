@@ -24,6 +24,9 @@
  *  limitations under the License.
  */
 
+#ifndef MBEDTLSCPP_CONFIG_H
+#define MBEDTLSCPP_CONFIG_H
+
 /**
  * This is an optional version symbol that enables compatibility handling of
  * config files.
@@ -85,7 +88,7 @@
  * example, if double-width division is implemented in software, disabling
  * it can reduce code size in some embedded targets.
  */
-//#define MBEDTLS_NO_UDBL_DIVISION
+#define MBEDTLS_NO_UDBL_DIVISION
 
 /**
  * \def MBEDTLS_NO_64BIT_MULTIPLICATION
@@ -3384,7 +3387,11 @@ static inline int empty_int_func_cvoidp(const void* ptr, ...) { (void)ptr; retur
  * If the implementation here is empty, this will effectively disable the
  * checking of functions' return values.
  */
+#ifdef _MSC_VER
+#define MBEDTLS_CHECK_RETURN
+#else // _MSC_VER
 //#define MBEDTLS_CHECK_RETURN __attribute__((__warn_unused_result__))
+#endif // _MSC_VER
 
 /** \def MBEDTLS_IGNORE_RETURN
  *
@@ -3593,3 +3600,5 @@ static inline int empty_int_func_cvoidp(const void* ptr, ...) { (void)ptr; retur
 //#define MBEDTLS_ECDH_VARIANT_EVEREST_ENABLED
 
 /** \} name SECTION: Module configuration options */
+
+#endif /* MBEDTLSCPP_CONFIG_H */

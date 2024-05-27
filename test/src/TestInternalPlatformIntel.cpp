@@ -42,7 +42,18 @@ GTEST_TEST(TestInternalPlatformIntel, CountTestFile)
 GTEST_TEST(TestInternalPlatformIntel, AvailabilityTest)
 {
 #ifdef MBEDTLSCPPTEST_ARCH_X86
-	EXPECT_TRUE(Internal::PlatformIntel::IsIntelProcessor());
+	std::string cpuBrand = Internal::PlatformIntel::GetBrandStr();
+	std::cout << "CPU Brand: " << cpuBrand << std::endl;
+	EXPECT_TRUE(
+		(
+			cpuBrand == "GenuineIntel" &&
+			Internal::PlatformIntel::IsIntelProcessor()
+		) ||
+		(
+			cpuBrand != "GenuineIntel" &&
+			!Internal::PlatformIntel::IsIntelProcessor()
+		)
+	);
 	// These two tests are not valid, since even Intel CPU may not support
 	// RdSeed and RdRand
 	// EXPECT_TRUE(Internal::PlatformIntel::IsRdSeedSupportedCached());

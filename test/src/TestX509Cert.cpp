@@ -34,6 +34,51 @@ using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 using namespace mbedTLScpp_Test;
 
 
+class TestX509CertExt :
+	public mbedTLScpp::X509Cert
+{
+public: // static members:
+
+	using Base = mbedTLScpp::X509Cert;
+
+	static TestX509CertExt Empty()
+	{
+		return TestX509CertExt();
+	}
+
+public:
+
+	TestX509CertExt() :
+		Base()
+	{}
+
+	virtual int mbedTLSParseExt(
+		mbedtls_x509_crt const* crt,
+		mbedtls_x509_buf const* oid,
+		int critical,
+		const unsigned char* p,
+		const unsigned char* end
+	) override
+	{
+		static const std::string sk_expOid = "1.2.3.4.5.6.7.1";
+		if (
+			oid->len == sk_expOid.size() &&
+			std::memcmp(oid->p, sk_expOid.data(), sk_expOid.size()) == 0
+		)
+		{
+			size_t dataLen = static_cast<size_t>(end - p);
+			m_extData.resize(dataLen);
+			std::memcpy(&(m_extData[0]), p, dataLen);
+			return 0;
+		}
+		return Base::mbedTLSParseExt(crt, oid, critical, p, end);
+	}
+
+	std::string m_extData;
+
+}; // class TestX509CertExt
+
+
 GTEST_TEST(TestX509CertWrt, CountTestFile)
 {
 	++mbedTLScpp_Test::g_numOfTestFile;
@@ -127,6 +172,8 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSettersAndPEM)
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
+		std::string testExtData = "TestData1";
+
 		EXPECT_NO_THROW(
 			writer1.SetSerialNum(
 				BigNum::Rand(32, *rand)
@@ -139,13 +186,38 @@ GTEST_TEST(TestX509CertWrt, X509CertWrtSettersAndPEM)
 			).SetNsType(
 				MBEDTLS_X509_NS_CERT_TYPE_SSL_CA
 			).SetV3Extension(
-				"1.2.3.4.5.6.7.1", false, CtnFullR("TestData1")
+				"1.2.3.4.5.6.7.1", false, CtnFullR(testExtData)
 			);
 		);
 
-		EXPECT_NO_THROW(
-			writer1.GetPem(*rand);
+		std::string pem;
+		ASSERT_NO_THROW(
+			pem = writer1.GetPem(*rand);
 		);
+
+		std::vector<uint8_t> der;
+		ASSERT_NO_THROW(
+			der = writer1.GetDer(*rand);
+		);
+
+		// try to parse
+		{
+			EXPECT_NO_THROW(
+				X509Cert::FromPEM(pem);
+			);
+		}
+		{
+			EXPECT_NO_THROW(
+				X509Cert::FromDER(CtnFullR(der));
+			);
+		}
+		{
+			TestX509CertExt cert = TestX509CertExt::Empty();
+			EXPECT_NO_THROW(
+				cert.AppendDER(CtnFullR(der));
+			);
+			EXPECT_EQ(cert.m_extData, testExtData);
+		}
 	}
 
 	// Finally, all allocation should be cleaned after exit.

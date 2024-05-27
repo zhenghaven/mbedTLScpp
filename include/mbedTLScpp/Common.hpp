@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+
 #include <array>
 
 #ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE

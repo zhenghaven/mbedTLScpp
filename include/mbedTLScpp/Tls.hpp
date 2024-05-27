@@ -420,7 +420,10 @@ public:
 			len
 		);
 
-		if (retVal < 0)
+		if (
+			(retVal < 0) &&
+			(retVal != MBEDTLS_ERR_SSL_WANT_READ)
+		)
 		{
 			MBEDTLSCPP_THROW_IF_ERROR_CODE_NON_SUCCESS(
 				retVal, Tls::Handshake, mbedtls_ssl_read

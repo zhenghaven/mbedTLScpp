@@ -728,7 +728,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 
 		static const BigNumber<DefaultBigNumObjTrait>& Zero()
 		{
-			static BigNumber<DefaultBigNumObjTrait> zero;
+			static const BigNumber<DefaultBigNumObjTrait> zero;
 			return zero;
 		}
 
@@ -747,7 +747,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				return res;
 			};
 
-			static BigNumber<DefaultBigNumObjTrait> nOne = constructFunc();
+			static const BigNumber<DefaultBigNumObjTrait> nOne = constructFunc();
 			return nOne;
 		}
 

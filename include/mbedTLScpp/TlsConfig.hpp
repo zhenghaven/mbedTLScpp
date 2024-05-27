@@ -26,6 +26,16 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 #endif
 {
 
+enum class TlsVersion : uint8_t
+{
+	Default = 0,
+
+	Tls1_2 = 2,
+	Tls1_3 = 3,
+
+	Tls1_2_To_1_3 = 23,
+}; // enum class TlsVersion
+
 /**
  * @brief TLS Config object allocator.
  *
@@ -108,6 +118,52 @@ public: // Static members:
 		}
 	}
 
+	static void SetTlsVersion(
+		typename TlsConfObjTrait::CObjType& obj,
+		TlsVersion ver
+	)
+	{
+		switch (ver)
+		{
+		case TlsVersion::Tls1_2:
+			mbedtls_ssl_conf_min_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_2
+			);
+			mbedtls_ssl_conf_max_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_2
+			);
+			break;
+
+		case TlsVersion::Tls1_3:
+			mbedtls_ssl_conf_min_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_3
+			);
+			mbedtls_ssl_conf_max_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_3
+			);
+			break;
+
+		case TlsVersion::Tls1_2_To_1_3:
+			mbedtls_ssl_conf_min_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_2
+			);
+			mbedtls_ssl_conf_max_tls_version(
+				&obj,
+				mbedtls_ssl_protocol_version::MBEDTLS_SSL_VERSION_TLS1_3
+			);
+			break;
+
+		default:
+			// Default - do nothing; let mbedTLS decide.
+			break;
+		}
+	}
+
 public:
 
 	/**
@@ -137,7 +193,8 @@ public:
 		std::shared_ptr<const X509Cert> cert,
 		std::shared_ptr<const PKeyBase<> > prvKey,
 		std::unique_ptr<RbgInterface> rand,
-		std::shared_ptr<TlsSessTktMgrIntf > ticketMgr
+		std::shared_ptr<TlsSessTktMgrIntf > ticketMgr,
+		TlsVersion ver = TlsVersion::Tls1_2
 	) :
 		_Base::ObjectBase(),
 		m_ca(ca),
@@ -158,13 +215,13 @@ public:
 			this
 		);
 
-		mbedtls_ssl_conf_session_tickets(
-			NonVirtualGet(),
-			MBEDTLS_SSL_SESSION_TICKETS_ENABLED
-		);
-
 		if (m_ticketMgr != nullptr)
 		{
+			mbedtls_ssl_conf_session_tickets(
+				NonVirtualGet(),
+				MBEDTLS_SSL_SESSION_TICKETS_ENABLED
+			);
+
 			mbedtls_ssl_conf_session_tickets_cb(NonVirtualGet(),
 				&TlsSessTktMgrIntf::Write,
 				&TlsSessTktMgrIntf::Parse,
@@ -182,6 +239,11 @@ public:
 				MBEDTLS_SSL_TRANSPORT_DATAGRAM,
 			preset
 		);
+
+		if (isServer)
+		{
+			SetTlsVersion(*NonVirtualGet(), ver);
+		}
 
 		if (m_cert != nullptr)
 		{
@@ -319,8 +381,7 @@ public:
 	virtual bool IsNull() const noexcept override
 	{
 		return _Base::IsNull() ||
-			(m_rand == nullptr) ||
-			(m_prvKey == nullptr);
+			(m_rand == nullptr);
 	}
 
 	using _Base::NullCheck;

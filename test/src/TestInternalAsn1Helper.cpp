@@ -297,3 +297,263 @@ GTEST_TEST(TestInternalAsn1Helper, asn1_write_tagged_string_est_size)
 		1   // <==> Internal::asn1_write_tag_est_size(MBEDTLS_ASN1_UTF8_STRING)
 	);
 }
+
+GTEST_TEST(TestInternalAsn1Helper, CalcLeadingZeroBitsInByte)
+{
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x00U)),
+		8
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x01U)),
+		7
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x02U)),
+		6
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x04U)),
+		5
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x08U)),
+		4
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x10U)),
+		3
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x20U)),
+		2
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x40U)),
+		1
+	);
+	EXPECT_EQ(
+		Internal::CalcLeadingZeroBitsInByte(static_cast<uint8_t>(0x80U)),
+		0
+	);
+}
+
+GTEST_TEST(TestInternalAsn1Helper, FillWritingBits)
+{
+	// length of lastByte is larger than we need
+	{
+		std::vector<uint8_t> input = { 0xAA, 0xAA, };
+		uint8_t lastByte = 0xAA; // 1010 1010
+		size_t lastByteBitLength = 8;
+
+		auto byteBegin = input.begin();
+		uint8_t output = Internal::FillWritingBits(
+			7,
+			lastByte,
+			lastByteBitLength,
+			byteBegin,
+			input.end()
+		);
+
+		EXPECT_EQ(output,            0x55U); // 0101 0101
+		EXPECT_EQ(lastByte,          0x00U); // ---- ---0
+		EXPECT_EQ(lastByteBitLength, 1U);
+	}
+
+	// length of lastByte is smaller than we need
+	{
+		std::vector<uint8_t> input = { 0xAA, 0xAA, };
+		uint8_t lastByte = 0x01; // ---- ---1
+		size_t lastByteBitLength = 1;
+
+		auto byteBegin = input.begin();
+		uint8_t output = Internal::FillWritingBits(
+			7,
+			lastByte,
+			lastByteBitLength,
+			byteBegin,
+			input.end()
+		);
+
+		EXPECT_EQ(output,            0x6AU); // 0110 1010
+		EXPECT_EQ(lastByte,          0x02U); // ---- --10
+		EXPECT_EQ(lastByteBitLength, 2U);
+	}
+
+	// length of lastByte is exactly what we need
+	{
+		std::vector<uint8_t> input = { 0xAA, 0xAA, };
+		uint8_t lastByte = 0x55; // -101 0101
+		size_t lastByteBitLength = 7;
+
+		auto byteBegin = input.begin();
+		uint8_t output = Internal::FillWritingBits(
+			7,
+			lastByte,
+			lastByteBitLength,
+			byteBegin,
+			input.end()
+		);
+
+		EXPECT_EQ(output,            0x55U); // 0110 1010
+		EXPECT_EQ(lastByte,          0x00U); // ---- ----
+		EXPECT_EQ(lastByteBitLength, 0U);
+	}
+
+	// unexpected byte ending
+	{
+		std::vector<uint8_t> input = {  };
+		uint8_t lastByte = 0x01; // ---- ---1
+		size_t lastByteBitLength = 1;
+
+		auto byteBegin = input.begin();
+		EXPECT_THROW(
+			Internal::FillWritingBits(
+				7,
+				lastByte,
+				lastByteBitLength,
+				byteBegin,
+				input.end()
+			);,
+			InvalidArgumentException
+		);
+
+		EXPECT_EQ(lastByte,          0x00); // ---- ---1
+		EXPECT_EQ(lastByteBitLength, 0U);
+	}
+
+	// invalid fill length
+	{
+		std::vector<uint8_t> input = {  };
+		uint8_t lastByte = 0x01; // ---- ---1
+		size_t lastByteBitLength = 1;
+
+		auto byteBegin = input.begin();
+		EXPECT_THROW(
+			Internal::FillWritingBits(
+				10,
+				lastByte,
+				lastByteBitLength,
+				byteBegin,
+				input.end()
+			);,
+			InvalidArgumentException
+		);
+	}
+}
+
+GTEST_TEST(TestInternalAsn1Helper, Asn1MultiBytesOidEncode)
+{
+	// small example from https://learn.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier
+	{
+		std::vector<uint8_t> input = { 0x01U, 0x37U };
+		std::string expOutput = "\x82\x37";
+
+		std::string output;
+		Internal::Asn1MultiBytesOidEncode<char>(
+			std::back_inserter(output),
+			input.begin(),
+			input.end(),
+			input.size()
+		);
+		EXPECT_EQ(output, expOutput);
+	}
+
+	// UUID of decent enclave
+	{
+		// bac83453-fdf5-4ac2-9182-d7bc2ee0981e
+		std::vector<uint8_t> input = {
+			0xBAU, 0xC8U, 0x34U, 0x53U,
+			0xFDU, 0xF5U,
+			0x4AU, 0xC2U,
+			0x91U, 0x82U,
+			0xD7U, 0xBCU, 0x2EU, 0xE0U, 0x98U, 0x1EU
+		};
+		std::string expOutput =
+			"\x82\xF5\xC8\x9A\x94\xFF\xDF\xAA\xAB\x85"
+			"\x91\xC1\xB5\xF7\xC2\xF7\x82\xB0\x1E";
+
+		std::string output;
+		Internal::Asn1MultiBytesOidEncode<char>(
+			std::back_inserter(output),
+			input.begin(),
+			input.end(),
+			input.size()
+		);
+		EXPECT_EQ(output, expOutput);
+	}
+
+	// UUID for the University of California San Diego WebCharts application.
+	// 4d502da0-ede8-11df-b6b6-0002a5d5c51b
+	// https://oidref.com/2.25.102766864882687977556167898990804059419
+	{
+		// bac83453-fdf5-4ac2-9182-d7bc2ee0981e
+		std::vector<uint8_t> input = {
+			0x4DU, 0x50U, 0x2DU, 0xA0U,
+			0xEDU, 0xE8U,
+			0x11U, 0xDFU,
+			0xB6U, 0xB6U,
+			0x00U, 0x02U, 0xA5U, 0xD5U, 0xC5U, 0x1BU
+		};
+		std::string expOutput =
+			"\x81\x9A\xD0\x96\xE8\x9D\xDE\xC0\xC7\xBF"
+			"\xB6\xDB\x80\x80\xAA\xAE\xD7\x8A\x1B";
+
+		std::string output;
+		Internal::Asn1MultiBytesOidEncode<char>(
+			std::back_inserter(output),
+			input.begin(),
+			input.end(),
+			input.size()
+		);
+		EXPECT_EQ(output, expOutput);
+	}
+
+	// empty input
+	{
+		std::vector<uint8_t> input = {};
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
+	}
+
+	// too many leading zeros
+	{
+		std::vector<uint8_t> input = { 0x00U, 0x00U, 0x01U, 0x37U, };
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
+	}
+
+	// non-multi-bytes OID
+	{
+		std::vector<uint8_t> input = { 0x01U, };
+
+		std::string output;
+		EXPECT_THROW(
+			Internal::Asn1MultiBytesOidEncode<char>(
+				std::back_inserter(output),
+				input.begin(),
+				input.end(),
+				input.size()
+			);,
+			InvalidArgumentException
+		);
+	}
+}
