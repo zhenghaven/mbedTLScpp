@@ -16,17 +16,17 @@
 #endif
 
 #ifdef MBEDTLSCPPTEST_ARCH_X86
-#include <mbedTLScpp/Internal/PlatformIntel/Drng.hpp>
+#	include <mbedTLScpp/Internal/PlatformIntel/Drng.hpp>
+
+#	ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
+using namespace mbedTLScpp;
+#	else
+using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
+#	endif
 #endif
 
 #ifdef MBEDTLSCPPTEST_TEST_STD_NS
 using namespace std;
-#endif
-
-#ifndef MBEDTLSCPP_CUSTOMIZED_NAMESPACE
-using namespace mbedTLScpp;
-#else
-using namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE;
 #endif
 
 namespace mbedTLScpp_Test
@@ -58,18 +58,10 @@ GTEST_TEST(TestInternalPlatformIntel, AvailabilityTest)
 	// RdSeed and RdRand
 	// EXPECT_TRUE(Internal::PlatformIntel::IsRdSeedSupportedCached());
 	// EXPECT_TRUE(Internal::PlatformIntel::IsRdRandSupportedCached());
-	std::cout<< "Intel CPU detected, " <<
-		"RdSeed and RdRand are expected to be supported." << std::endl;
-#else
-	EXPECT_FALSE(Internal::PlatformIntel::IsIntelProcessor());
-	// These two tests are not valid, since even Intel CPU may not support
-	// RdSeed and RdRand
-	// EXPECT_FALSE(Internal::PlatformIntel::IsRdSeedSupportedCached());
-	// EXPECT_FALSE(Internal::PlatformIntel::IsRdRandSupportedCached());
-	std::cout<< "Non-Intel CPU detected, " <<
-		"RdSeed and RdRand tests are disabled." << std::endl;
 #endif
 }
+
+#ifdef MBEDTLSCPPTEST_ARCH_X86
 
 template<typename _SetType>
 static void RdSeedTest(_SetType& set)
@@ -93,7 +85,6 @@ static void RdSeedTest(_SetType& set)
 	);
 }
 
-#ifdef MBEDTLSCPPTEST_ARCH_X86
 GTEST_TEST(TestInternalPlatformIntel, RdSeedTest)
 {
 	if (!Internal::PlatformIntel::IsRdSeedSupportedCached())
