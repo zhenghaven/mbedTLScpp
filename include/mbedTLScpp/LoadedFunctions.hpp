@@ -25,7 +25,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 	public: // types
 
 		typedef void (*SecureZeroizeFunc)(void*, size_t);
-		typedef int (*MemEqualFunc)(const void*, const void*, size_t);
+		typedef uint8_t (*MemEqualFunc)(const void*, const void*, size_t);
 
 	public: // Static members
 

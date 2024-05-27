@@ -26,15 +26,30 @@ namespace Internal
  * @param a
  * @param b
  * @param n
- * @return int 1 for equal, 0 for not equal.
+ * @return 1 for equal, 0 for not equal.
  */
-inline int ConstTimeMemEqual( const void *a, const void *b, size_t n ) noexcept
+inline uint8_t ConstTimeMemEqual( const void *a, const void *b, size_t n ) noexcept
 {
-	// mbedtls_ct_memcmp should return in range [0, 256).
-	uint32_t initRes = static_cast<uint32_t>(mbedtls_ct_memcmp(a, b, n));
+	// mbedtls_ct_memcmp should return a int that is at most 32 bits.
+	int initRes = mbedtls_ct_memcmp(a, b, n);
 
-	// Map 0 to 1 and [1, 256) to 0 using only constant-time arithmetic.
-	return static_cast<int>(0x1 & ((initRes - 1) >> 8));
+	// fold the 32 bits result to 16 bits, by ORing the upper 16 bits with the lower 16 bits.
+	uint16_t fold16Res = static_cast<uint16_t>((initRes & 0xffff) | (initRes >> 16));
+	// fold again to 8 bits, and store the result in 16 bits variable.
+	uint16_t fold8Res = static_cast<uint16_t>((fold16Res & 0xff) | (fold16Res >> 8));
+
+	// The value in fold8Res should be in the range of [0x0000, 0x00ff]
+	// By subtracting 1, 0x0000 will be mapped to 0xffff,
+	// and [0x0001, 0x00ff] will be mapped to [0x0000, 0x00fe]
+	uint16_t minusOne = static_cast<uint16_t>(fold8Res - 1);
+
+	// By shifting right 8 bits, 0xffff will be mapped to 0xff,
+	// and [0x0000, 0x00fe] will be mapped to 0x00
+	uint8_t upperByte = static_cast<uint8_t>(minusOne >> 8);
+
+	// we only need to return the least significant bit of the upper byte.
+	// so 0x00ff will be mapped to 0x01, and 0x0000 will be mapped to 0x00.
+	return static_cast<uint8_t>(0x01 & upperByte);
 }
 
 /**
@@ -43,15 +58,15 @@ inline int ConstTimeMemEqual( const void *a, const void *b, size_t n ) noexcept
  * @param a
  * @param b
  * @param n
- * @return int 0 for equal, 1 for not equal.
+ * @return 0 for equal, 1 for not equal.
  */
-inline int ConstTimeMemNotEqual( const void *a, const void *b, size_t n ) noexcept
+inline uint8_t ConstTimeMemNotEqual( const void *a, const void *b, size_t n ) noexcept
 {
 	// ConstTimeMemEqual should return in range [0, 1]
-	uint8_t initRes = static_cast<uint8_t>(ConstTimeMemEqual(a, b, n));
+	auto initRes = ConstTimeMemEqual(a, b, n);
 
 	// Map 0 to 1 and 1 to 0 using only constant-time arithmetic.
-	return static_cast<int>(0x1 ^ initRes);
+	return static_cast<uint8_t>(0x1 ^ initRes);
 }
 
 } // namespace Internal
