@@ -152,6 +152,142 @@ GTEST_TEST(TestBigNumber, BigNumberClass)
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
+GTEST_TEST(TestBigNumber, BigNumberConstructFromStr)
+{
+	int64_t initCount = 0;
+	InitMemLeakCount(initCount);
+
+	// ===== Decimal
+	{
+		int64_t expVal = 1234567890LL;
+
+		BigNum val("1234567890");
+		EXPECT_EQ(val, expVal);
+	}
+
+	{
+		int64_t expVal = 9876543210LL;
+
+		BigNum val("9876543210");
+		EXPECT_EQ(val, expVal);
+	}
+
+	{
+		int64_t expVal = 0x1234567890ABCDEFLL;
+
+		BigNum val("1311768467294899695");
+		EXPECT_EQ(val, expVal);
+	}
+	// 128 bits
+	{
+		std::vector<uint8_t> expValBytes = {
+			0x11U, 0x22U, 0x33U, 0x44U, 0x55U, 0x66U, 0x77U, 0x88U,
+			0x99U, 0x00U, 0xAAU, 0xBBU, 0xCCU, 0xDDU, 0xEEU, 0xFFU,
+		};
+		BigNum expVal(
+			CtnFullR(expValBytes),
+			/*isPositive=*/true,
+			/*isLittleEndian=*/false
+		);
+
+		BigNum val("22774453838368691933710012711845097215");
+		EXPECT_EQ(val, expVal);
+	}
+	// 256 bits
+	{
+		std::vector<uint8_t> expValBytes = {
+			0x11U, 0x22U, 0x33U, 0x44U, 0x55U, 0x66U, 0x77U, 0x88U,
+			0x99U, 0x00U, 0xAAU, 0xBBU, 0xCCU, 0xDDU, 0xEEU, 0xFFU,
+			0x1FU, 0x2EU, 0x3DU, 0x4CU, 0x5BU, 0x6AU, 0x70U, 0x89U,
+			0x98U, 0x87U, 0x76U, 0x65U, 0x54U, 0x43U, 0x32U, 0x21U,
+		};
+		BigNum expVal(
+			CtnFullR(expValBytes),
+			/*isPositive=*/true,
+			/*isLittleEndian=*/false
+		);
+
+		BigNum val("7749745057451750595652775467055142246985373987309575996470579829872645059105");
+		EXPECT_EQ(val, expVal);
+	}
+
+
+	// ===== Hex
+	{
+		int64_t expVal = 0x1234567890LL;
+
+		BigNum val("1234567890", /*radix=*/16);
+		EXPECT_EQ(val, expVal);
+	}
+
+	{
+		int64_t expVal = 0xABCDEFLL;
+
+		BigNum val("ABCDEF", /*radix=*/16);
+		EXPECT_EQ(val, expVal);
+
+		BigNum vall("abcdef", /*radix=*/16);
+		EXPECT_EQ(vall, expVal);
+	}
+
+	{
+		int64_t expVal = 0x1234567890ABCDEFLL;
+
+		BigNum val("1234567890ABCDEF", /*radix=*/16);
+		EXPECT_EQ(val, expVal);
+
+		BigNum vall("1234567890abcdef", /*radix=*/16);
+		EXPECT_EQ(vall, expVal);
+	}
+	// 128 bits
+	{
+		std::vector<uint8_t> expValBytes = {
+			0x11U, 0x22U, 0x33U, 0x44U, 0x55U, 0x66U, 0x77U, 0x88U,
+			0x99U, 0x00U, 0xAAU, 0xBBU, 0xCCU, 0xDDU, 0xEEU, 0xFFU,
+		};
+		BigNum expVal(
+			CtnFullR(expValBytes),
+			/*isPositive=*/true,
+			/*isLittleEndian=*/false
+		);
+
+		BigNum val("11223344556677889900AABBCCDDEEFF", /*radix=*/16);
+		EXPECT_EQ(val, expVal);
+
+		BigNum vall("11223344556677889900aabbccddeeff", /*radix=*/16);
+		EXPECT_EQ(vall, expVal);
+	}
+	// 256 bits
+	{
+		std::vector<uint8_t> expValBytes = {
+			0x11U, 0x22U, 0x33U, 0x44U, 0x55U, 0x66U, 0x77U, 0x88U,
+			0x99U, 0x00U, 0xAAU, 0xBBU, 0xCCU, 0xDDU, 0xEEU, 0xFFU,
+			0x1FU, 0x2EU, 0x3DU, 0x4CU, 0x5BU, 0x6AU, 0x70U, 0x89U,
+			0x98U, 0x87U, 0x76U, 0x65U, 0x54U, 0x43U, 0x32U, 0x21U,
+		};
+		BigNum expVal(
+			CtnFullR(expValBytes),
+			/*isPositive=*/true,
+			/*isLittleEndian=*/false
+		);
+
+		BigNum val(
+			"11223344556677889900AABBCCDDEEFF1F2E3D4C5B6A70899887766554433221",
+			/*radix=*/16
+		);
+		EXPECT_EQ(val, expVal);
+
+		BigNum vall(
+			"11223344556677889900aabbccddeeff1f2e3d4c5b6a70899887766554433221",
+			/*radix=*/16
+		);
+		EXPECT_EQ(vall, expVal);
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+}
+
 GTEST_TEST(TestBigNumber, BigNumberCalc)
 {
 	int64_t initCount = 0;

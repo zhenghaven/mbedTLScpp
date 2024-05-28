@@ -877,6 +877,29 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		/**
+		 * @brief Construct a new Big Number object by reading integer from a string.
+		 *
+		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
+		 * @exception std::bad_alloc Thrown when memory allocation failed.
+		 * @param asciiStr A ASCII string that represents the number.
+		 * @param radix The radix of the number.
+		 *              (e.g. 10 for decimal, 16 for hex, etc.)
+		 *              The default value is 10.
+		 */
+		template<typename _dummy_Trait = _ObjTrait,
+				 enable_if_t<!_dummy_Trait::sk_isBorrower, int> = 0>
+		BigNumber(const std::string& asciiStr, int radix = 10) :
+			_Base::BigNumberBase()
+		{
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(BigNumber::BigNumber,
+				mbedtls_mpi_read_string,
+				NonVirtualGet(),
+				radix,
+				asciiStr.c_str()
+			);
+		}
+
+		/**
 		 * @brief Construct a new Big Number object by copying value from a native integral value.
 		 *
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
