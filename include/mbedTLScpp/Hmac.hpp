@@ -93,7 +93,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param data The data to be hmaced.
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		void Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
+		HmacerBase& Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
 		{
 			NullCheck();
 
@@ -101,6 +101,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				Get(),
 				static_cast<const unsigned char*>(data.BeginPtr()),
 				data.GetRegionSize());
+
+			return *this;
 		}
 
 		/**
@@ -227,6 +229,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		Hmacer& operator=(const Hmacer& other) = delete;
+
+		template<typename ContainerType, bool ContainerSecrecy>
+		Hmacer& Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
+		{
+			HmacerBase::Update(data);
+			return *this;
+		}
 
 		/**
 		 * @brief Finishes the HMAC calculation and get the HMAC result.
