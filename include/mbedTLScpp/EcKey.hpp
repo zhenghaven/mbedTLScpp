@@ -232,6 +232,36 @@ public:
 		);
 	}
 
+	const BigNumber<BorrowerBigNumTrait> BorrowA() const
+	{
+		mbedtls_ecp_group* ctx = _Base::MutableGet();
+		return BigNumber<BorrowerBigNumTrait>(&(ctx->A));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowGx() const
+	{
+		mbedtls_ecp_group* ctx = _Base::MutableGet();
+		return BigNumber<BorrowerBigNumTrait>(&(ctx->G.MBEDTLS_PRIVATE(X)));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowGy() const
+	{
+		mbedtls_ecp_group* ctx = _Base::MutableGet();
+		return BigNumber<BorrowerBigNumTrait>(&(ctx->G.MBEDTLS_PRIVATE(Y)));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowN() const
+	{
+		mbedtls_ecp_group* ctx = _Base::MutableGet();
+		return BigNumber<BorrowerBigNumTrait>(&(ctx->N));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowP() const
+	{
+		mbedtls_ecp_group* ctx = _Base::MutableGet();
+		return BigNumber<BorrowerBigNumTrait>(&(ctx->P));
+	}
+
 }; // class EcGroup
 
 
@@ -609,7 +639,14 @@ public:
 	const mbedtls_ecp_keypair* GetEcContext() const
 	{
 		NullCheck();
-		return mbedtls_pk_ec(*Get());;
+		return mbedtls_pk_ec(*Get());
+	}
+
+
+	mbedtls_ecp_keypair* GetMutableEcContext() const
+	{
+		NullCheck();
+		return mbedtls_pk_ec(*_Base::MutableGet());
 	}
 
 
@@ -647,6 +684,20 @@ public:
 	}
 
 
+	mbedtls_ecp_keypair& GetMutableEcContextRef() const
+	{
+		mbedtls_ecp_keypair* ctx = GetMutableEcContext();
+		if (ctx == nullptr)
+		{
+			throw InvalidObjectException(
+				MBEDTLSCPP_CLASS_NAME_STR(EcPublicKeyBase)
+			);
+		}
+
+		return *ctx;
+	}
+
+
 	/**
 	 * @brief	Gets Elliptic Curve type
 	 *
@@ -671,6 +722,16 @@ public:
 		);
 
 		return res;
+	}
+
+
+	const EcGroup<BorrowedEcGroupTrait> BorrowGroup() const
+	{
+		mbedtls_ecp_keypair& ctx = GetMutableEcContextRef();
+
+		return EcGroup<BorrowedEcGroupTrait>(
+			(Internal::GetGroupFromEcPair(ctx))
+		);
 	}
 
 
@@ -710,10 +771,42 @@ public:
 		);
 	}
 
+
+	const BigNumber<BorrowerBigNumTrait> BorrowPubPointX() const
+	{
+		mbedtls_ecp_keypair& ctx = GetMutableEcContextRef();
+		auto& pubPt = Internal::GetQFromEcPair(ctx);
+		return BigNumber<BorrowerBigNumTrait>(&(pubPt.MBEDTLS_PRIVATE(X)));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowPubPointY() const
+	{
+		mbedtls_ecp_keypair& ctx = GetMutableEcContextRef();
+		auto& pubPt = Internal::GetQFromEcPair(ctx);
+		return BigNumber<BorrowerBigNumTrait>(&(pubPt.MBEDTLS_PRIVATE(Y)));
+	}
+
+	const BigNumber<BorrowerBigNumTrait> BorrowPubPointZ() const
+	{
+		mbedtls_ecp_keypair& ctx = GetMutableEcContextRef();
+		auto& pubPt = Internal::GetQFromEcPair(ctx);
+		return BigNumber<BorrowerBigNumTrait>(&(pubPt.MBEDTLS_PRIVATE(Z)));
+	}
+
 protected:
 
 	using _Base::GetPrivateDer;
 	using _Base::GetPrivatePem;
+
+
+	const BigNumber<BorrowerBigNumTrait> BorrowSecretNum() const
+	{
+		mbedtls_ecp_keypair& ctx = GetMutableEcContextRef();
+
+		return BigNumber<BorrowerBigNumTrait>(
+			&Internal::GetDFromEcPair(ctx)
+		);
+	}
 
 
 	template<typename _FilterFunc>
@@ -859,6 +952,41 @@ public: // Static members:
 	}
 
 
+	template<typename _other_NumTraits>
+	static EcKeyPairBaseOwnerType FromSecretNum(
+		EcType ecType,
+		const BigNumberBase<_other_NumTraits>& secretNum,
+		RbgInterface& rand
+	)
+	{
+		EcKeyPairBaseOwnerType res(ecType);
+
+		mbedtls_ecp_keypair& ecCtx = res.GetEcContextRef();
+
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			EcKeyPairBase::FromSecretNum,
+			mbedtls_mpi_copy,
+			&Internal::GetDFromEcPair(ecCtx),
+			secretNum.Get()
+		);
+
+		// Generate public key from private key
+		// reference: mbedtls_ecp_gen_keypair_base
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			EcKeyPairBase::FromSecretNum,
+			mbedtls_ecp_mul,
+			&(ecCtx.MBEDTLS_PRIVATE(grp)),
+			&(ecCtx.MBEDTLS_PRIVATE(Q)),
+			&(ecCtx.MBEDTLS_PRIVATE(d)),
+			&(ecCtx.MBEDTLS_PRIVATE(grp).G),
+			&RbgInterface::CallBack,
+			&rand
+		);
+
+		return res;
+	}
+
+
 	/**
 	 * @brief Construct a new EC key object that borrows the C object.
 	 *
@@ -972,6 +1100,8 @@ public:
 
 	using _Base::GetPrivateDer;
 	using _Base::GetPrivatePem;
+
+	using _Base::BorrowSecretNum;
 
 
 	/**
@@ -1547,6 +1677,18 @@ public: // Types and static members:
 	{
 		return EcKeyPairOwnerType(
 			_Base::Generate(sk_ecType, rand)
+		);
+	}
+
+
+	template<typename _other_NumTraits>
+	static EcKeyPairOwnerType FromSecretNum(
+		const BigNumberBase<_other_NumTraits>& secretNum,
+		RbgInterface& rand
+	)
+	{
+		return EcKeyPairOwnerType(
+			_Base::FromSecretNum(sk_ecType, secretNum, rand)
 		);
 	}
 
