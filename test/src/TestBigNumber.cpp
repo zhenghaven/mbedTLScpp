@@ -449,6 +449,43 @@ GTEST_TEST(TestBigNumber, BigNumberCalc)
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 }
 
+GTEST_TEST(TestBigNumber, ReminderAndMod)
+{
+	{
+		BigNum a(-88091155);
+		BigNum b(11579);
+
+		// a % b in python
+		// it's `a - (round_down(a / b) * b)`
+		// where `a / b = -7607.837896191381`
+		// and `round_down(a / b) = -7608`
+		BigNum expMod(1877);
+		BigNum mod = Mod(a, b);
+		EXPECT_EQ(mod, expMod);
+
+		// a % b in C/C++
+		// it's `a - (round_towards_zero(a / b) * b)`
+		// where `a / b = -7607.837896191381`
+		// and `round_towards_zero(a / b) = -7607`
+		BigNum expRem(-9702);
+		BigNum rem = a % b;
+		EXPECT_EQ(rem, expRem);
+	}
+
+	{
+		BigNum a("-8809115541847889079303914586772286292427582643565204648787975926198236900499775371799643739458926744604258588242226270417256635160805965184937991917108924");
+		BigNum b("115792089237316195423570985008687907853269984665640564039457584007908834671663");
+
+		BigNum expMod("60378037945358702174120191576064721420705580920788624404695193057953527100220");
+		BigNum mod = Mod(a, b);
+		EXPECT_EQ(mod, expMod);
+
+		BigNum expRem("-55414051291957493249450793432623186432564403744851939634762390949955307571443");
+		BigNum rem = a % b;
+		EXPECT_EQ(rem, expRem);
+	}
+}
+
 GTEST_TEST(TestBigNumber, Rand)
 {
 	std::unique_ptr<RbgInterface> rand =
