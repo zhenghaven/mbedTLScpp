@@ -1,5 +1,5 @@
 --- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2024-06-07 00:26:02.240436853 -0700
-+++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2024-06-07 00:18:04.854596659 -0700
++++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2024-06-07 00:50:12.102812216 -0700
 @@ -12,6 +12,9 @@
   *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
   */
@@ -73,15 +73,33 @@
  
  /**
   * \def MBEDTLS_SHA256_SMALLER
-@@ -1548,7 +1551,7 @@
+@@ -1808,7 +1811,7 @@
+  * effect on the build.
   *
-  * Uncomment to enable the Connection ID extension.
   */
--#define MBEDTLS_SSL_DTLS_CONNECTION_ID
-+//#define MBEDTLS_SSL_DTLS_CONNECTION_ID
- 
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
  
  /**
+  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+@@ -1826,7 +1829,7 @@
+  * effect on the build.
+  *
+  */
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+ 
+ /**
+  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+@@ -1840,7 +1843,7 @@
+  * have any effect on the build.
+  *
+  */
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+ 
+ /**
+  * \def MBEDTLS_SSL_EARLY_DATA
 @@ -2065,7 +2068,7 @@
   *
   * Uncomment this to allow your own alternate threading implementation.

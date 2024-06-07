@@ -1550,7 +1550,7 @@
  *
  * Uncomment to enable the Connection ID extension.
  */
-//#define MBEDTLS_SSL_DTLS_CONNECTION_ID
+#define MBEDTLS_SSL_DTLS_CONNECTION_ID
 
 
 /**
@@ -1810,7 +1810,7 @@
  * effect on the build.
  *
  */
-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
@@ -1828,7 +1828,7 @@
  * effect on the build.
  *
  */
-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
 
 /**
  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
@@ -1842,7 +1842,7 @@
  * have any effect on the build.
  *
  */
-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
 
 /**
  * \def MBEDTLS_SSL_EARLY_DATA
@@ -4135,6 +4135,6 @@
  * allows to disable the feature detection code and avoid using explicit_bzero.
  *
  */
-#define MBEDTLS_PLATFORM_NO_EXPLICIT_BZERO
+//#define MBEDTLS_PLATFORM_NO_EXPLICIT_BZERO
 
 /** \} name SECTION: Decent configuration options */
