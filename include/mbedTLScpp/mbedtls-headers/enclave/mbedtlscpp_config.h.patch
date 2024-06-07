@@ -1,5 +1,5 @@
 --- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2024-06-07 00:26:02.240436853 -0700
-+++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2024-06-07 00:50:12.102812216 -0700
++++ include/mbedTLScpp/mbedtls-headers/enclave/mbedtlscpp_config.h	2024-06-07 00:59:35.465276496 -0700
 @@ -12,6 +12,9 @@
   *  SPDX-License-Identifier: Apache-2.0 OR GPL-2.0-or-later
   */
@@ -136,6 +136,15 @@
  
  /**
   * \def MBEDTLS_DES_C
+@@ -2804,7 +2807,7 @@
+  *
+  * Uncomment to enable the LMS verification algorithm and public key operations.
+  */
+-#define MBEDTLS_LMS_C
++//#define MBEDTLS_LMS_C
+ 
+ /**
+  * \def MBEDTLS_LMS_PRIVATE
 @@ -2918,7 +2921,7 @@
   *
   * This module provides networking routines.
