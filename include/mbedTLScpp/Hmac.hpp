@@ -93,7 +93,7 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 * @param data The data to be hmaced.
 		 */
 		template<typename ContainerType, bool ContainerSecrecy>
-		void Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
+		HmacerBase& Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
 		{
 			NullCheck();
 
@@ -101,6 +101,8 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				Get(),
 				static_cast<const unsigned char*>(data.BeginPtr()),
 				data.GetRegionSize());
+
+			return *this;
 		}
 
 		/**
@@ -110,9 +112,10 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		 *                                   holding a null pointer for the C mbed TLS
 		 *                                   object.
 		 * @exception mbedTLSRuntimeError    Thrown when mbed TLS C function call failed.
-		 * @return std::vector<uint8_t> The HMAC result.
+		 * @return The HMAC result.
 		 */
-		std::vector<uint8_t> Finish()
+		template<typename _DestContainerType = std::vector<uint8_t> >
+		_DestContainerType Finish()
 		{
 			NullCheck();
 
@@ -123,11 +126,14 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 				throw UnexpectedErrorException("HMACerBase is not null, but mbedtls_md_get_size returns zero.");
 			}
 
-			std::vector<uint8_t> hmac(size);
+			_DestContainerType hmac;
+			hmac.resize(size);
 
-			MBEDTLSCPP_MAKE_C_FUNC_CALL(HmacerBase::Finish, mbedtls_md_hmac_finish,
+			MBEDTLSCPP_MAKE_C_FUNC_CALL(
+				HmacerBase::Finish, mbedtls_md_hmac_finish,
 				Get(),
-				static_cast<unsigned char*>(hmac.data()));
+				static_cast<unsigned char*>(hmac.data())
+			);
 
 			return hmac;
 		}
@@ -227,6 +233,13 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 		}
 
 		Hmacer& operator=(const Hmacer& other) = delete;
+
+		template<typename ContainerType, bool ContainerSecrecy>
+		Hmacer& Update(const ContCtnReadOnlyRef<ContainerType, ContainerSecrecy>& data)
+		{
+			HmacerBase::Update(data);
+			return *this;
+		}
 
 		/**
 		 * @brief Finishes the HMAC calculation and get the HMAC result.

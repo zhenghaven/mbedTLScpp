@@ -94,10 +94,13 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
+	HmacerBase* updRetRefPtr = nullptr;
+
 	{
 		HmacerBase hmacBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA256), CtnFullR(testKey));
 
-		hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
+		updRetRefPtr = &(hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1")));
+		EXPECT_EQ(updRetRefPtr, &hmacBase);
 
 		auto hmac = hmacBase.Finish();
 		auto hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
@@ -106,7 +109,8 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 
 		hmacBase = HmacerBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA512), CtnFullR(testKey));
 
-		hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
+		updRetRefPtr = &(hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1")));
+		EXPECT_EQ(updRetRefPtr, &hmacBase);
 
 		hmac = hmacBase.Finish();
 		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
@@ -115,7 +119,8 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 
 		hmacBase = HmacerBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA384), CtnFullR(testKey));
 
-		hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
+		updRetRefPtr = &(hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1")));
+		EXPECT_EQ(updRetRefPtr, &hmacBase);
 
 		hmac = hmacBase.Finish();
 		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
@@ -124,7 +129,8 @@ GTEST_TEST(TestHmac, HmacerBaseCalc)
 
 		hmacBase = HmacerBase(*mbedtls_md_info_from_type(mbedtls_md_type_t::MBEDTLS_MD_SHA224), CtnFullR(testKey));
 
-		hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1"));
+		updRetRefPtr = &(hmacBase.Update(CtnItemRgR<0, 12>("TestMessage1")));
+		EXPECT_EQ(updRetRefPtr, &hmacBase);
 
 		hmac = hmacBase.Finish();
 		hmacHex = Internal::Bytes2HexLitEnd(CtnFullR(hmac));
@@ -148,16 +154,20 @@ GTEST_TEST(TestHmac, HmacerClass)
 	MEMORY_LEAK_TEST_GET_COUNT(initCount);
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
+	Hmacer<HashType::SHA256>* updRetRefPtr = nullptr;
+
 	{
 		Hmacer<HashType::SHA256> hmac2561(CtnFullR(testKey));
-		hmac2561.Update(CtnItemRgR<0, 12>("TestMessage1"));
+		updRetRefPtr = &(hmac2561.Update(CtnItemRgR<0, 12>("TestMessage1")));
+		EXPECT_EQ(updRetRefPtr, &hmac2561);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 1);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 
 		Hmacer<HashType::SHA256> hmac2562(CtnFullR(testKey));
-		hmac2562.Update(CtnItemRgR<0, 12>("TestMessage2"));
+		updRetRefPtr = &(hmac2562.Update(CtnItemRgR<0, 12>("TestMessage2")));
+		EXPECT_EQ(updRetRefPtr, &hmac2562);
 
 		// after successful initialization, we should have its allocation remains.
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 2);
