@@ -302,6 +302,22 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			SecretVector(init_list.begin(), init_list.end(), alloc)
 		{}
 
+		template<typename _StdAlloc>
+		SecretVector(
+			const std::vector<value_type, _StdAlloc>& vec,
+			const allocator_type& alloc = allocator_type()
+		) :
+			SecretVector(vec.begin(), vec.end(), alloc)
+		{}
+
+		template<size_t _Size>
+		SecretVector(
+			const std::array<value_type, _Size>& arr,
+			const allocator_type& alloc = allocator_type()
+		) :
+			SecretVector(arr.begin(), arr.end(), alloc)
+		{}
+
 		SecretVector(const SecretVector& other, const allocator_type& alloc) :
 			m_alloc(alloc),
 			m_capacity(other.m_capacity),

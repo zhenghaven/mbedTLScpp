@@ -1,6 +1,6 @@
---- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2022-10-25 21:05:21.979558746 -0700
-+++ include/mbedTLScpp/mbedtls-headers/normal/mbedtlscpp_config.h	2022-11-03 02:12:28.907539150 -0700
-@@ -1272,6 +1272,8 @@
+--- include/mbedTLScpp/mbedtls-headers/mbedtls_config.h	2024-06-07 00:26:02.240436853 -0700
++++ include/mbedTLScpp/mbedtls-headers/normal/mbedtlscpp_config.h	2024-06-07 00:50:29.894891193 -0700
+@@ -1484,6 +1484,8 @@
   *
   * Enable the checkup functions (*_self_test).
   */
@@ -9,7 +9,34 @@
  #define MBEDTLS_SELF_TEST
  
  /**
-@@ -1743,7 +1745,7 @@
+@@ -1808,7 +1810,7 @@
+  * effect on the build.
+  *
+  */
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_ENABLED
+ 
+ /**
+  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+@@ -1826,7 +1828,7 @@
+  * effect on the build.
+  *
+  */
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL_ENABLED
+ 
+ /**
+  * \def MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+@@ -1840,7 +1842,7 @@
+  * have any effect on the build.
+  *
+  */
+-#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
++//#define MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_PSK_EPHEMERAL_ENABLED
+ 
+ /**
+  * \def MBEDTLS_SSL_EARLY_DATA
+@@ -2065,7 +2067,7 @@
   *
   * Uncomment this to allow your own alternate threading implementation.
   */
@@ -18,7 +45,7 @@
  
  /**
   * \def MBEDTLS_THREADING_PTHREAD
-@@ -2227,7 +2229,9 @@
+@@ -2611,7 +2613,9 @@
   *
   * This module provides debugging functions.
   */
@@ -28,12 +55,36 @@
  
  /**
   * \def MBEDTLS_DES_C
-@@ -3056,7 +3060,7 @@
+@@ -3513,7 +3517,7 @@
   *
-  * Enable this layer to allow use of mutexes within mbed TLS
+  * Enable this layer to allow use of mutexes within Mbed TLS
   */
 -//#define MBEDTLS_THREADING_C
 +#define MBEDTLS_THREADING_C
  
  /**
   * \def MBEDTLS_TIMING_C
+@@ -4114,3 +4118,23 @@
+ //#define MBEDTLS_X509_MAX_FILE_PATH_LEN     512 /**< Maximum length of a path/filename string in bytes including the null terminator character ('\0'). */
+ 
+ /** \} name SECTION: Module configuration options */
++
++
++/**
++ * \name SECTION: Decent configuration options
++ *
++ * This section contains configuration options that are not part of the
++ * standard Mbed TLS distribution, but are used in the Decent project.
++ * \{
++ */
++
++/**
++ * Disable explicit_bzero and explicit_bzero feature detection. For enclave
++ * platforms, it is possible that explicit_bzero is not available, but the
++ * feature detection code may falsely detect it as available. This option
++ * allows to disable the feature detection code and avoid using explicit_bzero.
++ *
++ */
++//#define MBEDTLS_PLATFORM_NO_EXPLICIT_BZERO
++
++/** \} name SECTION: Decent configuration options */

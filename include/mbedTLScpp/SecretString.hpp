@@ -106,6 +106,30 @@ namespace MBEDTLSCPP_CUSTOMIZED_NAMESPACE
 			_Base::SecretVector(std::forward<_Base>(other), alloc)
 		{}
 
+		template<typename _StdTraits, typename _StdAlloc>
+		SecretBasicString(
+			const std::basic_string<value_type, _StdTraits, _StdAlloc>& str,
+			const allocator_type& alloc = allocator_type()
+		) :
+			_Base::SecretVector(str.begin(), str.end(), alloc)
+		{}
+
+		template<typename _StdAlloc>
+		SecretBasicString(
+			const std::vector<value_type, _StdAlloc>& vec,
+			const allocator_type& alloc = allocator_type()
+		) :
+			_Base::SecretVector(vec, alloc)
+		{}
+
+		template<size_t _Size>
+		SecretBasicString(
+			const std::array<value_type, _Size>& arr,
+			const allocator_type& alloc = allocator_type()
+		) :
+			_Base::SecretVector(arr, alloc)
+		{}
+
 		SecretBasicString(std::initializer_list<value_type> init_list,
 			const allocator_type& alloc = allocator_type()) :
 			_Base::SecretVector(init_list.begin(), init_list.end(), alloc)

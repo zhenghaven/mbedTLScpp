@@ -279,6 +279,77 @@ GTEST_TEST(TestSecretVector, ConstructIterator)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
+GTEST_TEST(TestSecretVector, ConstructStdVector)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	// copy iterator construct, copy construct, content test
+	{
+		std::vector<MemTestObj<int> > expVec1  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 10 + 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		SecretVector<MemTestObj<int> > secVec1(expVec1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 10 + 10);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 10);
+
+		EXPECT_NE(secVec1.data(), nullptr);
+		EXPECT_LE(secVec1.size(), secVec1.capacity());
+
+		EXPECT_EQ(secVec1.size(),  expVec1.size());
+		EXPECT_EQ(secVec1.empty(), expVec1.empty());
+
+		for(size_t i = 0; i < secVec1.size(); ++i)
+		{
+			EXPECT_EQ(secVec1[i].Data(), expVec1[i].Data());
+		}
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+GTEST_TEST(TestSecretVector, ConstructStdArray)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	// copy iterator construct, copy construct, content test
+	{
+		std::array<MemTestObj<int>, 10> expArr1  = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 10 + 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+
+		// example list:
+		SecretVector<MemTestObj<int> > secVec1(expArr1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 10 + 10);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 10);
+
+		EXPECT_NE(secVec1.data(), nullptr);
+		EXPECT_LE(secVec1.size(), secVec1.capacity());
+
+		EXPECT_EQ(secVec1.size(),  expArr1.size());
+		EXPECT_EQ(secVec1.empty(), expArr1.empty());
+
+		for(size_t i = 0; i < secVec1.size(); ++i)
+		{
+			EXPECT_EQ(secVec1[i].Data(), expArr1[i].Data());
+		}
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
 GTEST_TEST(TestSecretVector, PushBack)
 {
 	int64_t initCount = 0;

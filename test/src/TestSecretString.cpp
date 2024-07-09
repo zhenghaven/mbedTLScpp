@@ -286,6 +286,112 @@ GTEST_TEST(TestSecretString, ConstructStrCopy)
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
 
+GTEST_TEST(TestSecretString, ConstructStdStr)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		std::string  stdStr1("Hello, World!");
+
+		SecretString secStr2(stdStr1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+
+		EXPECT_EQ(secStr2.capacity(), 13);
+
+		EXPECT_EQ(secStr2.size(),  stdStr1.size());
+		EXPECT_EQ(secStr2.empty(), stdStr1.empty());
+
+		for(size_t i = 0; i < secStr2.size(); ++i)
+		{
+			EXPECT_EQ(secStr2[i], stdStr1[i]);
+		}
+		EXPECT_EQ(*(secStr2.data() + secStr2.size()), '\0');
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+GTEST_TEST(TestSecretString, ConstructStdVec)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		std::vector<char>  stdVec1(
+			{ 'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', }
+		);
+
+		SecretString secStr1(stdVec1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+
+		EXPECT_EQ(secStr1.capacity(), 13);
+
+		EXPECT_EQ(secStr1.size(),  stdVec1.size());
+		EXPECT_EQ(secStr1.empty(), stdVec1.empty());
+
+		for(size_t i = 0; i < secStr1.size(); ++i)
+		{
+			EXPECT_EQ(secStr1[i], stdVec1[i]);
+		}
+		EXPECT_EQ(*(secStr1.data() + secStr1.size()), '\0');
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+GTEST_TEST(TestSecretString, ConstructStdArr)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		std::array<char, 13>  stdArr1(
+			{ 'H', 'e', 'l', 'l', 'o', ',', ' ', 'W', 'o', 'r', 'l', 'd', '!', }
+		);
+
+		SecretString secStr1(stdArr1);
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+
+		EXPECT_EQ(secStr1.capacity(), 13);
+
+		EXPECT_EQ(secStr1.size(),  stdArr1.size());
+		EXPECT_EQ(secStr1.empty(), stdArr1.empty());
+
+		for(size_t i = 0; i < secStr1.size(); ++i)
+		{
+			EXPECT_EQ(secStr1[i], stdArr1[i]);
+		}
+		EXPECT_EQ(*(secStr1.data() + secStr1.size()), '\0');
+
+		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 13 + 1);
+	}
+
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
 GTEST_TEST(TestSecretString, ConstructItCopy)
 {
 	int64_t initCount = 0;
@@ -1589,6 +1695,60 @@ GTEST_TEST(TestSecretString, Insert)
 
 		MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 		SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 26 + 1 + 26);
+	}
+
+	// Insert that does not require relocation, and there is overlap
+	// between the source and destination
+	{
+		SecretString secStr1("abcdefghijklmnopqrstuvwxyz");
+
+		secStr1.reserve(100);
+
+		using SecretStringBase = typename SecretString::_Base;
+		SecretStringBase& baseStr1 = secStr1;
+		baseStr1.insert(baseStr1.begin() + 10, baseStr1.begin(), baseStr1.begin() + 5);
+
+		EXPECT_EQ(secStr1.size(), 26 + 5);
+		EXPECT_EQ(
+			secStr1,
+			SecretString("abcdefghijabcdeklmnopqrstuvwxyz")
+		);
+	}
+	{
+		SecretString secStr1("abcdefghijklmnopqrstuvwxyz");
+
+		secStr1.reserve(100);
+
+		using SecretStringBase = typename SecretString::_Base;
+		SecretStringBase& baseStr1 = secStr1;
+		const char* first = baseStr1.data();
+		const char* last = baseStr1.data() + 5;
+		baseStr1.insert(baseStr1.begin() + 10, first, last);
+
+		EXPECT_EQ(secStr1.size(), 26 + 5);
+		EXPECT_EQ(
+			secStr1,
+			SecretString("abcdefghijabcdeklmnopqrstuvwxyz")
+		);
+	}
+
+	// Insert that does not require relocation, and there is NO overlap
+	// between the source and destination
+	{
+		SecretString secStr1("abcdefghijklmnopqrstuvwxyz");
+		SecretString secStr2("abcdefghijklmnopqrstuvwxyz");
+
+		secStr1.reserve(100);
+
+		using SecretStringBase = typename SecretString::_Base;
+		SecretStringBase& baseStr1 = secStr1;
+		baseStr1.insert(baseStr1.begin() + 10, secStr2.begin(), secStr2.begin() + 5);
+
+		EXPECT_EQ(secStr1.size(), 26 + 5);
+		EXPECT_EQ(
+			secStr1,
+			SecretString("abcdefghijabcdeklmnopqrstuvwxyz")
+		);
 	}
 
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
