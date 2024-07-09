@@ -452,6 +452,60 @@ public: // Static members, and methods will be used in constructors:
 	}
 
 
+	template<
+		typename _other_XNumTraits,
+		typename _other_YNumTraits,
+		typename _other_ZNumTraits
+	>
+	static EcPublicKeyBaseOwnerType FromPublicNum(
+		EcType ecType,
+		const BigNumberBase<_other_XNumTraits>& x,
+		const BigNumberBase<_other_YNumTraits>& y,
+		const BigNumberBase<_other_ZNumTraits>& z
+	)
+	{
+		EcPublicKeyBaseOwnerType res(ecType);
+
+		mbedtls_ecp_keypair& ecCtx = res.GetEcContextRef();
+		mbedtls_ecp_point& pubPt = Internal::GetQFromEcPair(ecCtx);
+
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			EcKeyPairBase::FromSecretNum,
+			mbedtls_mpi_copy,
+			&(pubPt.MBEDTLS_PRIVATE(X)),
+			x.Get()
+		);
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			EcKeyPairBase::FromSecretNum,
+			mbedtls_mpi_copy,
+			&(pubPt.MBEDTLS_PRIVATE(Y)),
+			y.Get()
+		);
+		MBEDTLSCPP_MAKE_C_FUNC_CALL(
+			EcKeyPairBase::FromSecretNum,
+			mbedtls_mpi_copy,
+			&(pubPt.MBEDTLS_PRIVATE(Z)),
+			z.Get()
+		);
+
+		return res;
+	}
+
+
+	template<
+		typename _other_XNumTraits,
+		typename _other_YNumTraits
+	>
+	static EcPublicKeyBaseOwnerType FromPublicNum(
+		EcType ecType,
+		const BigNumberBase<_other_XNumTraits>& x,
+		const BigNumberBase<_other_YNumTraits>& y
+	)
+	{
+		return FromPublicNum(ecType, x, y, BigNumber<>(1));
+	}
+
+
 	/**
 	 * @brief Construct a new EcPublicKeyBase object that borrows the C object.
 	 *
@@ -1429,6 +1483,34 @@ public: // Types and static members:
 		}
 
 		return EcPublicKeyOwnerType(std::move(cpy));
+	}
+
+
+	template<
+		typename _other_XNumTraits,
+		typename _other_YNumTraits,
+		typename _other_ZNumTraits
+	>
+	static EcPublicKeyOwnerType FromPublicNum(
+		const BigNumberBase<_other_XNumTraits>& x,
+		const BigNumberBase<_other_YNumTraits>& y,
+		const BigNumberBase<_other_ZNumTraits>& z
+	)
+	{
+		return EcPublicKeyOwnerType(_Base::FromPublicNum(sk_ecType, x, y, z));
+	}
+
+
+	template<
+		typename _other_XNumTraits,
+		typename _other_YNumTraits
+	>
+	static EcPublicKeyOwnerType FromPublicNum(
+		const BigNumberBase<_other_XNumTraits>& x,
+		const BigNumberBase<_other_YNumTraits>& y
+	)
+	{
+		return FromPublicNum(x, y, BigNumber<>(1));
 	}
 
 

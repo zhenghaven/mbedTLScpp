@@ -908,6 +908,58 @@ GTEST_TEST(TestEcKey, EcPublicKeyBorrow)
 }
 
 
+GTEST_TEST(TestEcKey, EcPublicKeyBorrowPublicNum)
+{
+	int64_t initCount = 0;
+	int64_t initSecCount = 0;
+	MEMORY_LEAK_TEST_GET_COUNT(initCount);
+	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
+
+	{
+		BigNum publicX("60721863119697049450636964312370295896154053543869915584747184239365488533407");
+		BigNum publicY("36529609718400382142347494734857041866068993877812905659583946912502342675229");
+
+		auto pubKey = EcPublicKey<EcType::SECP256R1>::FromPublicNum(
+			publicX,
+			publicY
+		);
+
+		EXPECT_NO_THROW(pubKey.NullCheck());
+		EXPECT_EQ(pubKey.BorrowPubPointX(), publicX);
+		EXPECT_EQ(pubKey.BorrowPubPointY(), publicY);
+		EXPECT_EQ(pubKey.BorrowPubPointZ(), BigNum(1));
+		EXPECT_EQ(
+			pubKey.BorrowGroup().BorrowGx().Dec(),
+			"48439561293906451759052585252797914202762949526041747995844080717082404635286"
+		);
+		EXPECT_EQ(
+			pubKey.BorrowGroup().BorrowGy().Dec(),
+			"36134250956749795798585127919587881956611106672985015071877198253568414405109"
+		);
+	}
+
+	{
+		BigNum publicX("60721863119697049450636964312370295896154053543869915584747184239365488533407");
+		BigNum publicY("36529609718400382142347494734857041866068993877812905659583946912502342675229");
+
+		auto pubKey = EcPublicKeyBase<>::FromPublicNum(
+			EcType::SECP256R1,
+			publicX,
+			publicY
+		);
+
+		EXPECT_NO_THROW(pubKey.NullCheck());
+		EXPECT_EQ(pubKey.BorrowPubPointX(), publicX);
+		EXPECT_EQ(pubKey.BorrowPubPointY(), publicY);
+		EXPECT_EQ(pubKey.BorrowPubPointZ(), BigNum(1));
+	}
+
+	// Finally, all allocation should be cleaned after exit.
+	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
+	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
+}
+
+
 GTEST_TEST(TestEcKey, EcKeyPairConstructAndMove)
 {
 	int64_t initCount = 0;
