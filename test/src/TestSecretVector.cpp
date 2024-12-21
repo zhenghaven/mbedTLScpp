@@ -1780,3 +1780,17 @@ GTEST_TEST(TestSecretVector, Equality)
 	MEMORY_LEAK_TEST_INCR_COUNT(initCount, 0);
 	SECRET_MEMORY_LEAK_TEST_INCR_COUNT(initSecCount, 0);
 }
+
+#if 0
+GTEST_TEST(TestSecretVector, Concat)
+{
+	{
+		SecretVector<uint8_t> sVec1 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, };
+		SecretVector<uint8_t> sVec2 = { 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, };
+		SecretVector<uint8_t> expRes = {
+			0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+			10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+		};
+	}
+}
+#endif

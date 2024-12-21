@@ -1191,11 +1191,11 @@ GTEST_TEST(TestEcKey, EcKeyPairBorrowSecret)
 	SECRET_MEMORY_LEAK_TEST_GET_COUNT(initSecCount);
 
 	{
-		// auto ec = EcKeyPair<EcType::SECP256R1>::Generate(*rand);
-		// std::cout << "SECP256R1 Secret num: " << ec.BorrowSecretNum().Dec() << std::endl;
-		// std::cout << "SECP256R1 Pub X: " << ec.BorrowPubPointX().Dec() << std::endl;
-		// std::cout << "SECP256R1 Pub Y: " << ec.BorrowPubPointY().Dec() << std::endl;
-		// std::cout << "SECP256R1 Pub Z: " << ec.BorrowPubPointZ().Dec() << std::endl;
+		// auto ec = EcKeyPair<EcType::SECP256K1>::Generate(*rand);
+		// std::cout << "SECP256R1 Secret num: " << ec.BorrowSecretNum().Hex() << std::endl;
+		// std::cout << "SECP256R1 Pub X: " << ec.BorrowPubPointX().Hex() << std::endl;
+		// std::cout << "SECP256R1 Pub Y: " << ec.BorrowPubPointY().Hex() << std::endl;
+		// std::cout << "SECP256R1 Pub Z: " << ec.BorrowPubPointZ().Hex() << std::endl;
 
 		BigNum secretNum("101755203457639817974212986655053425722578058740881989237880011707721590358361");
 
